@@ -59,7 +59,7 @@ namespace Game
                     break;
 
                 case MessageType.Error:
-                    Debug.LogError($"{RED_COLOR}Åy{ERROR}Åz{message} {callerInfo}{FINISH_COLOR}");
+                   // Debug.LogError($"{RED_COLOR}Åy{ERROR}Åz{message} {callerInfo}{FINISH_COLOR}");
                     break;
             }
         }

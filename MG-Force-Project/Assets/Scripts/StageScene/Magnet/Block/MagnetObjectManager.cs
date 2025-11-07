@@ -4,88 +4,99 @@ using UnityEngine;
 namespace Game.StageScene.Magnet
 {
     /// <summary>
-    /// オブジェクトの磁力管理クラス
+    /// オブジェクトの磁力管理クラス  
+    /// ・磁力オブジェクトに関する状態を保持・更新  
+    /// ・磁力ON/OFFやリセット、弾による磁力付与などを管理
     /// </summary>
     public class MagnetObjectManager : MonoBehaviour
     {
-        private InputHandler input;
+        private InputHandler input; // プレイヤー入力処理クラスの参照
 
-        // 磁力データ
-        public MagnetData MyData {  get; protected set; }
+        /// <summary>
+        /// このオブジェクトの磁力データ  
+        /// （磁極の種類や強さなどを保持）
+        /// </summary>
+        public MagnetData MyData { get; protected set; }
 
-        // 磁力管理クラス
+        // 磁力システム全体を管理するクラス
         protected MagnetManager magnetManager;
 
-        // 磁力動作管理クラス
+        // 磁力の動作制御（吸着・反発など）を行うクラス
         protected MagnetController magnetController;
 
-        // 磁力のコライダー付きオブジェクト
+        // 磁力判定用のコライダー（当たり判定専用）
         [SerializeField] private GameObject _magnetCollider;
 
-        // 磁力の固定有無
+        // このオブジェクトが固定磁石かどうか
         [SerializeField] protected bool magnetFixed;
 
-        // 磁力の強さ
+        // 固定磁石の磁力強度
         [SerializeField] protected MagnetData.MagnetPower magnetFixedPower;
 
         /// <summary>
-        /// 初期化処理
+        /// 初期化処理  
+        /// ゲーム開始時に磁力データを生成・設定する
         /// </summary>
         protected virtual void Start()
         {
             input = InputHandler.Instance;
 
+            // シーン内の MagnetManager オブジェクトを取得
             magnetManager = GameObject.Find(GameConstants.MAGNET_MANAGER_OBJ).GetComponent<MagnetManager>();
+
+            // 磁力動作制御用クラスを生成
             magnetController = new MagnetController();
 
-            // コンストラクタの呼び出し
+            // 固定磁石（例：壁や床など）の場合
             if (magnetFixed)
             {
-                string new_object_type = gameObject.tag;
-                MagnetData.MagnetType new_magnet_type = (MagnetData.MagnetType)gameObject.layer;
+                string new_object_type = gameObject.tag; // タグからオブジェクト種別を取得
+                MagnetData.MagnetType new_magnet_type = (MagnetData.MagnetType)gameObject.layer; // レイヤーから磁極を取得
 
+                // 固定磁石用の磁力データを生成
                 MyData = new MagnetData(new_object_type, new_magnet_type, magnetFixedPower);
             }
             else
             {
+                // 通常のオブジェクトはデフォルトの磁力データを生成
                 string new_object_type = gameObject.tag;
-
                 MyData = new MagnetData(new_object_type);
             }
         }
 
         /// <summary>
-        /// 更新処理
+        /// 毎フレーム更新処理  
+        /// 磁力ON/OFF制御や入力によるリセット処理を行う
         /// </summary>
         protected virtual void Update()
         {
+            // コライダーは基本的に常に有効化しておく
             _magnetCollider.SetActive(true);
 
             if (magnetManager == null) return;
 
-            // 磁力の起動処理
+            // MagnetManager から磁力起動状態を確認
             if (magnetManager.IsMagnetBoot)
             {
+                // 起動中にコライダーが無効なら再度ON
                 if (!_magnetCollider.activeSelf)
                 {
-                    // 磁力の有効化
                     _magnetCollider.SetActive(true);
                 }
 
-                return;
+                return; // 起動中は以降の処理をスキップ
             }
 
-            // 磁力の無効化処理
+            // MagnetBootがOFFになった場合は磁力判定を無効化
             if (_magnetCollider.activeSelf)
             {
-                // 磁力の無効化
                 _magnetCollider.SetActive(false);
             }
 
-            // 磁力固定オブジェクトは除外
+            // 固定磁石は入力によるリセット対象外
             if (magnetFixed) return;
 
-            // 付与した磁力のリセット
+            // リセットキーが押された場合
             if (input.IsActionPressed(InputConstants.Action.RESET))
             {
                 ResetMagnet();
@@ -93,20 +104,22 @@ namespace Game.StageScene.Magnet
         }
 
         /// <summary>
-        /// 磁力のリセット処理
+        /// 磁力リセット処理  
+        /// オブジェクトの磁力を初期状態（無磁力）に戻す
         /// </summary>
         private void ResetMagnet()
         {
-            // 磁力データの宣言
+            // 初期状態（無磁力）を設定
             MagnetData.MagnetType reset_type = MagnetData.MagnetType.NotType;
             MagnetData.MagnetPower reset_power = MagnetData.MagnetPower.None;
 
-            // レイヤーの更新
+            // レイヤーを「NotType」に変更
             gameObject.layer = (int)reset_type;
 
-            // 磁力データの設定
+            // MagnetDataをリセット状態に更新
             MyData.SetMagnetData(reset_type, reset_power);
 
+            // UI更新処理（磁力ゲージやアイコンをリセット）
             MagnetUIManager ui = GameObject.Find("MagnetUIManager").GetComponent<MagnetUIManager>();
             ui.Reset();
 
@@ -114,25 +127,25 @@ namespace Game.StageScene.Magnet
         }
 
         /// <summary>
-        /// トリガーと当たった時
+        /// トリガー衝突時の処理  
+        /// 弾が当たった時に磁力の種類と強さを付与する
         /// </summary>
-        /// <param name="other"></param>
         protected virtual void OnTriggerEnter(Collider other)
         {
-            // 磁力が固定の場合は終了
+            // 固定磁石には弾の影響を与えない
             if (magnetFixed) return;
 
-            // 弾に当たった時
+            // 弾（Bullet）に当たった場合
             if (other.gameObject.layer == (int)GameConstants.Layer.BULLET)
             {
-                // レイヤーの更新
+                // 弾の持つ磁力情報を適用
                 gameObject.layer = (int)magnetManager.CurrentType;
 
-                // 磁力データの取得
+                // 新しい磁力情報を取得
                 MagnetData.MagnetType new_magnet_type = (MagnetData.MagnetType)gameObject.layer;
                 MagnetData.MagnetPower new_magnet_power = (MagnetData.MagnetPower)magnetManager.CurrentPower;
 
-                // 磁力データの設定
+                // MagnetDataを更新
                 MyData.SetMagnetData(new_magnet_type, new_magnet_power);
 
                 DebugManager.LogMessage(MyData.MyMangetType.ToString() + " | " + MyData.MyMagnetPower.ToString());
@@ -140,9 +153,9 @@ namespace Game.StageScene.Magnet
         }
 
         /// <summary>
-        /// 磁力の強さのセット
+        /// オブジェクトの磁力強度を外部から設定する  
+        /// （例えばエディタやスクリプトから呼び出し可能）
         /// </summary>
-        /// <param name="power"></param>
         public void SetObjectPower(int power)
         {
             switch (power)

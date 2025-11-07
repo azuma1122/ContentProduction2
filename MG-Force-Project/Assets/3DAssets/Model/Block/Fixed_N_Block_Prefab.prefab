@@ -168,6 +168,10 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 6175379725942923144}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: ea3838d0461610745bf60ea1dd52ef83,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6890902007481355267}
   m_SourcePrefab: {fileID: 100100000, guid: ea3838d0461610745bf60ea1dd52ef83, type: 3}
 --- !u!4 &2795692752971746617 stripped
 Transform:
@@ -236,7 +240,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3280761362568157059}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e4bdc76d19299604c9090f15d8d20636, type: 3}
   m_Name: 
@@ -244,3 +248,18 @@ MonoBehaviour:
   _magnetCollider: {fileID: 2581570767281934506}
   magnetFixed: 1
   magnetFixedPower: 0
+--- !u!114 &6890902007481355267
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3280761362568157059}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 58368bc480bf47249bdd2114b497e633, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  magnetForce: 10
+  magnetRange: 5
+  poleType: 0

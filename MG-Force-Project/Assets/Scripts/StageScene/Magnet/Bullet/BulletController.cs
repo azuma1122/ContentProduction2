@@ -1,122 +1,175 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 namespace Game.StageScene.Magnet
 {
     /// <summary>
-    /// ’e‚Ì“®ìŠÇ—ƒNƒ‰ƒX
+    /// å¼¾ï¼ˆBulletï¼‰ã®å‹•ä½œã‚’åˆ¶å¾¡ã™ã‚‹ã‚¯ãƒ©ã‚¹
+    /// - ç™ºå°„æ–¹å‘ã®è¨ˆç®—
+    /// - ç§»å‹•ï¼ˆç‰©ç†æŒ™å‹•ï¼‰
+    /// - ä¸€å®šæ™‚é–“å¾Œã®è‡ªå‹•å‰Šé™¤
+    /// - ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆè¡çªæ™‚ã®ç ´å£Šãƒ»ç½®ãæ›ãˆå‡¦ç†ï¼ˆUIçŠ¶æ…‹ã«ã‚ˆã£ã¦Prefabã‚’åˆ‡ã‚Šæ›¿ãˆï¼‰
     /// </summary>
     public class BulletController : MonoBehaviour
     {
-        // ƒ^ƒO
+        // ===== ã‚¿ã‚°å®šç¾© =====
         private const string FIXED_TAG = GameConstants.Tag.FIXED;
         private const string MOVING_TAG = GameConstants.Tag.MOVING;
 
+        // ===== å®šæ•° =====
         private const float INIT_SPEED = 10.0f;
-        private const float INIT_TIMER = 0.0f;
+        private const float LIFE_TIME = 12.0f;
 
-        // ’e‚ÌRigidbody
-        private Rigidbody _rigidbody = null;
+        // ===== å‚ç…§ =====
+        [Header("ç‰©ç†æŒ™å‹•ç”¨"), SerializeField] private Rigidbody _rigidbody = null;
+        [Header("ã‚¢ãƒ‹ãƒ¡ãƒ¼ã‚·ãƒ§ãƒ³åˆ¶å¾¡"), SerializeField] private Animator _animator;
 
-        private Animator _animator;
+        [Header("ç½®ãæ›ãˆç”¨Prefab(Fixed)")]
+        [SerializeField] private GameObject _fixedSPrefab;
+        [SerializeField] private GameObject _fixedNPrefab;
 
-        // ƒ^[ƒQƒbƒg‚ÌÀ•W
+        [Header("ç½®ãæ›ãˆç”¨Prefab(Moving)")]
+        [SerializeField] private GameObject _movingSPrefab;
+        [SerializeField] private GameObject _movingNPrefab;
+
+        // UIã‚’è‡ªå‹•æ¤œå‡ºï¼ˆN / S åˆ‡ã‚Šæ›¿ãˆç”¨ï¼‰
+        private GameObject _uiNMagnet;
+        private GameObject _uiSMagnet;
+
+        // ç™ºå°„é–¢é€£
         private Vector3 _targetPos = Vector3.zero;
-
-        // Œü‚«ƒxƒNƒgƒ‹
         private Vector3 _direction = Vector3.zero;
-
-        // ’e‚Ì‘¬“x
         private float _bulletSpeed = INIT_SPEED;
+        private float _timer = 0f;
 
-        private float _timer = INIT_TIMER;
-
-        /// <summary>
-        /// ‰Šú‰»ˆ—
-        /// </summary>
         private void Start()
         {
+            // Rigidbodyã‚’å–å¾—
             _rigidbody = GetComponent<Rigidbody>();
+            if (_rigidbody == null)
+                Debug.LogWarning("RigidbodyãŒè¨­å®šã•ã‚Œã¦ã„ã¾ã›ã‚“ã€‚");
 
+            // Animatorã‚’å–å¾—
             _animator = GetComponent<Animator>();
 
-            // ƒ^[ƒQƒbƒg‚ÌÀ•Wæ“¾
-            _targetPos = BulletLineController.GetDirection();
+            // UIã‚’è‡ªå‹•æ¤œå‡ºï¼ˆN/S UIï¼‰
+            _uiNMagnet = GameObject.Find("N_Magnet_UI") ?? GameObject.Find("N_Magnet");
+            _uiSMagnet = GameObject.Find("S_Magnet_UI") ?? GameObject.Find("S_Magnet");
 
-            //// ’e‚Ì”­Ë
+            if (_uiNMagnet == null || _uiSMagnet == null)
+                Debug.LogWarning("N_Magnet_UI ã¾ãŸã¯ S_Magnet_UI ãŒã‚·ãƒ¼ãƒ³å†…ã«è¦‹ã¤ã‹ã‚Šã¾ã›ã‚“ã€‚");
+
+            // ç™ºå°„æ–¹å‘ã‚’è¨­å®š
+            _targetPos = BulletLineController.GetDirection();
             FiringBullet();
         }
 
         private void Update()
         {
             _timer += Time.deltaTime;
-
-            if (_timer > 12)
+            if (_timer > LIFE_TIME)
             {
                 Destroy(gameObject);
             }
         }
 
         /// <summary>
-        /// ’e‚Ì”­Ëˆ—
+        /// å¼¾ã‚’ã‚¿ãƒ¼ã‚²ãƒƒãƒˆæ–¹å‘ã¸ç™ºå°„
         /// </summary>
         private void FiringBullet()
         {
-            // Œü‚«ƒxƒNƒgƒ‹‚ğ‹‚ß‚é
-            _direction = _targetPos - gameObject.transform.position;
-
-            // ³‹K‰»
-            _direction.Normalize();
-
-            // ‘¬“x‚ğæZ
-            _direction *= _bulletSpeed;
-
-            // Œü‚«ƒxƒNƒgƒ‹‚É‰‚¶‚ÄˆÚ“®‚³‚¹‚é
+            _direction = (_targetPos - transform.position).normalized * _bulletSpeed;
             _rigidbody.AddForce(_direction, ForceMode.Impulse);
         }
 
-        ///// <summary>
-        ///// ŠO•”‚©‚çŒÄ‚Ño‚µ‰Â”\‚È’e‚Ì”­Ëˆ—
-        ///// </summary>
-        ///// <param name="fireDirection">”­Ë‚·‚é•ûŒüƒxƒNƒgƒ‹</param>
-        ///// <param name="speed">’e‚Ì‘¬“x</param>
-        //public void Fire(Vector3 fireDirection, float speed)
-        //{
-        //    if (_rigidbody == null)
-        //    {
-        //        _rigidbody = GetComponent<Rigidbody>();
-        //    }
-
-        //    if (_rigidbody != null)
-        //    {
-        //        // •ûŒü‚ğ³‹K‰»‚µ‚Ä‘¬“x‚ğİ’è
-        //        _direction = fireDirection.normalized;
-        //        _bulletSpeed = speed;
-
-        //        // Œü‚«ƒxƒNƒgƒ‹‚É‰‚¶‚Ä—Í‚ğ‰Á‚¦‚é
-        //        _rigidbody.AddForce(_direction * _bulletSpeed, ForceMode.Impulse);
-        //    }
-        //    else
-        //    {
-        //        DebugManager.LogMessage("Rigidbody ‚ª‘¶İ‚µ‚È‚¢‚½‚ßA’e‚ğ”­Ë‚Å‚«‚Ü‚¹‚ñB", DebugManager.MessageType.Error);
-        //    }
-        //}
-
+        /// <summary>
+        /// ä»–ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã¨ã®è¡çªå‡¦ç†
+        /// </summary>
         private void OnTriggerEnter(Collider other)
         {
-            MagnetObjectManager magnet_object = other.GetComponent<MagnetObjectManager>();
-
-            if (other.CompareTag(FIXED_TAG) && magnet_object != null)
+            // Fixed_Not_Block_Prefab(Clone)ã«å½“ã£ãŸã‚‰æ¶ˆå»
+            if (other.gameObject.name == "Fixed_Not_Block_Prefab(Clone)")
             {
-                DebugManager.LogMessage(other.tag + "FTag‚ÌƒIƒuƒWƒFƒNƒg‚ª’e‚É“–‚½‚è‚Ü‚µ‚½", DebugManager.MessageType.Warning);
+                Debug.Log("å¼¾ã‚’å‰Šé™¤ã—ã¾ã™");
+                Destroy(gameObject);
+                return;
+            }
 
+            // åå‰ã«ã€ŒFixedã€ãŒå«ã¾ã‚Œã¦ã„ã‚‹ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã‚’å¯¾è±¡
+            if (other.gameObject.name.Contains("Fixed"))
+            {
+                GameObject prefabToSpawn = GetPrefabBasedOnUI(isMoving: false);
+                if (prefabToSpawn != null)
+                {
+                    ReplaceBlock(other.gameObject, prefabToSpawn);
+                }
+
+                Destroy(gameObject); // å¼¾ã‚’å‰Šé™¤
+            }
+            // Movingç³»ãƒ–ãƒ­ãƒƒã‚¯ã«å½“ãŸã£ãŸå ´åˆï¼ˆæ–°è¦è¿½åŠ ï¼‰
+            else if (other.CompareTag(MOVING_TAG) || other.gameObject.name.Contains("Moving"))
+            {
+                GameObject prefabToSpawn = GetPrefabBasedOnUI(isMoving: true);
+                if (prefabToSpawn != null)
+                {
+                    ReplaceBlock(other.gameObject, prefabToSpawn);
+                }
                 Destroy(gameObject);
             }
-            else if (other.CompareTag(MOVING_TAG) && magnet_object != null)
-            {
-                DebugManager.LogMessage(other.tag + "FTag‚ÌƒIƒuƒWƒFƒNƒg‚ª’e‚É“–‚½‚è‚Ü‚µ‚½", DebugManager.MessageType.Warning);
+        }
 
-                Destroy(gameObject);
+        /// <summary>
+        /// ç¾åœ¨ã®UIçŠ¶æ…‹ã«å¿œã˜ã¦Prefabã‚’æ±ºå®šï¼ˆFixed / Movingä¸¡å¯¾å¿œï¼‰
+        /// </summary>
+        private GameObject GetPrefabBasedOnUI(bool isMoving)
+        {
+            bool sMagnetActive = _uiSMagnet != null && _uiSMagnet.activeSelf;
+            bool nMagnetActive = _uiNMagnet != null && _uiNMagnet.activeSelf;
+
+            if (isMoving)
+            {
+                if (sMagnetActive && !nMagnetActive)
+                {
+                    Debug.Log("UIçŠ¶æ…‹: Sã‚¢ã‚¯ãƒ†ã‚£ãƒ– â†’ Moving_S_Block_Prefabã«ç½®ãæ›ãˆ");
+                    return _movingSPrefab;
+                }
+                else if (nMagnetActive && !sMagnetActive)
+                {
+                    Debug.Log("UIçŠ¶æ…‹: Nã‚¢ã‚¯ãƒ†ã‚£ãƒ– â†’ Moving_N_Block_Prefabã«ç½®ãæ›ãˆ");
+                    return _movingNPrefab;
+                }
             }
+            else
+            {
+                if (sMagnetActive && !nMagnetActive)
+                {
+                    Debug.Log("UIçŠ¶æ…‹: Sã‚¢ã‚¯ãƒ†ã‚£ãƒ– â†’ Fixed_S_Block_Prefabã«ç½®ãæ›ãˆ");
+                    return _fixedSPrefab;
+                }
+                else if (nMagnetActive && !sMagnetActive)
+                {
+                    Debug.Log("UIçŠ¶æ…‹: Nã‚¢ã‚¯ãƒ†ã‚£ãƒ– â†’ Fixed_N_Block_Prefabã«ç½®ãæ›ãˆ");
+                    return _fixedNPrefab;
+                }
+            }
+
+            Debug.LogWarning("ã©ã¡ã‚‰ã®UIã‚‚ã‚¢ã‚¯ãƒ†ã‚£ãƒ–ã§ã¯ãªã„ãŸã‚ã€ç½®ãæ›ãˆå¯¾è±¡ãªã—");
+            return null;
+        }
+
+        /// <summary>
+        /// å¯¾è±¡ãƒ–ãƒ­ãƒƒã‚¯ã‚’Prefabã«ç½®ãæ›ãˆã‚‹ï¼ˆä½•åº¦ã§ã‚‚åˆ‡ã‚Šæ›¿ãˆå¯èƒ½ï¼‰
+        /// </summary>
+        private void ReplaceBlock(GameObject oldObj, GameObject newPrefab)
+        {
+            if (oldObj == null || newPrefab == null) return;
+
+            Vector3 pos = oldObj.transform.position;
+            Quaternion rot = oldObj.transform.rotation;
+            Transform parent = oldObj.transform.parent;
+
+            // å…ƒã®ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã‚’å‰Šé™¤ã—ã¦æ–°ã—ã„Prefabã‚’ç”Ÿæˆ
+            Destroy(oldObj);
+            Instantiate(newPrefab, pos, rot, parent);
         }
     }
 }

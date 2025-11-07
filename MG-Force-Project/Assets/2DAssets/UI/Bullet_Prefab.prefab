@@ -100,6 +100,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5d8b7592dd41e5e4db80bff2171730c1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _rigidbody: {fileID: 7444583821415356857}
+  _animator: {fileID: -2771168790800295984}
+  _fixedSPrefab: {fileID: 6687628407338511429, guid: 3ad7dc385f0ab15418b3314a64023f20,
+    type: 3}
+  _fixedNPrefab: {fileID: 3280761362568157059, guid: d1a14eed1bd2e9a45911aac665eb07f5,
+    type: 3}
+  _movingSPrefab: {fileID: 4001629709848593178, guid: 66ecbac424ad2d447a6ce083bebd369b,
+    type: 3}
+  _movingNPrefab: {fileID: 4001629709848593178, guid: 394a206cf2d8fec459c6e2169796ff57,
+    type: 3}
 --- !u!54 &7444583821415356857
 Rigidbody:
   m_ObjectHideFlags: 0

@@ -137,7 +137,7 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
-      objectReference: {fileID: 2100000, guid: 951930664607000459181a1ff41e2e72, type: 2}
+      objectReference: {fileID: 2100000, guid: 42dcbaa33ef5b0349a0a7811f5ce4ef6, type: 2}
     - target: {fileID: 919132149155446097, guid: 9b2d4ba5acce7b94796dce2aed642329,
         type: 3}
       propertyPath: m_Name
@@ -177,6 +177,10 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: -2970466410122464257}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 9b2d4ba5acce7b94796dce2aed642329,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3842585988178089103}
   m_SourcePrefab: {fileID: 100100000, guid: 9b2d4ba5acce7b94796dce2aed642329, type: 3}
 --- !u!1 &4001629709848593178 stripped
 GameObject:
@@ -228,7 +232,7 @@ Rigidbody:
   m_ImplicitCom: 1
   m_ImplicitTensor: 1
   m_UseGravity: 0
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 120
   m_CollisionDetection: 0
@@ -259,6 +263,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ef45ce8442e288441b4c5f3b5ed57744, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &3842585988178089103
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4001629709848593178}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 30d73f5bae3bbb649b1774965098094a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  poleType: 0
 --- !u!4 &4378472634004576672 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 9b2d4ba5acce7b94796dce2aed642329,
