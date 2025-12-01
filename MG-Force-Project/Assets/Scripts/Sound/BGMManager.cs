@@ -22,6 +22,7 @@ namespace Game
         // âπåπÇó¨Ç∑AudioSouurce
         private AudioSource _audioSource;
 
+        public AudioSource GetAudioSource() { return _audioSource; }    
         // ó¨Ç∑âπåπ
         [SerializeField] private AudioClip[] _audioClips = new AudioClip[(int)BGM.MAX_BGM];
 
@@ -40,7 +41,7 @@ namespace Game
 
         #region -------- ÉVÉìÉOÉãÉgÉìÇÃê›íË --------
 
-        private static BGMManager instance;
+        public static BGMManager instance;
 
         private void Awake()
         {
@@ -52,6 +53,8 @@ namespace Game
                 DontDestroyOnLoad(gameObject);
 
                 _audioSource = GetComponent<AudioSource>();
+
+                Debug.LogWarning(_audioSource.ToString());  
 
                 _inputHandler = InputHandler.Instance;
 
