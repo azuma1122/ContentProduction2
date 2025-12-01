@@ -4875,6 +4875,11 @@ PrefabInstance:
       propertyPath: m_text
       value: "\u3000\u3000\u79FB\u52D5\uFF1A\u3000\u3000\u3000\u3000\u3000\u3000\u30B8\u30E3\u30F3\u30D7\uFF1A\u3000\u3000\u3000\u3000\u78C1\u529B\u306E\u5207\u308A\u66FF\u3048\uFF1A\u3000\u3000\u3000\u3000\u30E1\u30CB\u30E5\u30FC\uFF1A"
       objectReference: {fileID: 0}
+    - target: {fileID: 8712954417877963800, guid: 65c45419377b1cb4f9ff8c6265a3647e,
+        type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.size
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 8870375255243194658, guid: 65c45419377b1cb4f9ff8c6265a3647e,
         type: 3}
       propertyPath: m_SizeDelta.x
