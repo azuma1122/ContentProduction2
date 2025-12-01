@@ -2248,13 +2248,13 @@ PrefabInstance:
     - target: {fileID: 5822482458810644583, guid: 98b11e885af74e44481581efe31dffcc,
         type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
-      value: 3
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5822482458810644583, guid: 98b11e885af74e44481581efe31dffcc,
         type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 1736974516}
     - target: {fileID: 5822482458810644583, guid: 98b11e885af74e44481581efe31dffcc,
         type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
@@ -2263,12 +2263,12 @@ PrefabInstance:
     - target: {fileID: 5822482458810644583, guid: 98b11e885af74e44481581efe31dffcc,
         type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
-      value: ConfigMenuDecisioin
+      value: ToggleConfigMenu
       objectReference: {fileID: 0}
     - target: {fileID: 5822482458810644583, guid: 98b11e885af74e44481581efe31dffcc,
         type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
-      value: Game.Title.TitleSceneController, Assembly-CSharp
+      value: GlobalUIManager, Assembly-CSharp
       objectReference: {fileID: 0}
     - target: {fileID: 5822482458810644583, guid: 98b11e885af74e44481581efe31dffcc,
         type: 3}
@@ -5600,7 +5600,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1565317518
 Transform:
   m_ObjectHideFlags: 0
@@ -6687,7 +6687,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 23726ae6c8d397f418fcda3e8a9745f4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  configMenu: {fileID: 558690996}
+  configMenu: {fileID: 1565317517}
 --- !u!4 &1736974517
 Transform:
   m_ObjectHideFlags: 0
@@ -7264,7 +7264,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1999191048
 Transform:
   m_ObjectHideFlags: 0
@@ -7458,6 +7458,21 @@ PrefabInstance:
         type: 3}
       propertyPath: m_text
       value: "\u3000\u3000\u79FB\u52D5\uFF1A\u3000\u3000\u3000\u3000\u3000\u3000\u30B8\u30E3\u30F3\u30D7\uFF1A\u3000\u3000\u3000\u3000\u78C1\u529B\u306E\u5207\u308A\u66FF\u3048\uFF1A\u3000\u3000\u3000\u3000\u30E1\u30CB\u30E5\u30FC\uFF1A"
+      objectReference: {fileID: 0}
+    - target: {fileID: 8712954417877963800, guid: 65c45419377b1cb4f9ff8c6265a3647e,
+        type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 1736974516}
+    - target: {fileID: 8712954417877963800, guid: 65c45419377b1cb4f9ff8c6265a3647e,
+        type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: ToggleConfigMenu
+      objectReference: {fileID: 0}
+    - target: {fileID: 8712954417877963800, guid: 65c45419377b1cb4f9ff8c6265a3647e,
+        type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: GlobalUIManager, Assembly-CSharp
       objectReference: {fileID: 0}
     - target: {fileID: 8870375255243194658, guid: 65c45419377b1cb4f9ff8c6265a3647e,
         type: 3}
