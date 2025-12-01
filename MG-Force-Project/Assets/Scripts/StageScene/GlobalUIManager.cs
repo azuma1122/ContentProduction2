@@ -14,7 +14,7 @@ public class GlobalUIManager : MonoBehaviour
         }
     }
 
-    void ToggleConfigMenu()
+    public void ToggleConfigMenu()
     {
         bool isActive = configMenu.activeSelf;
         configMenu.SetActive(!isActive);  // ← 非表示 → 表示 / 表示 → 非表示
