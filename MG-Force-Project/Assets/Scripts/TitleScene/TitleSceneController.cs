@@ -6,67 +6,75 @@ using TMPro;
 namespace Game.Title
 {
     /// <summary>
-    /// タイトルシーンの管理クラス
+    /// タイトルシーン全体の制御を行うクラス
+    /// - 入力処理の受け取り
+    /// - 各メニュー画面の切り替え管理
+    /// - サウンド設定やセーブデータ確認などの初期処理
     /// </summary>
     public class TitleSceneController : MonoBehaviour
     {
-        // 入力管理クラスの呼び出し
+        // 入力管理
         private InputHandler _input;
 
+        // デバイス（ゲームパッド／キーボードなど）管理
         private DeviceManager _deviceManager = null;
 
+        // シーン遷移管理
         private SceneLoader _sceneLoader = SceneLoader.Instance;
 
-        // ロード管理フラグ
+        // ゲームデータロード済みかどうかのフラグ（最初の一度だけロード）
         private static bool isLoadGameData = false;
 
+        // SE（効果音）管理
         private SEManager _seManager;
 
         #region -------- ステップ管理用定数 --------
 
-        // タイトルシーンのステップ
+        /// <summary>
+        /// タイトルシーン内のステップ（画面状態）
+        /// </summary>
         public enum TitleStep
         {
-            TITLE,
-            GAME_MENU,
-            START_MENU,
-            CONFIG_MENU,
-            GAMEDATA_ERASE,
+            TITLE,          // タイトル画面
+            GAME_MENU,      // ゲームメニュー（設定・スタート・終了）
+            START_MENU,     // ゲーム開始メニュー（新規／再開）
+            CONFIG_MENU,    // 設定メニュー
+            GAMEDATA_ERASE, // セーブデータ削除確認画面
             MAX_STEP,
         }
 
-        // ゲームメニューのステップ
+        // ゲームメニュー内のボタン
         private enum GameMenu
         {
-            CONFIG,
-            START,
-            GAME_FINISH,
+            CONFIG,         // 設定
+            START,          // スタート
+            GAME_FINISH,    // 終了
             MAX_BUTTON
         }
 
-        // スタートメニューのステップ
+        // スタートメニュー内のボタン
         private enum StartMenu
         {
-            NEW_START,
-            RE_START,
+            NEW_START,      // 新しく始める
+            RE_START,       // 続きから
             MAX_BUTTON,
         }
 
-        // 設定メニューのステップ
+        // 設定メニュー内のボタン
         private enum ConfigMenu
         {
-            BGM,
-            SE,
-            KEY,
-            HELP,
-            DATA,
-            BACK,
+            BGM,            // BGM設定
+            SE,             // SE設定
+            KEY,            // キー設定
+            HELP,           // ヘルプ
+            DATA,           // データ削除
+            BACK,           // 戻る
             MAX_BUTTON,
         }
 
         #endregion
 
-        // サウンド管理用
+        // サウンドスライダーの種類
         private enum SoundSlider
         {
             BGM,
@@ -74,33 +82,29 @@ namespace Game.Title
             MAX_SLIDER,
         }
 
-        private const int INIT_BUTTON = -1;
+        private const int INIT_BUTTON = -1; // 初期状態（ボタン未選択）
 
-        // 現在のメニュー
+        // 現在の画面ステップ
         private TitleStep _currentStep;
 
-        [SerializeField] private TextMeshProUGUI _titleMessage;
+        [SerializeField] private TextMeshProUGUI _titleMessage; // タイトル画面のメッセージ（例：ボタンを押してください）
 
-        [SerializeField] private GameObject[] _menuObjects = new GameObject[(int)TitleStep.MAX_STEP];
+        [SerializeField] private GameObject[] _menuObjects = new GameObject[(int)TitleStep.MAX_STEP];   // 各メニューオブジェクト
 
-        [SerializeField] private GameObject[] _gameMenu = new GameObject[(int)GameMenu.MAX_BUTTON];
+        [SerializeField] private GameObject[] _gameMenu = new GameObject[(int)GameMenu.MAX_BUTTON];     // ゲームメニュー内のボタン
+        [SerializeField] private GameObject[] _startMenu = new GameObject[(int)StartMenu.MAX_BUTTON];   // スタートメニュー内のボタン
+        [SerializeField] private GameObject[] _configMenu = new GameObject[(int)ConfigMenu.MAX_BUTTON]; // 設定メニュー内のボタン
 
-        [SerializeField] private GameObject[] _startMenu = new GameObject[(int)StartMenu.MAX_BUTTON];
+        [SerializeField] private Slider[] _soundSlider = new Slider[(int)SoundSlider.MAX_SLIDER];       // 音量調整用スライダー
+        [SerializeField] private Toggle _keyToggle;                                                     // キー設定トグル
 
-        [SerializeField] private GameObject[] _configMenu = new GameObject[(int)ConfigMenu.MAX_BUTTON];
+        [SerializeField] private GameDataEraseController _eraseContrller; // セーブデータ削除管理
 
-        [SerializeField] private Slider[] _soundSlider = new Slider[(int)SoundSlider.MAX_SLIDER];
+        private int _currentButton = INIT_BUTTON;                         // 現在選択中のボタン番号
+        private bool _isExistGameData;                                    // セーブデータが存在するかどうか
 
-        [SerializeField] private Toggle _keyToggle;
-
-        [SerializeField] private GameDataEraseController _eraseContrller;
-
-        private int _currentButton = INIT_BUTTON;
-
-        private bool _isExistGameData;
-
+        // 選択中／非選択時のボタン拡大率
         private Vector3 _targetButton = new Vector3(1.2f, 1.2f, 1.2f);
-
         private Vector3 _offTargetButton = new Vector3(1.0f, 1.0f, 1.0f);
 
         /// <summary>
@@ -108,40 +112,45 @@ namespace Game.Title
         /// </summary>
         private void Awake()
         {
-            // 外部データの読み込み
+            // ステージデータの読み込み(タイトル起動時)
             StageDataLoader.LoadStageData();
 
-            // 実行して一度のみロードする
+            // ゲームデータのロード（実行中に1回のみ）
             if (!isLoadGameData)
             {
-                // ゲームデータのロード
                 _isExistGameData = SaveSystem.LoadManager();
-
                 isLoadGameData = true;
             }
 
-            // 入力管理クラスの呼び出し
+            // 各管理クラスの取得
             _input = GameObject.Find(GameConstants.Object.INPUT).GetComponent<InputHandler>();
-
             _deviceManager = GameObject.Find(GameConstants.Object.DEVICE_MANAGER).GetComponent<DeviceManager>();
-
             _sceneLoader = SceneLoader.Instance;
 
-            // ステップを初期化
+            // 最初はタイトル画面ステップから開始
             _currentStep = TitleStep.TITLE;
         }
 
         /// <summary>
-        /// 更新処理
+        /// 毎フレーム更新処理
         /// </summary>
         private void Update()
         {
+            // どの画面でも M キーで設定メニューへ移動
+            if (_input.IsActionPressed(InputConstants.Action.MENU_OPEN))
+            {
+                SetStep(TitleStep.CONFIG_MENU);
+                return; // 正常に遷移したら他の処理を止める
+            }
+
+            // デバッグ用：クレジットシーンへ遷移
             if (_input.IsActionPressing(InputConstants.Action.DEBUG_CREDITS))
             {
                 _sceneLoader.LoadScene(GameConstants.Scene.Credits.ToString());
             }
 
-            switch(_currentStep)
+            // 現在のステップに応じた更新処理
+            switch (_currentStep)
             {
                 case TitleStep.TITLE:
                     TitleUpdate();
@@ -152,35 +161,39 @@ namespace Game.Title
                     break;
 
                 case TitleStep.START_MENU:
-                    StartMenuUpdate(); 
+                    StartMenuUpdate();
                     break;
 
                 case TitleStep.CONFIG_MENU:
-                    ConfigMenuUpdate(); 
+                    ConfigMenuUpdate();
                     break;
 
                 case TitleStep.GAMEDATA_ERASE:
-
+                    // データ削除確認画面を開く
                     if (!_menuObjects[(int)TitleStep.GAMEDATA_ERASE].activeSelf)
                     {
                         _menuObjects[(int)TitleStep.GAMEDATA_ERASE].SetActive(true);
                     }
                     else
                     {
+                        // 終了後に設定画面へ戻る
                         if (!_eraseContrller.isActive)
                         {
                             SetStep(TitleStep.CONFIG_MENU);
                         }
                     }
-
                     break;
             }
         }
 
-        #region -------- タイトルのステップ処理 --------
+        #region -------- タイトル画面処理 --------
 
+        /// <summary>
+        /// タイトル画面の更新処理
+        /// </summary>
         public void TitleUpdate(bool is_push_button = false)
         {
+            // 入力デバイスに応じてメッセージを表示
             if (_deviceManager.isGamepad)
             {
                 _titleMessage.text = "ボタンを押してください";
@@ -190,74 +203,66 @@ namespace Game.Title
                 _titleMessage.text = "画面をクリックしてください";
             }
 
+            // 決定入力でメニューへ移行
             if (_input.IsActionPressed(InputConstants.Action.MENU_DECISION) || is_push_button)
             {
                 SetStep(TitleStep.GAME_MENU);
             }
         }
 
-        #endregion // タイトルのステップの処理
+        #endregion
 
-        #region -------- ゲームメニューのステップ処理 --------
+        #region -------- ゲームメニュー処理 --------
 
+        /// <summary>
+        /// ゲームメニューの更新処理
+        /// </summary>
         private void GameMenuUpdate()
         {
+            // 決定ボタンで実行
             if (_input.IsActionPressed(InputConstants.Action.MENU_DECISION))
             {
                 GameMenuDecision(_currentButton);
             }
+            // 左右キーでボタン選択
             else if (_input.IsActionPressed(InputConstants.Action.MENU_LEFT_SELECT))
             {
                 if (_currentButton == INIT_BUTTON)
-                {
                     _currentButton = (int)GameMenu.START;
-                }
                 else if (_currentButton != (int)GameMenu.CONFIG)
-                {
                     _currentButton--;
-                }
             }
             else if (_input.IsActionPressed(InputConstants.Action.MENU_RIGHT_SELECT))
             {
                 if (_currentButton == INIT_BUTTON)
-                {
                     _currentButton = (int)GameMenu.START;
-                }
                 else if (_currentButton != (int)GameMenu.GAME_FINISH)
-                {
                     _currentButton++;
-                }
             }
+            // 戻るキーでタイトルに戻る
             else if (_input.IsActionPressed(InputConstants.Action.MENU_BACK))
             {
                 SetStep(TitleStep.TITLE);
             }
 
+            // ボタンの見た目更新
             GameMenuButtonUpdate();
         }
 
         /// <summary>
-        /// ボタンの更新処理
+        /// ボタン拡大などの見た目更新
         /// </summary>
         private void GameMenuButtonUpdate()
         {
             for (int i = (int)GameMenu.CONFIG; i < (int)GameMenu.MAX_BUTTON; i++)
             {
-                if (_currentButton == i)
-                {
-                    _gameMenu[i].transform.localScale = _targetButton;
-                }
-                else
-                {
-                    _gameMenu[i].transform.localScale = _offTargetButton;
-                }
+                _gameMenu[i].transform.localScale = (_currentButton == i) ? _targetButton : _offTargetButton;
             }
         }
 
         /// <summary>
-        /// 決定時の処理
+        /// ボタン決定時の処理
         /// </summary>
-        /// <param name="button_index"></param>
         public void GameMenuDecision(int button_index)
         {
             switch (button_index)
@@ -281,25 +286,20 @@ namespace Game.Title
         }
 
         /// <summary>
-        /// ゲーム終了
+        /// ゲーム終了処理（エディタ／実機対応）
         /// </summary>
         public void GameFinish()
         {
 #if UNITY_EDITOR
-
-            // エディターの終了
-            UnityEditor.EditorApplication.isPlaying = false;
-
-#else // 実際のビルド版実行時
-      
-            // アプリケーションの終了
-            Application.Quit();
+            UnityEditor.EditorApplication.isPlaying = false; // エディタ停止
+#else
+            Application.Quit(); // 実機終了
 #endif
         }
 
-        #endregion // ゲームメニューのステップ処理
+        #endregion
 
-        #region -------- スタートメニューのステップ処理 --------
+        #region -------- スタートメニュー処理 --------
 
         private void StartMenuUpdate()
         {
@@ -310,24 +310,16 @@ namespace Game.Title
             else if (_input.IsActionPressed(InputConstants.Action.MENU_LEFT_SELECT))
             {
                 if (_currentButton == INIT_BUTTON)
-                {
                     _currentButton = (_isExistGameData) ? (int)StartMenu.RE_START : (int)StartMenu.NEW_START;
-                }
                 else if (_currentButton != (int)StartMenu.NEW_START)
-                {
                     _currentButton--;
-                }
             }
             else if (_input.IsActionPressed(InputConstants.Action.MENU_RIGHT_SELECT))
             {
                 if (_currentButton == INIT_BUTTON)
-                {
                     _currentButton = (_isExistGameData) ? (int)StartMenu.RE_START : (int)StartMenu.NEW_START;
-                }
                 else if (_currentButton != (int)StartMenu.RE_START)
-                {
                     _currentButton++;
-                }
             }
             else if (_input.IsActionPressed(InputConstants.Action.MENU_BACK))
             {
@@ -338,57 +330,43 @@ namespace Game.Title
         }
 
         /// <summary>
-        /// ボタンの更新処理
+        /// ボタンの拡大／縮小更新
         /// </summary>
         private void StartMenuButtonUpdate()
-        {            
+        {
             for (int i = (int)StartMenu.NEW_START; i < (int)StartMenu.MAX_BUTTON; i++)
             {
-                if (_currentButton == i)
-                {
-                    _startMenu[i].transform.localScale = _targetButton;
-                }
-                else
-                {
-                    _startMenu[i].transform.localScale = _offTargetButton;
-                }
+                _startMenu[i].transform.localScale = (_currentButton == i) ? _targetButton : _offTargetButton;
             }
         }
 
         /// <summary>
-        /// 決定時の処理
+        /// 決定時の処理（新規開始／続きから）
         /// </summary>
-        /// <param name="button_index"></param>
         public void StartMenuDecision(int button_index)
         {
             switch (button_index)
             {
                 case (int)StartMenu.NEW_START:
+                    // 新規データ開始（未実装）
                     break;
 
                 case (int)StartMenu.RE_START:
+                    // 続きから開始（未実装）
                     break;
 
                 case INIT_BUTTON:
-
-                    if (_isExistGameData)
-                    {
-                        _currentButton = (int)StartMenu.RE_START;
-                    }
-                    else
-                    {
-                        _currentButton = (int)StartMenu.NEW_START;
-                    }
-
+                    _currentButton = _isExistGameData ? (int)StartMenu.RE_START : (int)StartMenu.NEW_START;
                     return;
             }
 
+            // ステージ選択シーンへ遷移
             _sceneLoader.LoadScene(GameConstants.Scene.StageSelect.ToString());
         }
 
-        #endregion // スタートメニューのステップ処理
+        #endregion
 
-        #region -------- 設定メニューのステップ処理 --------
+        #region -------- 設定メニュー処理 --------
 
         private void ConfigMenuUpdate()
         {
@@ -399,82 +377,81 @@ namespace Game.Title
             else if (_input.IsActionPressed(InputConstants.Action.MENU_UP_SELECT))
             {
                 if (_currentButton == INIT_BUTTON)
-                {
                     _currentButton = (int)ConfigMenu.BGM;
-                }
                 else if (_currentButton != (int)ConfigMenu.BGM)
-                {
                     _currentButton--;
-                }
             }
             else if (_input.IsActionPressed(InputConstants.Action.MENU_DOWN_SELECT))
             {
                 if (_currentButton == INIT_BUTTON)
-                {
                     _currentButton = (int)ConfigMenu.BGM;
-                }
                 else if (_currentButton != (int)ConfigMenu.BACK)
-                {
                     _currentButton++;
-                }
             }
             else if (_input.IsActionPressed(InputConstants.Action.MENU_BACK))
             {
                 SetStep(TitleStep.GAME_MENU);
             }
 
+            // 音量変更更新
             SoundVolumeUpdate();
 
+            // 見た目更新
             ConfigMenuButtonUpdate();
         }
 
+        /// <summary>
+        /// 設定メニュー内のボタン見た目更新
+        /// </summary>
         private void ConfigMenuButtonUpdate()
         {
             for (int i = (int)ConfigMenu.BGM; i < (int)ConfigMenu.MAX_BUTTON; i++)
             {
-                if (_currentButton == i)
-                {
-                    _configMenu[i].transform.localScale = _targetButton;
-                }
-                else
-                {
-                    _configMenu[i].transform.localScale = _offTargetButton;
-                }
+                _configMenu[i].transform.localScale = (_currentButton == i) ? _targetButton : _offTargetButton;
             }
         }
 
+        /// <summary>
+        /// 設定メニュー決定処理
+        /// </summary>
         public void ConfigMenuDecisioin(int button_index)
         {
-            switch (button_index) 
+            switch (button_index)
             {
                 case (int)ConfigMenu.BGM:
+                    // BGMミュート切り替え
                     AudioSource bgm_audio = GameObject.Find(GameConstants.Object.BGM_MANAGER).GetComponent<AudioSource>();
                     bgm_audio.mute = !bgm_audio.mute;
                     break;
 
                 case (int)ConfigMenu.SE:
+                    // SEミュート切り替え
                     AudioSource se_audio = GameObject.Find(GameConstants.Object.SE_MANAGER).GetComponent<AudioSource>();
                     se_audio.mute = !se_audio.mute;
                     break;
 
                 case (int)ConfigMenu.KEY:
+                    // キー設定のトグル切り替え
                     _keyToggle.isOn = !_keyToggle.isOn;
                     break;
 
                 case (int)ConfigMenu.HELP:
+                    // ヘルプ表示（未実装）
                     break;
 
                 case (int)ConfigMenu.DATA:
+                    // セーブデータ削除画面へ
                     SetStep(TitleStep.GAMEDATA_ERASE);
                     break;
 
                 case (int)ConfigMenu.BACK:
+                    // メニューに戻る
                     SetStep(TitleStep.GAME_MENU);
                     break;
             }
         }
 
-        #region ------------ サウンド設定 ------------
+        #region ------------ サウンド設定関連 ------------
 
         /// <summary>
         /// 音量更新処理
@@ -482,72 +459,63 @@ namespace Game.Title
         private void SoundVolumeUpdate()
         {
             if (_currentButton == (int)ConfigMenu.BGM || _currentButton == INIT_BUTTON)
-            {
-                // BGMの音量変更
                 ChangeBGMVolume();
-            }
-            
+
             if (_currentButton == (int)ConfigMenu.SE || _currentButton == INIT_BUTTON)
-            {
-                // SEの音量変更
                 ChangeSEVolume();
-            }
         }
 
-
         /// <summary>
-        /// BGMの音量変更
+        /// BGM音量変更
         /// </summary>
         private void ChangeBGMVolume()
         {
             BGMManager bgm_manager = GameObject.Find(GameConstants.Object.BGM_MANAGER).GetComponent<BGMManager>();
-
             float sound = _soundSlider[(int)SoundSlider.BGM].value;
             _soundSlider[(int)SoundSlider.BGM].value = bgm_manager.VolumeChange(sound);
         }
 
         /// <summary>
-        /// SEの音量変更
+        /// SE音量変更
         /// </summary>
         private void ChangeSEVolume()
         {
             SEManager se_manager = GameObject.Find(GameConstants.Object.SE_MANAGER).GetComponent<SEManager>();
-
             float sound = _soundSlider[(int)SoundSlider.SE].value;
             _soundSlider[(int)SoundSlider.SE].value = se_manager.VolumeChange(sound);
         }
 
-        #endregion // サウンド設定
+        #endregion
 
         /// <summary>
-        /// GamePadのキー切り替え
+        /// ゲームパッドのキー割り当て切り替え
         /// </summary>
         public void GamePadKeyChange()
         {
             _input.GamePadKeyChange();
         }
 
-        #endregion // 設定メニューのステップ処理
+        #endregion
 
         /// <summary>
-        /// ステップの設定
+        /// ステップ（画面）切り替え処理
         /// </summary>
-        /// <param name="step"></param>
         private void SetStep(TitleStep step)
         {
+            // 現在の画面を非表示に
             _menuObjects[(int)_currentStep].SetActive(false);
 
+            // ステップ更新
             _currentStep = step;
-
             _currentButton = INIT_BUTTON;
 
+            // 新しい画面を有効化
             _menuObjects[(int)_currentStep].SetActive(true);
         }
 
         /// <summary>
-        /// ステップの設定(Button呼び出し用)
+        /// ボタンから呼び出す用のステップ変更
         /// </summary>
-        /// <param name="step"></param>
         public void SetStep(int step)
         {
             SetStep((TitleStep)step);

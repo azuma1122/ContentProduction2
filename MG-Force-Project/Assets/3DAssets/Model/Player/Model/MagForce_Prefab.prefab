@@ -5174,6 +5174,26 @@ PrefabInstance:
       propertyPath: m_ConstrainProportionsScale
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: -7471031925422525645, guid: 2e29ddacf1ad99343a5e86d2ee1e5b56,
+        type: 3}
+      propertyPath: m_AABB.m_Center.x
+      value: -0.008846685
+      objectReference: {fileID: 0}
+    - target: {fileID: -7471031925422525645, guid: 2e29ddacf1ad99343a5e86d2ee1e5b56,
+        type: 3}
+      propertyPath: m_AABB.m_Center.y
+      value: 0.0012355763
+      objectReference: {fileID: 0}
+    - target: {fileID: -7471031925422525645, guid: 2e29ddacf1ad99343a5e86d2ee1e5b56,
+        type: 3}
+      propertyPath: m_AABB.m_Extent.x
+      value: 0.047747143
+      objectReference: {fileID: 0}
+    - target: {fileID: -7471031925422525645, guid: 2e29ddacf1ad99343a5e86d2ee1e5b56,
+        type: 3}
+      propertyPath: m_AABB.m_Extent.y
+      value: 0.03184609
+      objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 2e29ddacf1ad99343a5e86d2ee1e5b56,
         type: 3}
       propertyPath: m_Name
@@ -5205,10 +5225,6 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 1150639982740271520}
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 2e29ddacf1ad99343a5e86d2ee1e5b56,
-        type: 3}
-      insertIndex: -1
-      addedObject: {fileID: -8441482753966594434}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 2e29ddacf1ad99343a5e86d2ee1e5b56,
         type: 3}
       insertIndex: -1
@@ -5265,27 +5281,6 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 120
   m_CollisionDetection: 0
---- !u!65 &-8441482753966594434
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5400538784779662172}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 0.025, y: 0.1, z: 0.025}
-  m_Center: {x: 0, y: 0.05, z: 0}
 --- !u!136 &7447102673277699800
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -5305,10 +5300,10 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.025
-  m_Height: 0.1
+  m_Radius: 0.02431989
+  m_Height: 0.08816457
   m_Direction: 1
-  m_Center: {x: 0, y: 0.05, z: 0}
+  m_Center: {x: -0.0006801129, y: 0.05171856, z: 9.79003e-19}
 --- !u!95 &-3963242341459190134
 Animator:
   serializedVersion: 5
@@ -5354,11 +5349,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 53f7f21b28d234345800009775d220a3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  bulletPrefab: {fileID: 5006926018254083275, guid: e7fe3a9b88cf6ea4f9f5bc7632828753,
-    type: 3}
   _chargeGageObj: {fileID: 4985467487446186763}
   _chargeGage: {fileID: 8088367460782412997}
   _powerEffectObj: {fileID: 8172437375069700698}
+  bulletPrefab: {fileID: 5006926018254083275, guid: e7fe3a9b88cf6ea4f9f5bc7632828753,
+    type: 3}
+  bulletSpeed: 20
+  fixedNBlockPrefab: {fileID: 3280761362568157059, guid: d1a14eed1bd2e9a45911aac665eb07f5,
+    type: 3}
+  fixedSBlockPrefab: {fileID: 6687628407338511429, guid: 3ad7dc385f0ab15418b3314a64023f20,
+    type: 3}
 --- !u!137 &6801113512691744062 stripped
 SkinnedMeshRenderer:
   m_CorrespondingSourceObject: {fileID: -7471031925422525645, guid: 2e29ddacf1ad99343a5e86d2ee1e5b56,

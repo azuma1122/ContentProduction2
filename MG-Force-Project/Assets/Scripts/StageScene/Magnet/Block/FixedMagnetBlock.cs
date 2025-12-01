@@ -1,46 +1,132 @@
-﻿using UnityEngine;
+﻿using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
 
 namespace Game.StageScene.Magnet
 {
     /// <summary>
-    /// 固定された磁石ブロックを表すクラス
-    /// - このブロックは動かず、その場で「磁石のような見た目」を演出する
-    /// - 実際の磁力（物理的な力）は発生させない
-    /// - ゲーム中では、ギミックやステージ演出として使用する想定
+    /// 固定された磁石ブロック
+    /// - 自身は動かないが、範囲内の移動可能な磁石（MovingMagnetBlock）に磁力を加える
+    /// - 弾による極性反転（TogglePolarity）やUI表示にも対応
     /// </summary>
     public class FixedMagnetBlock : MonoBehaviour
     {
-        [Header("磁力が届く範囲（見た目用の目安）")]
-        [SerializeField]
-        private float magnetRange = 5f; // シーンビュー上で可視化する磁力範囲（あくまで目安）
-
         [Header("磁石の極タイプ")]
-        public PoleType poleType; // N極かS極かを指定
+        [Tooltip("N極(赤)か S極(青)を設定する")]
+        public MagnetPoleType poleType = MagnetPoleType.North;
 
-        /// <summary>
-        /// 磁石の極タイプ（North=青、South=赤）
-        /// ※見た目だけの区別で、実際の磁力は発生しない
-        /// </summary>
-        public enum PoleType
+        [Header("磁力の設定値")]
+        [Range(0f, 100f)]
+        [Tooltip("磁力の強さ。数値が大きいほど引き寄せ / 反発が強くなる")]
+        public float magneticForce = 10f;
+
+        [Tooltip("磁力の影響範囲。この距離内にある磁石と干渉する")]
+        public float magneticRange = 5f;
+
+        [Header("磁力表示用UI（Image）")]
+        [Tooltip("磁力の強さをUIで表示するためのImage（FillAmountを使用）")]
+        public Image magneticForceImage;
+
+        // UI表示などのための最大値（正規化用）
+        private const float MAX_FORCE = 100f;
+
+        private void Start()
         {
-            North, // N極
-            South  // S極
+            // ゲーム開始時に磁力表示UIを初期化
+            UpdateMagneticForceUI();
+        }
+
+        private void FixedUpdate()
+        {
+            // 一定範囲内にあるオブジェクトを検出
+            Collider[] colliders = Physics.OverlapSphere(transform.position, magneticRange);
+
+            foreach (Collider collider in colliders)
+            {
+                // MovingMagnetBlock（動く磁石）を取得
+                MovingMagnetBlock movingBlock = collider.GetComponent<MovingMagnetBlock>();
+
+                // 自分自身ではなく、磁力の影響を受ける対象にのみ処理を行う
+                if (movingBlock != null)
+                {
+                    ApplyMagneticForce(movingBlock);
+                }
+            }
         }
 
         /// <summary>
-        /// シーンビュー上で選択時に磁力範囲を可視化する
-        /// - 実際のゲームプレイ中には表示されない
-        /// - 極に応じて色を変えて区別しやすくしている
+        /// 移動可能な磁石に磁力を加える
         /// </summary>
-        private void OnDrawGizmosSelected()
+        /// <param name="otherBlock">影響を与える対象の磁石</param>
+        private void ApplyMagneticForce(MovingMagnetBlock otherBlock)
         {
-            // N極なら青っぽく、S極なら赤っぽく表示
-            Gizmos.color = poleType == PoleType.North
-                ? new Color(0, 0, 1, 0.25f)
-                : new Color(1, 0, 0, 0.25f);
+            // 対象のRigidbodyを取得
+            Rigidbody otherRb = otherBlock.GetComponent<Rigidbody>();
+            if (otherRb == null) return;
 
-            // 磁力範囲の目安を円で描画
-            Gizmos.DrawWireSphere(transform.position, magnetRange);
+            // 自分 → 相手への方向を計算
+            Vector3 direction = transform.position - otherBlock.transform.position;
+            float distance = direction.magnitude;
+
+            // 範囲外または距離が極端に近すぎる場合はスキップ
+            if (distance > magneticRange || distance <= 0.01f) return;
+
+            // 極が同じなら反発（-1）、異なれば引き寄せ（+1）
+            float forceMultiplier = (poleType == otherBlock.poleType) ? -1f : 1f;
+
+            // 距離に反比例して力を減衰（1 / distance）
+            float force = (magneticForce * 10f / distance) * forceMultiplier;
+
+            // 対象に力を加える（方向ベクトル × 磁力）
+            otherRb.AddForce(direction.normalized * force, ForceMode.Force);
+        }
+
+        /// <summary>
+        /// 外部またはデバッグから磁力値を変更する
+        /// </summary>
+        /// <param name="newForce">新しい磁力値</param>
+        public void SetMagneticForce(float newForce)
+        {
+            // 値を安全な範囲にクランプして適用
+            magneticForce = Mathf.Clamp(newForce, 0f, MAX_FORCE);
+            UpdateMagneticForceUI();
+        }
+
+        /// <summary>
+        /// UI（Image）に現在の磁力値を反映
+        /// </summary>
+        private void UpdateMagneticForceUI()
+        {
+            if (magneticForceImage != null)
+                magneticForceImage.fillAmount = Mathf.Clamp01(magneticForce / MAX_FORCE);
+        }
+
+        /// <summary>
+        /// 磁石の極性を反転する（N ↔ S）
+        /// 弾などでヒットした際に呼び出される想定
+        /// </summary>
+        public void TogglePolarity()
+        {
+            // N ↔ S 切り替え
+            poleType = (poleType == MagnetPoleType.North) ? MagnetPoleType.South : MagnetPoleType.North;
+
+            // 見た目を変更（赤＝N極、青＝S極）
+            Renderer renderer = GetComponent<Renderer>();
+            if (renderer != null)
+                renderer.material.color = (poleType == MagnetPoleType.North) ? Color.red : Color.blue;
+
+            Debug.Log($"{gameObject.name} の極性を {poleType} に切り替えました。");
+        }
+
+        /// <summary>
+        /// シーンビューで磁力範囲を可視化
+        /// </summary>
+        private void OnDrawGizmos()
+        {
+            // N極＝赤 / S極＝青 で範囲を表示
+            Gizmos.color = (poleType == MagnetPoleType.North) ? Color.red : Color.blue;
+            Gizmos.DrawWireSphere(transform.position, magneticRange);
         }
     }
 }

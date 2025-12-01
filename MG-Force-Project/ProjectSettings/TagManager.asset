@@ -7,11 +7,12 @@ TagManager:
   - Moving
   - Fixed
   - Ground
+  - MainStage
   layers:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - 
+  - Ground
   - Water
   - UI
   - NForce

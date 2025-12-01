@@ -102,6 +102,7 @@ namespace Game.StageScene.Player
                 if (_currentAnimationState != AnimationState.JUMP)
                 {
                     _currentAnimationTime = 0.0f;
+                    Debug.Log("[Animation] ジャンプアニメーション開始");
                 }
 
                 _currentAnimationState = AnimationState.JUMP; // ジャンプアニメーションに設定
@@ -176,8 +177,6 @@ namespace Game.StageScene.Player
 
         /// <summary>
         /// ジャンプアニメーションのループ制御
-        /// アニメーションが80%まで進んだら60%の位置にループバックさせる
-        /// これにより、ジャンプの頂点付近のアニメーションを繰り返す
         /// </summary>
         private void JumpUpdate()
         {
@@ -186,20 +185,10 @@ namespace Game.StageScene.Player
 
             // 正規化された再生時間を取得（0.0～1.0）
             _currentAnimationTime = stateInfo.normalizedTime;
-
-            // アニメーションが80%まで進んだら、60%の位置に巻き戻す
-            //if (_currentAnimationTime >= 0.8f)
-            //{
-            //    // stateInfo.shortNameHash: 現在のアニメーションステートのハッシュ値
-            //    // 第3引数の0.6f: 再生位置を60%に設定
-            //    _animator.Play(stateInfo.shortNameHash, (int)_currentAnimationLayer, 0.6f);
-            //}
         }
 
         /// <summary>
         /// 射撃アニメーションのループ制御
-        /// アニメーションが70%まで進んだら37.5%の位置にループバックさせる
-        /// これにより、射撃の構えと発射のモーションを繰り返す
         /// </summary>
         private void ShootUpdate()
         {
@@ -208,18 +197,6 @@ namespace Game.StageScene.Player
 
             // 正規化された再生時間を取得（0.0～1.0）
             _currentAnimationTime = stateInfo.normalizedTime;
-
-            // アニメーションが70%まで進んだら、37.5%の位置に巻き戻す
-            //if (_currentAnimationTime >= 0.7f)
-            //{
-            //    // stateInfo.shortNameHash: 現在のアニメーションステートのハッシュ値
-            //    // 第3引数の0.375f: 再生位置を37.5%に設定
-            //    if (_currentAnimationState == AnimationState.SHOOT && _currentAnimationTime >= 0.7f)
-            //    {
-            //        AnimatorStateInfo stateInfo = _animator.GetCurrentAnimatorStateInfo((int)_currentAnimationLayer);
-            //        _animator.Play(stateInfo.shortNameHash, (int)_currentAnimationLayer, 0.375f);
-            //    }
-            //}
         }
     }
 }

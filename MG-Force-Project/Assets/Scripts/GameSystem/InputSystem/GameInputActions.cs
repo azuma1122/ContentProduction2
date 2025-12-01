@@ -836,6 +836,15 @@ public partial class @GameInputActions: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Menu"",
+                    ""type"": ""Button"",
+                    ""id"": ""a46595fb-a77d-4cbd-8510-b713a011659f"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -1122,6 +1131,17 @@ public partial class @GameInputActions: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": ""Gamepad;Gamepad_2"",
                     ""action"": ""DownSelect"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""31fa0fc0-6ace-4528-84fa-5697f1f38761"",
+                    ""path"": ""<Keyboard>/m"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""KeyMouse"",
+                    ""action"": ""Menu"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -1504,6 +1524,7 @@ public partial class @GameInputActions: IInputActionCollection2, IDisposable
         m_Menu_RightSelect = m_Menu.FindAction("RightSelect", throwIfNotFound: true);
         m_Menu_UpSelect = m_Menu.FindAction("UpSelect", throwIfNotFound: true);
         m_Menu_DownSelect = m_Menu.FindAction("DownSelect", throwIfNotFound: true);
+        m_Menu_Menu = m_Menu.FindAction("Menu", throwIfNotFound: true);
         // Shortcut
         m_Shortcut = asset.FindActionMap("Shortcut", throwIfNotFound: true);
         m_Shortcut_ShortCut_1 = m_Shortcut.FindAction("ShortCut_1", throwIfNotFound: true);
@@ -1842,6 +1863,7 @@ public partial class @GameInputActions: IInputActionCollection2, IDisposable
     private readonly InputAction m_Menu_RightSelect;
     private readonly InputAction m_Menu_UpSelect;
     private readonly InputAction m_Menu_DownSelect;
+    private readonly InputAction m_Menu_Menu;
     public struct MenuActions
     {
         private @GameInputActions m_Wrapper;
@@ -1853,6 +1875,7 @@ public partial class @GameInputActions: IInputActionCollection2, IDisposable
         public InputAction @RightSelect => m_Wrapper.m_Menu_RightSelect;
         public InputAction @UpSelect => m_Wrapper.m_Menu_UpSelect;
         public InputAction @DownSelect => m_Wrapper.m_Menu_DownSelect;
+        public InputAction @Menu => m_Wrapper.m_Menu_Menu;
         public InputActionMap Get() { return m_Wrapper.m_Menu; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -1883,6 +1906,9 @@ public partial class @GameInputActions: IInputActionCollection2, IDisposable
             @DownSelect.started += instance.OnDownSelect;
             @DownSelect.performed += instance.OnDownSelect;
             @DownSelect.canceled += instance.OnDownSelect;
+            @Menu.started += instance.OnMenu;
+            @Menu.performed += instance.OnMenu;
+            @Menu.canceled += instance.OnMenu;
         }
 
         private void UnregisterCallbacks(IMenuActions instance)
@@ -1908,6 +1934,9 @@ public partial class @GameInputActions: IInputActionCollection2, IDisposable
             @DownSelect.started -= instance.OnDownSelect;
             @DownSelect.performed -= instance.OnDownSelect;
             @DownSelect.canceled -= instance.OnDownSelect;
+            @Menu.started -= instance.OnMenu;
+            @Menu.performed -= instance.OnMenu;
+            @Menu.canceled -= instance.OnMenu;
         }
 
         public void RemoveCallbacks(IMenuActions instance)
@@ -2128,6 +2157,7 @@ public partial class @GameInputActions: IInputActionCollection2, IDisposable
         void OnRightSelect(InputAction.CallbackContext context);
         void OnUpSelect(InputAction.CallbackContext context);
         void OnDownSelect(InputAction.CallbackContext context);
+        void OnMenu(InputAction.CallbackContext context);
     }
     public interface IShortcutActions
     {

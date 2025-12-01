@@ -60,6 +60,7 @@ namespace Game
             public const string RIGHTMOVE = "PlayerRightMove";   // 右移動
             public const string JUMP = "Jump";                   // ジャンプ
             public const string MENU_OPEN = "MenuOpen";          // メニューを開く
+           // public const string OPEN_CONFIG_MENU = "OpenConfigMenu"; // ← 追加
             public const string VIEW_MODE_START = "ViewModeStart";// 視点操作開始
             public const string MAGNET_BOOT = "MagnetBoot";      // 磁力装置の起動
 

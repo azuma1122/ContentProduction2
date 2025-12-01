@@ -6,7 +6,7 @@ using UnityEngine;
 /// </summary>
 public class MouseCursor : MonoBehaviour
 {
-    // [SerializeField] private Texture2D cursorTexture; // カーソル画像
+    [SerializeField] private Texture2D cursorTexture; // カーソル画像
 
     // Start is called before the first frame update
     void Start()

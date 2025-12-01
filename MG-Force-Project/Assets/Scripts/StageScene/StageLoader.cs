@@ -1,77 +1,117 @@
-using UnityEngine;
+﻿using UnityEngine;
+using System.IO;
 using UnityEngine.SceneManagement;
-using Game.GameSystem;
 
 namespace Game.StageScene
 {
     /// <summary>
-    /// �X�e�[�W���[�h�N���X
+    /// Scene 名から対応する JSON ステージデータを読み込み、
+    /// StageCreater に渡してステージを生成するクラス（修正版）
+    /// - シーン遷移時の初期化順序を改善
+    /// - 重複削除処理を防止
     /// </summary>
-    public class StageLoader : MonoBehaviour 
+    public class StageLoader : MonoBehaviour
     {
-        private InputHandler _inputHandler;
-        private GameDataManager _gameDataManager;
-        private StageCreater stageCreater;
+        [Header("ステージを JSON から読み込むかどうか")]
+        [SerializeField]
+        private bool _useJsonStage = true;
 
-        private Transform childTransform;
+        [Header("ステージ生成担当（StageCreater）")]
+        [SerializeField]
+        private StageCreater _stageCreater;
 
-        // �X�e�[�W�f�[�^
-        [SerializeField] private StageData[] _stageDatas;
-
-        private static GameConstants.Stage _currentStage;
+        // JSON 読み込み済みかどうか（多重生成防止用）
+        private bool _loaded = false;
 
         private void Awake()
         {
-            _inputHandler = InputHandler.Instance;
-            _gameDataManager = GameDataManager.Instance;
+            // Awake では削除処理を行わない（StageCreater に任せる）
+            Debug.Log("StageLoader: Awake - シーン初期化開始");
+        }
 
-            Scene scene = SceneManager.GetActiveScene();
-
-            if (scene.buildIndex == (int)GameConstants.Scene.StageSelect)
+        private void Start()
+        {
+            if (SceneManager.GetActiveScene().name == "StageSelect")
             {
-                _gameDataManager.SetCurrentStageIndex((int)GameConstants.Stage.Stage_1);
-
-                // �X�e�[�W�̐���
-                SetStage();
-
+                Debug.Log("StageLoader: StageSelect のため JSON 読み込みをスキップします");
                 return;
             }
 
-            SetStage();
-        }
-
-        /// <summary>
-        /// �X�e�[�W�̐���
-        /// </summary>
-        private void SetStage(bool external_data = true)
-        {
-            if (external_data)
+            if (!_useJsonStage)
             {
-                childTransform = gameObject.transform.Find("StageCreater");
-                stageCreater = childTransform.GetComponent<StageCreater>();
-                stageCreater.StageCreate();
-                stageCreater.BGCreate();
+                Debug.Log("StageLoader: JSON を使わず手置きステージを使用します");
                 return;
             }
 
-            int stage_index = _gameDataManager.GetCurrentStageIndex();
+            if (_loaded)
+            {
+                Debug.LogWarning("StageLoader: 既にロード済みのため処理をスキップします");
+                return;
+            }
 
-            Transform transform = GameObject.Find(GameConstants.MAIN_CAMERA).transform;
-
-            Instantiate(_stageDatas[stage_index].StagePrefab, Vector3.zero, Quaternion.identity);
-            Instantiate(_stageDatas[stage_index].StageBG, Vector3.zero, Quaternion.identity, transform);
+            LoadStageJson();
         }
 
-        /// <summary>
-        /// �X�e�[�W�f�[�^�̎擾
-        /// </summary>
-        /// <param name="stage_index"></param>
-        /// <returns></returns>
-        public StageData GetStageData(int stage_index)
+        private void LoadStageJson()
         {
-            DebugManager.LogMessage($"{stage_index}");
+            if (_stageCreater == null)
+            {
+                Debug.LogError("StageLoader: StageCreater が Inspector に設定されていません");
+                return;
+            }
 
-            return _stageDatas[stage_index];
+            string sceneName = SceneManager.GetActiveScene().name;
+            string jsonName = "";
+
+            // Stage1 は固定
+            if (sceneName == "Stage1")
+            {
+                jsonName = "Stage_1.json";
+                Debug.Log($"StageLoader: Stage1 のため JSON を {jsonName} に強制変更しました");
+            }
+            // Stage2 は Stage_2.json
+            else if (sceneName == "Stage2")
+            {
+                jsonName = "Stage_2.json";
+            }
+            // Stage3 は Stage_3.json
+            else if (sceneName == "Stage3")
+            {
+                jsonName = "Stage_3.json";
+            }
+            // それ以外の数字シーン（Stage4 以降）も対応
+            else
+            {
+                string number = System.Text.RegularExpressions.Regex.Match(sceneName, @"\d+").Value;
+                if (string.IsNullOrEmpty(number))
+                {
+                    Debug.LogError($"StageLoader: シーン名から数字を取得できません: {sceneName}");
+                    return;
+                }
+                jsonName = $"Stage_{number}.json";
+            }
+
+            string directory = Path.Combine(Application.streamingAssetsPath, "StageData");
+            string filePath = Path.Combine(directory, jsonName);
+
+            if (!File.Exists(filePath))
+            {
+                Debug.LogError($"StageLoader: JSON ファイルが見つかりません → {filePath}");
+                return;
+            }
+
+            string json = File.ReadAllText(filePath);
+            if (string.IsNullOrEmpty(json))
+            {
+                Debug.LogError("StageLoader: JSON が空です（読み込み失敗）");
+                return;
+            }
+
+            _stageCreater.SetJsonAndCreate(json);
+            _stageCreater.BGCreate();
+            _loaded = true;
+
+            Debug.Log($"StageLoader: {jsonName} からステージ生成が完了しました");
         }
     }
 }

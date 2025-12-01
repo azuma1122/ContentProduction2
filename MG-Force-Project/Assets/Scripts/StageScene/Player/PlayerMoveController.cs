@@ -1,204 +1,218 @@
 using UnityEngine;
+
 namespace Game.StageScene.Player
 {
     /// <summary>
-    /// プレイヤー移動制御クラス
-    /// - 射撃中は完全に移動を停止
-    /// - ジャンプ中は横移動可能（空中制御）
-    /// - 左右移動 / ジャンプ / 重力制御
+    /// プレイヤーの物理的な移動を制御するクラス。
+    /// - Rigidbodyを操作し、横移動、ジャンプ、カスタム重力処理を行います。
+    /// - PlayerStateControllerから受け取った状態（RUN, JUMP, SHOOT）に基づいて動作します。
     /// </summary>
     public class PlayerMoveController : PlayerControllerBase
     {
         #region ===== 定数 =====
         private const float MAX_SPEED = 3.5f;      // 横移動の最大速度
-        private const float MOVE_SPEED = 3f;       // 1フレームあたりの移動加速度
-        private const float MIN_SPEED = 0.0f;      // 最小速度（基本的に0）
+        private const float MOVE_SPEED = 0.3f;     // 1フレームあたりの移動加速度（加速/減速の速さ）
+        private const float MIN_SPEED = 0.0f;      // 最小速度
         private const float JUMP_FORCE = 5.0f;     // ジャンプ時に与える上方向の力
-        private const float RAYCAST_LENGTH = 0.2f; // 接地判定用のRayの長さ
         private const float GRAVITY_SCALE = 1.25f; // 重力の強さ（Unity標準重力の1.25倍）
+        private const float RAYCAST_LENGTH = 0.2f; // 接地判定用Rayの長さ
         #endregion
 
-        // ===== 公開プロパティ =====
-        public Vector2 inputDir { get; set; } = Vector2.zero; // 入力方向（現在未使用）
-
         // ===== 内部変数 =====
-        private Rigidbody _rigidbody;               // プレイヤーのRigidbodyコンポーネント
-        private Vector3 moveDir = Vector3.zero;     // 現在の移動方向・速度ベクトル
-        private Vector3 raycastDir = Vector3.down;  // 接地判定用のRay方向（真下）
+        public Vector2 inputDir { get; set; } = Vector2.zero; // 外部からの入力方向（現在は未使用の可能性あり）
 
-        // ===== ジャンプ制御用フラグ =====
-        private bool _hasJumped = false;    // ジャンプ力を与えたかどうか（連続ジャンプ防止）
+        private Rigidbody _rigidbody;
+        private Vector3 moveDir = Vector3.zero; // 現在の移動ベクトル（Rigidbody.velocityに設定される）
+
+        private bool _hasJumped = false; // ジャンプが実行されたかどうかのフラグ（ジャンプ入力の重複防止）
+
+        private CapsuleCollider _capsuleCollider;
 
         /// <summary>
-        /// 初期化処理（プレイヤー生成時に1回だけ呼ばれる）
+        /// 初期化処理。RigidbodyとColliderを取得し、重力を無効化します。
         /// </summary>
         public override void OnStart()
         {
             // Rigidbodyコンポーネントを取得
             _rigidbody = playerObject.GetComponent<Rigidbody>();
-
-            // Unityの標準重力を無効化（自前で重力処理を実装するため）
+            // カスタム重力処理を行うため、Unityの標準重力を無効化
             _rigidbody.useGravity = false;
+
+            // CapsuleColliderコンポーネントを取得
+            _capsuleCollider = playerObject.GetComponent<CapsuleCollider>();
+
+            if (playerTransform == null)
+                playerTransform = playerObject.transform;
         }
 
         /// <summary>
-        /// 毎フレーム呼ばれる更新処理（移動・ジャンプ・重力の制御）
+        /// 毎フレームの更新処理。接地判定、状態チェック、移動処理、カスタム重力処理を行います。
         /// </summary>
         public override void OnUpdate()
         {
-            // ===== 1. 接地判定を更新 =====
-            // Raycastを使って地面にいるかどうかをチェック
+            // デバッグログ（動作確認用）
+            Debug.Log($"[PlayerMove] enabled={enabled}, isGrounded={isGrounded}, " +
+             $"State.RUN={HasState(State.RUN)}, currentDir={currentDir}, " +
+             $"moveDir={moveDir}, velocity={_rigidbody?.velocity}");
+
+            // 接地判定を更新
             CheckGrounded();
 
-            // ===== 2. 着地判定：地面についたらジャンプ実行済みフラグをリセット =====
+            // 着地した瞬間、ジャンプフラグをリセット
             if (isGrounded && _hasJumped)
             {
-                _hasJumped = false; // 次回ジャンプボタンを押したときにジャンプできるようにする
+                _hasJumped = false;
             }
 
-            // ===== 3. 射撃中の処理 =====
-            // 射撃中はその場で停止し、重力のみ適用
+            // ===== 1. 射撃状態の処理 =====
             if (HasState(State.SHOOT))
             {
-                moveDir.x = 0f;                     // 横方向の速度を0にして停止
-                moveDir.z = 0f;                     // 奥行き方向も停止（2Dゲームなので基本0）
-                moveDir.y = _rigidbody.velocity.y;  // 縦方向（Y軸）は現在の速度を維持（落下継続のため）
+                // 射撃中は横移動を停止
+                moveDir.x = 0f;
+                moveDir.z = 0f;
+                moveDir.y = _rigidbody.velocity.y; // 縦方向の速度は維持
 
-                // 空中にいる場合のみ重力を適用（地面にいる場合は重力不要）
-                if (!isGrounded) GravityUpdate();
-
-                // 計算した速度をRigidbodyに反映
+                if (!isGrounded) GravityUpdate(); // 空中にいる場合は重力処理
                 _rigidbody.velocity = moveDir;
-                return; // 射撃中は他の移動処理を全てスキップ
+                return; // 射撃中は以降の移動・ジャンプ処理をスキップ
             }
 
-            // ===== 4. 停止処理 =====
-            // 地面にいて、ジャンプ中でもなく、静止状態の場合は横移動を停止
+            // ===== 2. 静止状態の処理 =====
+            // STILLNESS状態かつJUMP状態でない場合、移動を停止
             if (HasState(State.STILLNESS) && !HasState(State.JUMP))
-            {
-                StopMoving(); // 横方向の速度を0にする
-            }
+                StopMoving();
 
-            // ===== 5. ジャンプ処理 =====
-            // State.JUMPが立っていて、まだジャンプ力を与えていない場合のみ実行
+            // ===== 3. ジャンプ入力の処理 =====
+            // JUMP状態がセットされており、かつまだジャンプが実行されていない場合
             if (HasState(State.JUMP) && !_hasJumped)
-            {
-                JumpUpdate(); // ジャンプ力を与える（1回だけ）
-            }
+                JumpUpdate();
 
-            // ===== 6. 左右移動処理 =====
-            // 地面にいる場合も、空中にいる場合も横移動可能（空中制御あり）
+            // ===== 4. 横移動の処理 =====
             MoveInputUpdate();
 
-            // ===== 7. 重力処理 =====
+            // ===== 5. 重力処理 =====
             if (!isGrounded)
-            {
-                GravityUpdate(); // 空中にいる場合は重力を適用（下方向に加速）
-            }
+                GravityUpdate(); // 空中にいる場合はカスタム重力を適用
             else if (moveDir.y < 0f)
-            {
-                moveDir.y = MIN_SPEED; // 地面にいる場合は下方向の速度を0にする（地面にめり込まないため）
-            }
+                moveDir.y = MIN_SPEED; // 地面にいる場合はY速度をリセット（めり込み防止）
 
-            // ===== 8. 最終的な速度をRigidbodyに反映 =====
+            // 最終的な移動ベクトルをRigidbodyに適用
             _rigidbody.velocity = moveDir;
         }
 
         /// <summary>
-        /// 横移動を停止する
+        /// 横方向の移動を停止します。
         /// </summary>
         private void StopMoving()
         {
-            moveDir.x = 0f; // 横方向（X軸）の速度を0に
-            moveDir.z = 0f; // 奥行き方向（Z軸）の速度を0に（2Dなので基本使わない）
+            moveDir.x = 0f;
+            moveDir.z = 0f;
         }
 
         /// <summary>
-        /// 移動入力の処理（地面でもジャンプ中でも横移動可能）
-        /// currentDirの方向に基づいて加速または減速を行う
+        /// 移動入力（RUN状態）に基づいて横方向の速度を更新します。
         /// </summary>
         private void MoveInputUpdate()
         {
-            // State.RUN（地面での移動）またはState.JUMP（空中制御）が立っている場合
+            // RUN状態またはJUMP状態の場合
             if (HasState(State.RUN) || HasState(State.JUMP))
             {
-                // 右方向への移動
+                // 加速処理
                 if (currentDir == Direction.RIGHT)
-                {
-                    // 現在の速度にMOVE_SPEEDを加算し、MAX_SPEEDを超えないようにする
+                    // 右方向に加速し、最大速度を超えないように制限
                     moveDir.x = Mathf.Min(moveDir.x + MOVE_SPEED, MAX_SPEED);
-                }
-                // 左方向への移動
                 else if (currentDir == Direction.LEFT)
-                {
-                    // 現在の速度からMOVE_SPEEDを減算し、-MAX_SPEEDを下回らないようにする
+                    // 左方向に加速し、最大速度を超えないように制限
                     moveDir.x = Mathf.Max(moveDir.x - MOVE_SPEED, -MAX_SPEED);
-                }
             }
             else
             {
-                // 入力がない場合は徐々に減速（慣性を止める）
-                if (moveDir.x > 0f)
-                {
-                    // 右方向に動いている場合：減速して0に近づける
-                    moveDir.x = Mathf.Max(moveDir.x - MOVE_SPEED, 0f);
-                }
-                else if (moveDir.x < 0f)
-                {
-                    // 左方向に動いている場合：減速して0に近づける
-                    moveDir.x = Mathf.Min(moveDir.x + MOVE_SPEED, 0f);
-                }
+                // 入力がない場合、減速処理
+                if (moveDir.x > 0f) moveDir.x = Mathf.Max(moveDir.x - MOVE_SPEED, 0f);
+                else if (moveDir.x < 0f) moveDir.x = Mathf.Min(moveDir.x + MOVE_SPEED, 0f);
             }
         }
 
         /// <summary>
-        /// ジャンプ処理（地面にいる時のみジャンプ力を与える）
+        /// ジャンプを実行します。
         /// </summary>
         private void JumpUpdate()
         {
-            // 地面にいる場合のみジャンプ可能
             if (isGrounded)
             {
-                moveDir.y = JUMP_FORCE; // Y軸方向（上方向）に力を加える
-                _hasJumped = true; // ジャンプ実行済みフラグを立てる（連続ジャンプ防止）
+                // 上方向に力を加える
+                moveDir.y = JUMP_FORCE;
+                _hasJumped = true;
                 Debug.Log("[MoveController] ジャンプ実行");
             }
         }
 
+        // =====================================================
+        //  接地判定処理
+        // =====================================================
         /// <summary>
-        /// 接地判定（Raycastを使って地面との接触を検出）
+        /// Raycastを使用してプレイヤーの接地判定を行います。
         /// </summary>
         private void CheckGrounded()
         {
-            // プレイヤーの足元から少し上の位置（0.1f上）からRayを発射
-            Vector3 rayStart = playerTransform.position + Vector3.up * 0.1f;
+            if (_capsuleCollider == null)
+                _capsuleCollider = playerObject.GetComponent<CapsuleCollider>();
 
-            // 真下に向かってRayを発射し、何かに当たったかチェック
-            if (Physics.Raycast(rayStart, raycastDir, out RaycastHit hit, RAYCAST_LENGTH))
-            {
-                // トリガーコライダーではなく、かつタグがUNTAGGEDでない場合は地面と判定
-                if (!hit.collider.isTrigger && hit.collider.tag != GameConstants.Tag.UNTAGGED)
-                    isGrounded = true; // 地面に接地している
-            }
-            else
-            {
-                isGrounded = false; // 何にも当たらなければ空中にいる
-            }
+            // Rayの始点をカプセルコライダーの下端から少し上に設定
+            Vector3 rayStart = new Vector3(
+                _capsuleCollider.bounds.center.x,
+                _capsuleCollider.bounds.min.y + 0.01f, // 0.01fはコライダーの表面から開始するためのオフセット
+                _capsuleCollider.bounds.center.z
+            );
 
+            // 下方向にRayを飛ばし、地面との接触を判定
+            isGrounded = Physics.Raycast(
+                rayStart,
+                Vector3.down,
+                RAYCAST_LENGTH,
+                ~0, // すべてのレイヤーを対象
+                QueryTriggerInteraction.Ignore // トリガーColliderは無視
+            );
+
+            // Unity Editorでのデバッグ表示
 #if UNITY_EDITOR
-            // エディタ上でRayを可視化（デバッグ用・赤い線で表示）
-            Debug.DrawRay(playerTransform.position, raycastDir * RAYCAST_LENGTH, Color.red);
+            Debug.DrawRay(rayStart, Vector3.down * RAYCAST_LENGTH,
+                isGrounded ? Color.green : Color.red);
 #endif
         }
 
         /// <summary>
-        /// 重力処理（空中にいる時に下方向への加速度を与える）
+        /// 移動処理を有効化します。
+        /// </summary>
+        public void EnableMovement() => this.enabled = true;
+
+        /// <summary>
+        /// 移動処理を無効化します。
+        /// </summary>
+        public void DisableMovement() => this.enabled = false;
+
+        /// <summary>
+        /// カスタム重力処理。Y軸の速度に重力を加算します。
         /// </summary>
         private void GravityUpdate()
         {
-            // Unity標準の重力（Physics.gravity.y）にGRAVITY_SCALEを掛けて、Y軸速度に加算
-            // Time.deltaTimeを掛けることでフレームレートに依存しない滑らかな落下を実現
+            // moveDir.y = moveDir.y + (Physics.gravity.y * GRAVITY_SCALE * Time.deltaTime)
             moveDir.y += Physics.gravity.y * GRAVITY_SCALE * Time.deltaTime;
+        }
+
+        /// <summary>
+        /// プレイヤーの位置と速度を初期化します。
+        /// </summary>
+        public void InitPlayer(Vector3 spawnPos, Quaternion spawnRot)
+        {
+            playerTransform.position = spawnPos;
+            playerTransform.rotation = spawnRot;
+
+            if (_rigidbody != null)
+            {
+                _rigidbody.velocity = Vector3.zero;
+                _rigidbody.angularVelocity = Vector3.zero;
+            }
         }
     }
 }

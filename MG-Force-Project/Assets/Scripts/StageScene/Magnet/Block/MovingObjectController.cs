@@ -5,14 +5,16 @@ namespace Game.StageScene.Magnet
 {
     /// <summary>
     /// 可動オブジェクトクラス
+    /// - 磁力に反応して移動可能なオブジェクト
+    /// - プレイヤーとの接触で動作制御
+    /// - 上下左右のみの移動制限
     /// </summary>
     public class MovingObjectController : MagnetObjectManager
     {
-        private bool _canMove;
-
-        private Rigidbody _rigitbody;
-
-        private List<Collider> _isHitMagnet = new List<Collider>();
+        // ===== 内部変数 =====
+        private bool _canMove;                     // 動作可能か
+        private Rigidbody _rigitbody;              // Rigidbodyコンポーネント
+        private List<Collider> _isHitMagnet = new(); // 磁力範囲に入っているコライダーのリスト
 
         /// <summary>
         /// 初期化処理
@@ -21,123 +23,169 @@ namespace Game.StageScene.Magnet
         {
             base.Start();
 
+            // Rigidbody を取得
             _rigitbody = GetComponent<Rigidbody>();
+            if (_rigitbody == null)
+                Debug.LogError("[MovingObjectController] Rigidbody が見つかりません！");
+
+            _rigitbody.isKinematic = true;// Kinematicをする前提
 
             _canMove = true;
+
+            // magnetManager が null の場合は自動取得
+            if (magnetManager == null)
+            {
+                magnetManager = FindObjectOfType<MagnetManager>();
+                if (magnetManager == null)
+                    Debug.LogError("[MovingObjectController] MagnetManager が見つかりません！");
+            }
+
+            // magnetController が null の場合は初期化
+            if (magnetController == null)
+            {
+                magnetController = new MagnetController();
+                Debug.Log($"[MovingObjectController] {gameObject.name} で MagnetController を初期化しました");
+            }
         }
 
         protected override void Update()
         {
             base.Update();
 
+            // Rigidbody がない場合は処理をスキップ
             if (_rigitbody == null) return;
 
-            // 意図しない動作を防ぐ処理
+            // 動作可能な場合の制御
             if (_canMove)
             {
                 SetDefultConstraints();
 
-                if (!magnetManager.IsMagnetBoot)
+                // magnetManager が null または磁力が起動していない場合は停止
+                if (magnetManager == null || !magnetManager.IsMagnetBoot)
                 {
                     _rigitbody.velocity = Vector3.zero;
+                }
+                else
+                {
+                    // 磁力起動中は速度を上下左右のみに制限
+                    RestrictVelocityToFourDirections();
                 }
             }
             else
             {
+                // プレイヤーと当たった場合の制約
                 SetHitPlayerConstraints();
+            }
+        }
+
+        /// <summary>
+        /// 速度を上下左右のみに制限する
+        /// </summary>
+        private void RestrictVelocityToFourDirections()
+        {
+            Vector3 velocity = _rigitbody.velocity;
+
+            // X軸とY軸の絶対値を比較して、大きい方向のみを残す
+            if (Mathf.Abs(velocity.x) > Mathf.Abs(velocity.y))
+            {
+                // 左右移動のみ
+                _rigitbody.velocity = new Vector3(velocity.x, 0f, 0f);
+            }
+            else
+            {
+                // 上下移動のみ
+                _rigitbody.velocity = new Vector3(0f, velocity.y, 0f);
             }
         }
 
         #region -------- 判定処理 --------
 
         /// <summary>
-        /// オブジェクトに当たった時
+        /// プレイヤーと衝突した時の処理
         /// </summary>
-        /// <param name="collision"></param>
         private void OnCollisionEnter(Collision collision)
         {
-            // 例外処理：プレイヤー以外の場合は終了する
-            if (magnetManager.IsMagnetBoot || !collision.gameObject.CompareTag(GameConstants.Tag.PLAYER.ToString())) return;
+            if (magnetManager != null && magnetManager.IsMagnetBoot) return;
 
-            // プレイヤーと当たっている場合動かないようにする
-            _canMove = false;
+            // プレイヤー以外は無視
+            if (!collision.gameObject.CompareTag(GameConstants.Tag.PLAYER.ToString())) return;
+
+            _canMove = false; // プレイヤーと接触中は動かない
         }
 
         /// <summary>
-        /// オブジェクトから離れたとき
+        /// プレイヤーから離れた時の処理
         /// </summary>
-        /// <param name="collision"></param>
         private void OnCollisionExit(Collision collision)
         {
-            // 例外処理
-            if (magnetManager.IsMagnetBoot || !collision.gameObject.CompareTag(GameConstants.Tag.PLAYER.ToString()) || magnetFixed) return;
+            if (magnetManager != null && magnetManager.IsMagnetBoot) return;
 
-            // プレイヤーが離れたときに動けるようにする
-            _canMove = true;
+            if (!collision.gameObject.CompareTag(GameConstants.Tag.PLAYER.ToString())) return;
+
+            if (magnetFixed) return; // 固定状態なら無視
+
+            _canMove = true; // プレイヤーが離れたら再度動作可能
         }
 
         /// <summary>
-        /// トリガーと当たった時
+        /// 磁力範囲に入った時の処理
         /// </summary>
-        /// <param name="other"></param>
         protected override void OnTriggerEnter(Collider other)
         {
             base.OnTriggerEnter(other);
 
-            // 例外チェック：磁力の範囲オブジェクトではない場合は終了
             if (other.gameObject.layer != (int)GameConstants.Layer.MAGNET_RANGE) return;
 
-            // リストに追加
-            _isHitMagnet.Add(other);
+            // 磁力範囲リストに追加
+            if (!_isHitMagnet.Contains(other))
+                _isHitMagnet.Add(other);
         }
 
         /// <summary>
-        /// トリガーと当たっている時の処理
+        /// 磁力範囲内にいる間の処理
         /// </summary>
-        /// <param name="other"></param>
         private void OnTriggerStay(Collider other)
         {
-            // 磁力が起動していなければ終了
-            if (!magnetManager.IsMagnetBoot) return;
+            // magnetManager が null か磁力が起動していなければ終了
+            if (magnetManager == null || !magnetManager.IsMagnetBoot) return;
 
-            // 例外チェック
+            // 対象が磁力オブジェクトでない場合は終了
             if (other.gameObject.layer != (int)GameConstants.Layer.N_MAGNET &&
                 other.gameObject.layer != (int)GameConstants.Layer.S_MAGNET) return;
 
-            // このオブジェクトが可動オブジェクトの場合
+            // このオブジェクトが可動オブジェクトの場合のみ磁力処理
             if (MyData.MyObjectType == GameConstants.Tag.MOVING)
             {
-                // 磁力の動作処理
+                // magnetController が null なら初期化
+                if (magnetController == null)
+                {
+                    magnetController = new MagnetController();
+                    Debug.LogWarning($"[MovingObjectController] {gameObject.name} の magnetController が null だったため、初期化しました");
+                }
+
                 magnetController.MagnetUpdate(gameObject, other.gameObject);
             }
         }
 
         /// <summary>
-        /// トリガーが離れた時の処理
+        /// 磁力範囲から出た時の処理
         /// </summary>
-        /// <param name="other"></param>
         private void OnTriggerExit(Collider other)
         {
-            // 例外チェック：磁力の範囲オブジェクトではない場合は終了
             if (other.gameObject.layer != (int)GameConstants.Layer.MAGNET_RANGE) return;
 
-            // リストから削除
-            if (_isHitMagnet.IndexOf(other) != -1)
-            {
+            if (_isHitMagnet.Contains(other))
                 _isHitMagnet.Remove(other);
-            }
 
-            // 磁力の範囲に入っていない場合は動作をリセットする
-            if (_isHitMagnet.Count == 0)
-            {
+            // 磁力範囲に誰もいない場合は停止
+            if (_isHitMagnet.Count == 0 && _rigitbody != null)
                 _rigitbody.velocity = Vector3.zero;
-            }
         }
 
         #endregion
 
         /// <summary>
-        /// デフォルトの制約
+        /// デフォルトのRigidbody制約
         /// </summary>
         private void SetDefultConstraints()
         {
@@ -145,7 +193,7 @@ namespace Game.StageScene.Magnet
         }
 
         /// <summary>
-        /// プレイヤーと当たった時の制約
+        /// プレイヤーと接触中の制約(必要ならここで固定)
         /// </summary>
         private void SetHitPlayerConstraints()
         {

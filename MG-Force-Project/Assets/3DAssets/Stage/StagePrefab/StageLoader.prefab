@@ -79,6 +79,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2793488833847493522}
+  - component: {fileID: 9039979689250835571}
   - component: {fileID: 6218545112232283629}
   m_Layer: 0
   m_Name: StageLoader
@@ -103,6 +104,19 @@ Transform:
   - {fileID: 1428881031616260625}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &9039979689250835571
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5401147349349345859}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4479cfae1ee59744a77d5578a1734c6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  currentStageIndex: 1
 --- !u!114 &6218545112232283629
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -115,4 +129,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 67503cb9c21d8404c86792bf97778e05, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _stageDatas: []
+  _useJsonStage: 1
+  _stageCreater: {fileID: 8902325385458706}

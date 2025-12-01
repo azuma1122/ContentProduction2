@@ -1162,7 +1162,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   cursorTexture: {fileID: 0}
-  hotspot: {x: 0, y: 0}
 --- !u!4 &307817517
 Transform:
   m_ObjectHideFlags: 0

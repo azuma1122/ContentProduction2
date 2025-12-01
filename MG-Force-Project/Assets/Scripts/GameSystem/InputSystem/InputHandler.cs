@@ -3,6 +3,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
+using static Game.Title.TitleSceneController;
 
 namespace Game.GameSystem
 {
@@ -27,7 +28,7 @@ namespace Game.GameSystem
                 Destroy(gameObject);
                 return;
             }
-            
+
             Instance = this;
             DontDestroyOnLoad(gameObject);
 
@@ -95,7 +96,7 @@ namespace Game.GameSystem
         public bool IsActionPressed(string action_name)
         {
             bool is_action_pressed = _playerInput.actions[action_name].triggered;
-            
+
             return is_action_pressed;
         }
 
@@ -129,7 +130,7 @@ namespace Game.GameSystem
         {
             Scene scene = SceneManager.GetActiveScene();
 
-            switch ((GameConstants.Scene)scene.buildIndex) 
+            switch ((GameConstants.Scene)scene.buildIndex)
             {
                 case GameConstants.Scene.StageSelect:
                     InputStageSelectScene();
@@ -144,8 +145,6 @@ namespace Game.GameSystem
                     break;
             }
 
-            //Debug.Log($"MenuOpen : {_isMenuOpen}, ViewMode : {_isViewMode}, MagnetBoot : {_isMagnetBoot}");
-
             _playerInput.actions.FindActionMap(InputConstants.ActionMaps.SHORTCUT_MAPS).Enable();
 
 #if UNITY_EDITOR
@@ -157,7 +156,6 @@ namespace Game.GameSystem
 
         private bool _isMenuOpen = false;
         private bool _isViewMode = false;
-        private bool _isMagnetBoot = false;
 
         private void InputSetMenuMap()
         {
@@ -173,25 +171,27 @@ namespace Game.GameSystem
 
             if (!_isMenuOpen)
             {
-                if (!_isMagnetBoot)
+                // MagnetManagerの状態を取得
+                bool isMagnetBoot = GetMagnetBootState();
+
+                if (!isMagnetBoot)
                 {
                     OnViewMode();
                 }
 
                 if (!_isViewMode)
                 {
-                    OnMagnet();
+                    // MAGNET_MAPSは常に有効（極切り替えとBOOT切り替えを可能に）
+                    _playerInput.SwitchCurrentActionMap(InputConstants.ActionMaps.PLAYER_MAPS);
+                    _playerInput.actions.FindActionMap(InputConstants.ActionMaps.MAGNET_MAPS).Enable();
                 }
             }
 
             if (!_isMenuOpen && !_isViewMode)
             {
                 _playerInput.SwitchCurrentActionMap(InputConstants.ActionMaps.PLAYER_MAPS);
-
-                if (!_isMagnetBoot)
-                {
-                    _playerInput.actions.FindActionMap(InputConstants.ActionMaps.MAGNET_MAPS).Enable();
-                }
+                // MAGNET_MAPSは常に有効
+                _playerInput.actions.FindActionMap(InputConstants.ActionMaps.MAGNET_MAPS).Enable();
             }
         }
 
@@ -201,25 +201,27 @@ namespace Game.GameSystem
 
             if (!_isMenuOpen)
             {
-                if (!_isMagnetBoot)
+                // MagnetManagerの状態を取得
+                bool isMagnetBoot = GetMagnetBootState();
+
+                if (!isMagnetBoot)
                 {
                     OnViewMode();
                 }
 
                 if (!_isViewMode)
                 {
-                    OnMagnet();
+                    // MAGNET_MAPSは常に有効（極切り替えとBOOT切り替えを可能に）
+                    _playerInput.SwitchCurrentActionMap(InputConstants.ActionMaps.PLAYER_MAPS);
+                    _playerInput.actions.FindActionMap(InputConstants.ActionMaps.MAGNET_MAPS).Enable();
                 }
             }
 
             if (!_isMenuOpen && !_isViewMode)
             {
                 _playerInput.SwitchCurrentActionMap(InputConstants.ActionMaps.PLAYER_MAPS);
-
-                if (!_isMagnetBoot)
-                {
-                    _playerInput.actions.FindActionMap(InputConstants.ActionMaps.MAGNET_MAPS).Enable();
-                }
+                // MAGNET_MAPSは常に有効
+                _playerInput.actions.FindActionMap(InputConstants.ActionMaps.MAGNET_MAPS).Enable();
             }
         }
 
@@ -265,22 +267,13 @@ namespace Game.GameSystem
             }
         }
 
-        private void OnMagnet()
+        /// <summary>
+        /// MagnetManagerからBOOT状態を取得
+        /// </summary>
+        private bool GetMagnetBootState()
         {
-            if (_isMagnetBoot)
-            {
-                if (_playerInput.actions[InputConstants.Action.MAGNET_BOOT].triggered)
-                {
-                    _isMagnetBoot = false;
-                }
-            }
-            else
-            {
-                if (_playerInput.actions[InputConstants.Action.MAGNET_BOOT].triggered)
-                {
-                    _isMagnetBoot = true;
-                }
-            }
+            var magnetManager = GameObject.Find("MagnetManager")?.GetComponent<StageScene.Magnet.MagnetManager>();
+            return magnetManager != null && magnetManager.IsMagnetBoot;
         }
 
         #endregion

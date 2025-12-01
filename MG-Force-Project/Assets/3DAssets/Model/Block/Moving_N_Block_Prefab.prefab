@@ -231,11 +231,11 @@ Rigidbody:
     m_Bits: 0
   m_ImplicitCom: 1
   m_ImplicitTensor: 1
-  m_UseGravity: 0
+  m_UseGravity: 1
   m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 120
-  m_CollisionDetection: 0
+  m_CollisionDetection: 2
 --- !u!114 &7515196429539102367
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -248,8 +248,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d31fd3e125944a64faa8f2ff27e4b96b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  magnetManager: {fileID: 0}
   _magnetCollider: {fileID: 2492746171144611495}
-  magnetFixed: 1
+  magnetFixed: 0
   magnetFixedPower: 1
 --- !u!114 &-2970466410122464257
 MonoBehaviour:
@@ -263,6 +264,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ef45ce8442e288441b4c5f3b5ed57744, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  magnetManager: {fileID: 0}
+  _magnetCollider: {fileID: 0}
+  magnetFixed: 0
+  magnetFixedPower: 0
 --- !u!114 &3842585988178089103
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -275,7 +280,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 30d73f5bae3bbb649b1774965098094a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isBootActive: 0
   poleType: 0
+  magneticForce: 10
+  magneticRange: 3
+  magneticForceImage: {fileID: 0}
 --- !u!4 &4378472634004576672 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 9b2d4ba5acce7b94796dce2aed642329,

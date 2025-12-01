@@ -1,11 +1,6 @@
 using UnityEngine;
 
-namespace Game.StageScene
-{
-    /// <summary>
-    /// ステージデータ
-    /// </summary>
-    [CreateAssetMenu(fileName = "StageData", menuName = "Game/Stage Data")]
+
     public class StageData : ScriptableObject
     {
         // ステージの管理番号
@@ -38,4 +33,3 @@ namespace Game.StageScene
         // ステージの右上座標
         public Vector2 TopRight => topRight;
     }
-}
