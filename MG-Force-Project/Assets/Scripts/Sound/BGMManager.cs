@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace Game 
+namespace Game
 {
     public class BGMManager : MonoBehaviour
     {
-        private enum BGM 
+        private enum BGM
         {
             TITLE,
             SELECT_STAGE,
@@ -18,11 +18,12 @@ namespace Game
 
             MAX_BGM,
         }
-
+        private const string BGM_PREF_KEY = "BGM_VOLUME";
+        private const string SE_PREF_KEY = "SE_VOLUME";
         // âπåπÇó¨Ç∑AudioSouurce
         private AudioSource _audioSource;
 
-        public AudioSource GetAudioSource() { return _audioSource; }    
+        public AudioSource GetAudioSource() { return _audioSource; }
         // ó¨Ç∑âπåπ
         [SerializeField] private AudioClip[] _audioClips = new AudioClip[(int)BGM.MAX_BGM];
 
@@ -53,17 +54,23 @@ namespace Game
                 DontDestroyOnLoad(gameObject);
 
                 _audioSource = GetComponent<AudioSource>();
+                if (_audioSource == null)
+                    _audioSource = gameObject.AddComponent<AudioSource>();
 
-                Debug.LogWarning(_audioSource.ToString());  
+                Debug.LogWarning(_audioSource.ToString());
 
                 _inputHandler = InputHandler.Instance;
 
                 return;
             }
-            else
+            else if (instance != this)
             {
-                Destroy(gameObject);
+                Destroy(gameObject); // é©ï™ÇçÌèú
+                Debug.LogWarning("ÉVÉìÉOÉãÉgÉìçÌèú");
+
+                return;
             }
+            
         }
 
         #endregion
@@ -153,6 +160,9 @@ namespace Game
             if (volume != _audioSource.volume)
             {
                 _audioSource.volume = volume;
+                PlayerPrefs.SetFloat(BGM_PREF_KEY, volume);
+                PlayerPrefs.Save();
+
             }
             else if (_inputHandler.IsActionPressing(InputConstants.Action.MENU_LEFT_SELECT) &&
                 _audioSource.volume != MIN_VOLUME)
@@ -166,6 +176,25 @@ namespace Game
             }
 
             return _audioSource.volume;
+        }
+
+
+        public void LoadVolumeSettings()
+        {
+            // BGM âπó ÇÃì«Ç›çûÇ›
+
+            if (PlayerPrefs.HasKey(BGM_PREF_KEY))
+            {
+                float bgmVolume = PlayerPrefs.GetFloat(BGM_PREF_KEY);
+                VolumeChange(bgmVolume);
+            }
+            // SE âπó ÇÃì«Ç›çûÇ›
+
+            if (PlayerPrefs.HasKey(SE_PREF_KEY))
+            {
+                float seVolume = PlayerPrefs.GetFloat(SE_PREF_KEY);
+                VolumeChange(seVolume);
+            }
         }
     }
 }

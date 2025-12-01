@@ -45,23 +45,30 @@ namespace Game
 
         private void Awake()
         {
+
             if (!BGMManager.instance)
             {
                 Debug.LogWarning("BGMManagerのシングルトンなし");
-                return; 
+                return;
             }
+          
+        }
+        private void Start()
+        {
             if (_bgmAudioSource == null)
             {
-                _bgmAudioSource = BGMManager.instance.GetAudioSource(); 
+
+                _bgmAudioSource = BGMManager.instance.GetAudioSource();
+                Debug.Log(_bgmAudioSource.name);
+
+                BGMManager.instance.LoadVolumeSettings();
+
             }
 
             if (_seAudioSource == null)
             {
                 _seAudioSource = GameObject.Find(GameConstants.Object.SE_MANAGER).GetComponent<AudioSource>();
             }
-        }
-        private void Start()
-        {
             if (BGMSlider == null) return;
 
             // BGMManagerから現在の音量を取得してスライダーに反映
@@ -168,5 +175,9 @@ namespace Game
 
             else return VolumeUI.LOUD;
         }
+
+
     }
+
+
 }
