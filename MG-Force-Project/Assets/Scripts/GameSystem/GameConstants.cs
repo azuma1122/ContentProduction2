@@ -11,20 +11,22 @@ namespace Game
 
         public enum Scene
         {
-            Title,
-            Setting,
-            Options,
-            Loading,
-            StageSelect,
-            Stage,
-            Clear,
-            Credits,
+            Title = 0,          // Build Index: 0
+            Setting = 1,        // Build Index: 1
+            Options = 2,        // Build Index: 2
+            Loading = 3,        // Build Index: 3
+            StageSelect = 4,    // Build Index: 4
+            Stage1 = 5,         // Build Index: 5
+            Clear = 6,          // Build Index: 6
+            Stage2 = 7,         // Build Index: 7
+            Stage3 = 8,         // Build Index: 8
+            Credits = 10,       // Build Index: 10 (9ÇÕStageÇ≈çÌèúó\íË)
             Max,
         }
 
         /* ================ É^ÉO ================ */
 
-        public static class Tag 
+        public static class Tag
         {
             public const string UNTAGGED = "Untagged";
             public const string FIXED = "Fixed";

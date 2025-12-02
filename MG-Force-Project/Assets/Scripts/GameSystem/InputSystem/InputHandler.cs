@@ -136,7 +136,9 @@ namespace Game.GameSystem
                     InputStageSelectScene();
                     break;
 
-                case GameConstants.Scene.Stage:
+                case GameConstants.Scene.Stage1:
+                case GameConstants.Scene.Stage2:
+                case GameConstants.Scene.Stage3:
                     InputStageScene();
                     break;
 
@@ -181,7 +183,7 @@ namespace Game.GameSystem
 
                 if (!_isViewMode)
                 {
-                    // MAGNET_MAPSは常に有効（極切り替えとBOOT切り替えを可能に）
+                    // MAGNET_MAPSは常に有効(極切り替えとBOOT切り替えを可能に)
                     _playerInput.SwitchCurrentActionMap(InputConstants.ActionMaps.PLAYER_MAPS);
                     _playerInput.actions.FindActionMap(InputConstants.ActionMaps.MAGNET_MAPS).Enable();
                 }
@@ -211,7 +213,7 @@ namespace Game.GameSystem
 
                 if (!_isViewMode)
                 {
-                    // MAGNET_MAPSは常に有効（極切り替えとBOOT切り替えを可能に）
+                    // MAGNET_MAPSは常に有効(極切り替えとBOOT切り替えを可能に)
                     _playerInput.SwitchCurrentActionMap(InputConstants.ActionMaps.PLAYER_MAPS);
                     _playerInput.actions.FindActionMap(InputConstants.ActionMaps.MAGNET_MAPS).Enable();
                 }

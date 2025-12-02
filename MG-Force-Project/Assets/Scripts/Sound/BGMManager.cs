@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace Game 
+namespace Game
 {
     public class BGMManager : MonoBehaviour
     {
-        private enum BGM 
+        private enum BGM
         {
             TITLE,
             SELECT_STAGE,
@@ -31,11 +31,13 @@ namespace Game
         private static readonly Dictionary<int, BGM> _sceneBGM = new Dictionary<int, BGM>
         {
             {(int)GameConstants.Scene.Title, BGM.TITLE },
-            {(int) GameConstants.Scene.StageSelect, BGM.SELECT_STAGE },
-            {(int) GameConstants.Scene.Stage, BGM.STAGE },
-            {(int) GameConstants.Scene.Clear, BGM.CLEAR },
-            {(int) GameConstants.Scene.Options, BGM.ALL_CLEAR },
-            {(int) GameConstants.Scene.Credits, BGM.CREDITS },
+            {(int)GameConstants.Scene.StageSelect, BGM.SELECT_STAGE },
+            {(int)GameConstants.Scene.Stage1, BGM.STAGE },
+            {(int)GameConstants.Scene.Stage2, BGM.STAGE },
+            {(int)GameConstants.Scene.Stage3, BGM.STAGE },
+            {(int)GameConstants.Scene.Clear, BGM.CLEAR },
+            {(int)GameConstants.Scene.Options, BGM.ALL_CLEAR },
+            {(int)GameConstants.Scene.Credits, BGM.CREDITS },
         };
 
         #region -------- ÉVÉìÉOÉãÉgÉìÇÃê›íË --------

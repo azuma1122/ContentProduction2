@@ -16,12 +16,52 @@ namespace Game.StageScene
         // Rigidbodyコンポーネント（物理演算・移動に関係する）
         private Rigidbody _rigidbody;
 
+        // Unity Inspectorで設定する磁力データ
+        [Header("障害物磁力設定")]
+        [SerializeField] private bool isFixedMagnet = true; // 固定磁石として扱う
+        [SerializeField] private MagnetData.MagnetPower fixedPower = MagnetData.MagnetPower.Weak; // Weak, Medium, Strong
+
         protected override void Start()
         {
-            // 親クラスのStart()を呼び出してMyDataなどを初期化
+            // ===== 先にmagnetFixedを設定（base.Start()より前） =====
+            magnetFixed = isFixedMagnet;
+            magnetFixedPower = fixedPower;
+
+            // 親クラスのStart()を呼び出してMyDataを初期化
             base.Start();
 
-            // ゲーム開始時にRigidbodyを取得して記憶しておく
+            // ===== MyDataがnullの場合は手動で初期化 =====
+            if (MyData == null)
+            {
+                Debug.LogWarning($"[ObstaclesObjectController] {name} の MyData が null だったため、手動で初期化します");
+
+                string objectType = gameObject.tag;
+                MagnetData.MagnetType magnetType = (MagnetData.MagnetType)gameObject.layer;
+                MyData = new MagnetData(objectType, magnetType, fixedPower);
+            }
+
+            // ===== MagnetManagerを自動取得 =====
+            if (magnetManager == null)
+            {
+                magnetManager = FindObjectOfType<MagnetManager>();
+                if (magnetManager == null)
+                {
+                    Debug.LogError($"[ObstaclesObjectController] {name} で MagnetManager が見つかりません！");
+                }
+                else
+                {
+                    Debug.Log($"[ObstaclesObjectController] {name} で MagnetManager を自動取得しました");
+                }
+            }
+
+            // ===== MagnetControllerを自動初期化 =====
+            if (magnetController == null)
+            {
+                magnetController = new MagnetController();
+                Debug.Log($"[ObstaclesObjectController] {name} で MagnetController を初期化しました");
+            }
+
+            // ===== Rigidbodyの取得と設定 =====
             _rigidbody = GetComponent<Rigidbody>();
 
             if (_rigidbody == null)
@@ -37,35 +77,19 @@ namespace Game.StageScene
 
             _canMove = true;
 
-            // magnetManager が null の場合は自動取得
-            if (magnetManager == null)
-            {
-                magnetManager = FindObjectOfType<MagnetManager>();
-                if (magnetManager == null)
-                {
-                    Debug.LogError($"[ObstaclesObjectController] {name} で MagnetManager が見つかりません！");
-                }
-                else
-                {
-                    Debug.Log($"[ObstaclesObjectController] {name} で MagnetManager を取得しました");
-                }
-            }
-
-            // magnetController が null の場合は初期化
-            if (magnetController == null)
-            {
-                magnetController = new MagnetController();
-                Debug.Log($"[ObstaclesObjectController] {name} で MagnetController を初期化しました");
-            }
-
-            // MyDataの内容をログ出力
+            // ===== 初期化完了ログ =====
             if (MyData != null)
             {
-                Debug.Log($"[ObstaclesObjectController] {name} 初期化完了 - ObjectType={MyData.MyObjectType}, MagnetType={MyData.MyMangetType}, Power={MyData.MyMagnetPower}");
+                Debug.Log($"[ObstaclesObjectController] {name} 初期化完了");
+                Debug.Log($"  ObjectType: {MyData.MyObjectType}");
+                Debug.Log($"  MagnetType: {MyData.MyMangetType}");
+                Debug.Log($"  MagnetPower: {MyData.MyMagnetPower}");
+                Debug.Log($"  GameObject.layer: {gameObject.layer}");
+                Debug.Log($"  GameObject.tag: {gameObject.tag}");
             }
             else
             {
-                Debug.LogError($"[ObstaclesObjectController] {name} 初期化失敗 - MyDataがnullです。Inspectorで設定を確認してください。");
+                Debug.LogError($"[ObstaclesObjectController] {name} 初期化失敗 - MyDataがnullです");
             }
         }
 
@@ -75,9 +99,51 @@ namespace Game.StageScene
 
             if (_rigidbody == null) return;
 
-            // Boot起動中かどうかで処理を分岐
-            if (magnetManager != null && magnetManager.IsMagnetBoot)
+            // ===== MagnetManagerが途中でnullになった場合の自動再取得 =====
+            if (magnetManager == null)
             {
+                magnetManager = FindObjectOfType<MagnetManager>();
+                if (magnetManager != null)
+                {
+                    Debug.LogWarning($"[ObstaclesObjectController] {name} で MagnetManager を再取得しました");
+                }
+                else
+                {
+                    return; // magnetManagerがない場合は処理を中断
+                }
+            }
+
+            // ===== デバッグログ：Bキー押下時の状態確認 =====
+            if (Input.GetKeyDown(KeyCode.B))
+            {
+                Debug.Log($"========== Bキー押下 [{name}] ==========");
+                Debug.Log($"  magnetManager: {(magnetManager != null ? "存在" : "null")}");
+                if (magnetManager != null)
+                {
+                    Debug.Log($"  IsMagnetBoot: {magnetManager.IsMagnetBoot}");
+                }
+                Debug.Log($"  MyData: {(MyData != null ? "存在" : "null")}");
+                if (MyData != null)
+                {
+                    Debug.Log($"    ObjectType: {MyData.MyObjectType}");
+                    Debug.Log($"    MagnetType: {MyData.MyMangetType}");
+                    Debug.Log($"    MagnetPower: {MyData.MyMagnetPower}");
+                }
+                Debug.Log($"  magnetController: {(magnetController != null ? "存在" : "null")}");
+                Debug.Log($"  Rigidbody.isKinematic: {_rigidbody.isKinematic}");
+                Debug.Log($"  GameObject.layer: {gameObject.layer}");
+                Debug.Log($"=======================================");
+            }
+
+            // Boot起動中かどうかで処理を分岐
+            if (magnetManager.IsMagnetBoot)
+            {
+                // ===== デバッグログ：磁力モード中 =====
+                if (Time.frameCount % 60 == 0) // 60フレームに1回（約1秒に1回）
+                {
+                    Debug.Log($"[{name}] 磁力モード起動中 - velocity: {_rigidbody.velocity}");
+                }
+
                 // Boot起動中：磁力で動く
                 HandleMagneticMovement();
             }
@@ -168,6 +234,7 @@ namespace Game.StageScene
 
             // 押されたら動かなくする
             _canMove = false;
+            Debug.Log($"[ObstaclesObjectController] {name} が {collision.gameObject.name} と衝突 - 動作停止");
         }
 
         /// <summary>
@@ -186,6 +253,7 @@ namespace Game.StageScene
 
             // 離れたら再び動けるようにする
             _canMove = true;
+            Debug.Log($"[ObstaclesObjectController] {name} が {collision.gameObject.name} から離脱 - 動作再開");
         }
 
         /// <summary>

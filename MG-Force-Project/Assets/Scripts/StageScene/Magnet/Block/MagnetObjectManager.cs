@@ -39,38 +39,50 @@ namespace Game.StageScene.Magnet
         /// </summary>
         protected virtual void Start()
         {
-            input = InputHandler.Instance;
-
-            // MagnetManager が Inspector に設定されていない場合は Find で取得
-            if (magnetManager == null)
+            try
             {
-                var obj = GameObject.Find(GameConstants.MAGNET_MANAGER_OBJ);
-                if (obj != null)
+                // 入力ハンドラ取得（nullでも例外出さない）
+                input = InputHandler.Instance;
+
+                // MagnetManager が Inspector に設定されていない場合は Find で取得
+                if (magnetManager == null)
                 {
-                    magnetManager = obj.GetComponent<MagnetManager>();
-                    if (magnetManager == null)
-                        Debug.LogError("MagnetManager コンポーネントが見つかりません");
+                    var obj = GameObject.Find(GameConstants.MAGNET_MANAGER_OBJ);
+                    if (obj != null)
+                    {
+                        magnetManager = obj.GetComponent<MagnetManager>();
+                        if (magnetManager == null)
+                            Debug.LogError("MagnetManager コンポーネントが見つかりません");
+                    }
+                    else
+                    {
+                        Debug.LogError($"MagnetManager オブジェクトがシーンに存在しません: {GameConstants.MAGNET_MANAGER_OBJ}");
+                    }
+                }
+
+                // 磁力動作制御用クラスを生成
+                magnetController = new MagnetController();
+
+                // 必ず MyData を生成する
+                string new_object_type = gameObject.tag;
+
+                if (magnetFixed)
+                {
+                    MagnetData.MagnetType new_magnet_type = (MagnetData.MagnetType)gameObject.layer;
+                    MyData = new MagnetData(new_object_type, new_magnet_type, magnetFixedPower);
                 }
                 else
                 {
-                    Debug.LogError($"MagnetManager オブジェクトがシーンに存在しません: {GameConstants.MAGNET_MANAGER_OBJ}");
-                    return;
+                    MyData = new MagnetData(new_object_type);
                 }
             }
-
-            // 磁力動作制御用クラスを生成
-            magnetController = new MagnetController();
-
-            if (magnetFixed)
+            catch (System.Exception e)
             {
-                string new_object_type = gameObject.tag; // タグからオブジェクト種別を取得
-                MagnetData.MagnetType new_magnet_type = (MagnetData.MagnetType)gameObject.layer; // レイヤーから磁極を取得
-                MyData = new MagnetData(new_object_type, new_magnet_type, magnetFixedPower);
-            }
-            else
-            {
-                string new_object_type = gameObject.tag;
-                MyData = new MagnetData(new_object_type);
+                Debug.LogError($"MagnetObjectManager.Start() 中に例外発生: {e}");
+
+                // 落ちても MyData は絶対 null にしない
+                if (MyData == null)
+                    MyData = new MagnetData(gameObject.tag);
             }
         }
 
@@ -80,32 +92,31 @@ namespace Game.StageScene.Magnet
         /// </summary>
         protected virtual void Update()
         {
+            // Collider は常に安全に扱う
             if (_magnetCollider != null)
-            {
                 _magnetCollider.SetActive(true);
-            }
 
-            if (magnetManager == null) return;
+            // MagnetManager がいない → 処理中断（NRE防止）
+            if (magnetManager == null)
+                return;
 
             // MagnetManager から磁力起動状態を確認
             if (magnetManager.IsMagnetBoot)
             {
                 if (_magnetCollider != null && !_magnetCollider.activeSelf)
-                {
                     _magnetCollider.SetActive(true);
-                }
+
                 return;
             }
 
-            // MagnetBootがOFFになった場合は磁力判定を無効化
+            // MagnetBoot が OFF の場合 → 判定コライダー切る
             if (_magnetCollider != null && _magnetCollider.activeSelf)
-            {
                 _magnetCollider.SetActive(false);
-            }
 
             if (magnetFixed) return;
 
-            if (input.IsActionPressed(InputConstants.Action.RESET))
+            // input が null でも落ちないようにする
+            if (input != null && input.IsActionPressed(InputConstants.Action.RESET))
             {
                 ResetMagnet();
             }
@@ -117,6 +128,9 @@ namespace Game.StageScene.Magnet
         /// </summary>
         private void ResetMagnet()
         {
+            if (MyData == null)
+                MyData = new MagnetData(gameObject.tag);
+
             MagnetData.MagnetType reset_type = MagnetData.MagnetType.NotType;
             MagnetData.MagnetPower reset_power = MagnetData.MagnetPower.None;
 
@@ -140,15 +154,18 @@ namespace Game.StageScene.Magnet
         protected virtual void OnTriggerEnter(Collider other)
         {
             if (magnetFixed) return;
+            if (MyData == null) return; // 追加：念のため安全化
 
             if (other.gameObject.layer == (int)GameConstants.Layer.BULLET && magnetManager != null)
             {
                 gameObject.layer = (int)magnetManager.CurrentType;
+
                 MagnetData.MagnetType new_magnet_type = (MagnetData.MagnetType)gameObject.layer;
                 MagnetData.MagnetPower new_magnet_power = (MagnetData.MagnetPower)magnetManager.CurrentPower;
+
                 MyData.SetMagnetData(new_magnet_type, new_magnet_power);
 
-                DebugManager.LogMessage(MyData.MyMangetType.ToString() + " | " + MyData.MyMagnetPower.ToString());
+                DebugManager.LogMessage($"{MyData.MyMangetType} | {MyData.MyMagnetPower}");
             }
         }
 
@@ -160,14 +177,11 @@ namespace Game.StageScene.Magnet
             switch (power)
             {
                 case (int)MagnetData.MagnetPower.Weak:
-                    magnetFixedPower = MagnetData.MagnetPower.Weak;
-                    break;
+                    magnetFixedPower = MagnetData.MagnetPower.Weak; break;
                 case (int)MagnetData.MagnetPower.Medium:
-                    magnetFixedPower = MagnetData.MagnetPower.Medium;
-                    break;
+                    magnetFixedPower = MagnetData.MagnetPower.Medium; break;
                 case (int)MagnetData.MagnetPower.Strong:
-                    magnetFixedPower = MagnetData.MagnetPower.Strong;
-                    break;
+                    magnetFixedPower = MagnetData.MagnetPower.Strong; break;
             }
         }
     }

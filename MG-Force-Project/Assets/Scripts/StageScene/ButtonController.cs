@@ -75,7 +75,7 @@ namespace Game.StageScene
             if (collider.CompareTag(GameConstants.Tag.UNTAGGED)) return;
 
             // デバッグで何が乗っているか確認
-            Debug.LogWarning(collider.gameObject.tag);
+            // Debug.LogWarning(collider.gameObject.tag);
 
             // プレイヤー と Moving ブロックのときボタンを押す
             if (collider.gameObject.CompareTag(GameConstants.Tag.MOVING) ||
