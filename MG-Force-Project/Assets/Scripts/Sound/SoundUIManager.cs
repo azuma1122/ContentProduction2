@@ -1,9 +1,10 @@
 using UnityEngine;
+using UnityEngine.Audio;
 using UnityEngine.UI;
 
 namespace Game
-{ 
-    public class SoundUIManager : MonoBehaviour 
+{
+    public class SoundUIManager : MonoBehaviour
     {
         // 整数倍
         private const float INTEGER_TIMES = 4;
@@ -38,23 +39,58 @@ namespace Game
         // UIスプライト
         [SerializeField] private Sprite[] _volumeUI = new Sprite[(int)VolumeUI.MAX_SIZE];
 
-        /// <summary>
-        /// 更新処理
-        /// </summary>
-        private void Update()
+        [SerializeField] private Slider BGMSlider;
+        [SerializeField] private Slider SESlider;
+
+
+        private void Awake()
+        {
+
+            if (!BGMManager.instance)
+            {
+                Debug.LogWarning("BGMManagerのシングルトンなし");
+                return;
+            }
+          
+        }
+        private void Start()
         {
             if (_bgmAudioSource == null)
             {
-                _bgmAudioSource = GameObject.Find(GameConstants.Object.BGM_MANAGER).GetComponent<AudioSource>();
+
+                _bgmAudioSource = BGMManager.instance.GetAudioSource();
+                Debug.Log(_bgmAudioSource.name);
+
+                BGMManager.instance.LoadVolumeSettings();
+
             }
 
             if (_seAudioSource == null)
             {
                 _seAudioSource = GameObject.Find(GameConstants.Object.SE_MANAGER).GetComponent<AudioSource>();
             }
+            if (BGMSlider == null) return;
+
+            // BGMManagerから現在の音量を取得してスライダーに反映
+            BGMSlider.value = BGMManager.instance.VolumeChange(_bgmAudioSource.volume);
+
+            // スライダーの値が変わったらBGMManagerに反映
+            BGMSlider.onValueChanged.AddListener((value) =>
+            {
+                if (BGMManager.instance != null)
+                {
+                    BGMManager.instance.VolumeChange(value);
+                }
+            });
+        }
+        /// <summary>
+        /// 更新処理
+        /// </summary>
+        private void Update()
+        {
+
 
             BGMUIUpdate();
-
             SEUIUpdate();
         }
 
@@ -63,15 +99,16 @@ namespace Game
         /// </summary>
         private void BGMUIUpdate()
         {
+            if (!_bgmAudioSource) return;
             if (_bgmAudioSource.mute)
             {
                 _bgmVolume.sprite = _volumeUI[(int)VolumeUI.MIN];
                 return;
             }
-
             switch (CheckCurrentVolume(_bgmAudioSource.volume))
             {
                 case VolumeUI.MIN:
+
                     _bgmVolume.sprite = _volumeUI[(int)VolumeUI.MIN];
                     break;
 
@@ -94,6 +131,7 @@ namespace Game
         /// </summary>
         private void SEUIUpdate()
         {
+            if (!_seAudioSource) return;
             if (_seAudioSource.mute)
             {
                 _seVoluem.sprite = _volumeUI[(int)VolumeUI.MIN];
@@ -137,5 +175,9 @@ namespace Game
 
             else return VolumeUI.LOUD;
         }
+
+
     }
+
+
 }

@@ -19,15 +19,17 @@ namespace Game
             MAX_BGM,
         }
 
-        // 音源を流すAudioSouurce
+        private const string BGM_PREF_KEY = "BGM_VOLUME";
+        private const string SE_PREF_KEY = "SE_VOLUME";
+
         private AudioSource _audioSource;
 
-        // 流す音源
+        public AudioSource GetAudioSource() { return _audioSource; }
+
         [SerializeField] private AudioClip[] _audioClips = new AudioClip[(int)BGM.MAX_BGM];
 
         private InputHandler _inputHandler;
 
-        // 対応するBGMマッピング用の辞書
         private static readonly Dictionary<int, BGM> _sceneBGM = new Dictionary<int, BGM>
         {
             {(int)GameConstants.Scene.Title, BGM.TITLE },
@@ -40,9 +42,7 @@ namespace Game
             {(int)GameConstants.Scene.Credits, BGM.CREDITS },
         };
 
-        #region -------- シングルトンの設定 --------
-
-        private static BGMManager instance;
+        public static BGMManager instance;
 
         private void Awake()
         {
@@ -50,91 +50,66 @@ namespace Game
             {
                 instance = this;
 
-                // 破棄されないようにする
                 DontDestroyOnLoad(gameObject);
 
                 _audioSource = GetComponent<AudioSource>();
+                if (_audioSource == null)
+                    _audioSource = gameObject.AddComponent<AudioSource>();
+
+                Debug.LogWarning(_audioSource.ToString());
 
                 _inputHandler = InputHandler.Instance;
 
                 return;
             }
-            else
+            else if (instance != this)
             {
                 Destroy(gameObject);
+                Debug.LogWarning("シングルトン削除");
+                return;
             }
         }
 
-        #endregion
-
-        #region -------- イベント処理 --------
-
-        /// <summary>
-        /// シーンを読み込んだ時のイベント追加
-        /// </summary>
         private void OnEnable()
         {
             SceneManager.sceneLoaded += OnSceneLoaded;
         }
 
-        /// <summary>
-        /// シーンを読み込んだ時のイベント
-        /// </summary>
-        /// <param name="scene"></param>
-        /// <param name="mode"></param>
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
-            PlayBGM();  // 再生
+            PlayBGM();
         }
 
-        /// <summary>
-        /// シーンを読み込んだ時のイベントの削除
-        /// </summary>
         private void OnDisable()
         {
             SceneManager.sceneLoaded -= OnSceneLoaded;
         }
-
-        #endregion
 
         private void Start()
         {
             PlayBGM();
         }
 
-        /// <summary>
-        /// BGMの再生処理
-        /// </summary>
         private void PlayBGM()
         {
-            // 現在のシーン取得
             Scene scene = SceneManager.GetActiveScene();
 
-            // BGMのセット
             _audioSource.clip = SetBGM(scene.buildIndex);
 
-            // nullチェック
             if (_audioSource.clip != null)
             {
-                _audioSource.Play();  // 再生
+                _audioSource.Play();
             }
             else
             {
-                // エラー表示(Debug用)
                 DebugManager.LogMessage($"{scene.name}のBGMが再生できませんでした", DebugManager.MessageType.Error);
             }
         }
 
-        /// <summary>
-        /// BGMのセット
-        /// </summary>
-        /// <param name="scene_index"></param>
-        /// <returns></returns>
         private AudioClip SetBGM(int scene_index)
         {
             if (_sceneBGM.TryGetValue(scene_index, out BGM set_clip))
             {
-                // 範囲外チェック
                 if (set_clip >= BGM.MAX_BGM) return null;
 
                 return _audioClips[(int)set_clip];
@@ -152,6 +127,8 @@ namespace Game
             if (volume != _audioSource.volume)
             {
                 _audioSource.volume = volume;
+                PlayerPrefs.SetFloat(BGM_PREF_KEY, volume);
+                PlayerPrefs.Save();
             }
             else if (_inputHandler.IsActionPressing(InputConstants.Action.MENU_LEFT_SELECT) &&
                 _audioSource.volume != MIN_VOLUME)
@@ -165,6 +142,21 @@ namespace Game
             }
 
             return _audioSource.volume;
+        }
+
+        public void LoadVolumeSettings()
+        {
+            if (PlayerPrefs.HasKey(BGM_PREF_KEY))
+            {
+                float bgmVolume = PlayerPrefs.GetFloat(BGM_PREF_KEY);
+                VolumeChange(bgmVolume);
+            }
+
+            if (PlayerPrefs.HasKey(SE_PREF_KEY))
+            {
+                float seVolume = PlayerPrefs.GetFloat(SE_PREF_KEY);
+                VolumeChange(seVolume);
+            }
         }
     }
 }
