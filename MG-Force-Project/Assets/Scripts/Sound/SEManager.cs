@@ -217,7 +217,7 @@ namespace Game
         /// <param name="clip_index"></param>
         public void PlaySE(Stage clip_index)
         {
-            AudioClip set_clip = _PlayerClips[(int)clip_index];
+            AudioClip set_clip = _StageClips[(int)clip_index];
 
             _audioSource.PlayOneShot(set_clip);  // çƒê∂
         }
@@ -228,7 +228,7 @@ namespace Game
         /// <param name="clip_index"></param>
         public void PlaySE(Obstacle clip_index)
         {
-            AudioClip set_clip = _PlayerClips[(int)clip_index];
+            AudioClip set_clip = _ObstacleClips[(int)clip_index];
 
             _audioSource.PlayOneShot(set_clip);  // çƒê∂
         }
@@ -239,7 +239,7 @@ namespace Game
         /// <param name="clip_index"></param>
         public void PlaySE(Magnet clip_index)
         {
-            AudioClip set_clip = _PlayerClips[(int)clip_index];
+            AudioClip set_clip = _MagnetClips[(int)clip_index];
 
             _audioSource.PlayOneShot(set_clip);  // çƒê∂
         }
@@ -250,7 +250,7 @@ namespace Game
         /// <param name="clip_index"></param>
         public void PlaySE(Bullet clip_index)
         {
-            AudioClip set_clip = _PlayerClips[(int)clip_index];
+            AudioClip set_clip = _BulletClips[(int)clip_index];
 
             _audioSource.PlayOneShot(set_clip);  // çƒê∂
         }

@@ -85,6 +85,12 @@ namespace Game.StageScene.Magnet
             // === 射撃処理 ===
             if (_canShooting)
             {
+                //SE弾射撃はこの一行（必要時にコメントアウト(
+
+                SEManager.instance.PlaySE(SEManager.Bullet.BULLET_SHOT);
+                //ここまで
+
+
                 ShootBullet();
                 _playerState.ForceSetState(State.STILLNESS);
                 return;
@@ -98,9 +104,14 @@ namespace Game.StageScene.Magnet
                     // チャージ開始
                     _isCharging = true;
                     _currentPower = 0f;
-
                     _chargeGageObj.SetActive(true);
                     _powerEffectObj.SetActive(true);
+
+                    //SE弾発射チャージ中はこの一行（必要時にコメントアウト（チャージのSEの音源長すぎるかも？弾射撃と合わせて要検証）
+
+                    SEManager.instance.PlaySE(SEManager.Bullet.BULLET_CHARGE);
+                    //ここまで
+
                     _playerState.AddState(State.SHOOT);
                 }
 
