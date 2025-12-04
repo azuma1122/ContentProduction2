@@ -326,7 +326,14 @@ namespace Game.StageScene.Player
             else if (isGrounded && HasState(State.JUMP))
             {
                 RemoveState(State.JUMP);
+
                 Debug.Log("[PlayerStateController] 着地でジャンプ解除");
+
+                //SEプレイヤー着地中はこの一行（必要時にコメントアウト)
+
+                SEManager.instance.PlaySE(SEManager.Player.PLAYER_LAND);
+
+                //ここまで
 
                 // 走行中でなければ静止状態にする
                 if (!HasState(State.RUN))
