@@ -269,6 +269,8 @@ namespace Game.Title
             {
                 case (int)GameMenu.CONFIG:
                     SetStep(TitleStep.CONFIG_MENU);
+                    Button configButton = _gameMenu[(int)TitleStep.CONFIG_MENU].gameObject.GetComponent<Button>();
+                    configButton.onClick.AddListener(() =>SEManager.instance.PlaySE(SEManager.Menu.DECISION));  
                     break;
 
                 case (int)GameMenu.START:

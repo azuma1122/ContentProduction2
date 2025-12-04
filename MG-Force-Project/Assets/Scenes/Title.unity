@@ -4692,8 +4692,31 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c0410df51c6bed945b31294f9bc3a0f4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _menuClips: []
-  _ActionClips: []
+  _menuClips:
+  - {fileID: 8300000, guid: c834119367f0a9f49a942e20df63b4dd, type: 3}
+  - {fileID: 8300000, guid: 193aab5dd97fc9e488805d7ee8346a66, type: 3}
+  - {fileID: 8300000, guid: be5c259587f05bd46a07bec9cf43c6af, type: 3}
+  _PlayerClips:
+  - {fileID: 0}
+  - {fileID: 8300000, guid: 2d1c526d0eacbdd41959348b032c7375, type: 3}
+  - {fileID: 8300000, guid: 938181aca12e77040944eb950f519f1b, type: 3}
+  _StageClips:
+  - {fileID: 8300000, guid: 2b52c52b23def3749a1887b94faa1722, type: 3}
+  - {fileID: 0}
+  - {fileID: 8300000, guid: 58b3e4b6ac8c7414ba3015e11570492a, type: 3}
+  - {fileID: 8300000, guid: 2e626d181c1e0044aa73bee7453d0582, type: 3}
+  _BulletClips:
+  - {fileID: 8300000, guid: 153600940eeab2441bf8061e8d92601c, type: 3}
+  - {fileID: 8300000, guid: c222de23afb8bef4d94e205c2b98b05f, type: 3}
+  - {fileID: 8300000, guid: 927fcf174a8558e4db9a95feb15843f8, type: 3}
+  - {fileID: 0}
+  _MagnetClips:
+  - {fileID: 8300000, guid: 24148ad46b95b394a9986f696602c7f8, type: 3}
+  - {fileID: 8300000, guid: 46f19be487cd1724ca2de14c51606153, type: 3}
+  _ObstacleClips:
+  - {fileID: 8300000, guid: 3f7ea735852eb12489e521c140a78e61, type: 3}
+  - {fileID: 8300000, guid: 3fe7d3a79ef50a94d9b9aa5fbb16f76b, type: 3}
+  _audioSource: {fileID: 0}
 --- !u!82 &976967747
 AudioSource:
   m_ObjectHideFlags: 0
