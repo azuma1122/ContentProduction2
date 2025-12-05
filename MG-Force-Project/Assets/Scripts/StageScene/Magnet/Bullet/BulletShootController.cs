@@ -12,6 +12,7 @@ namespace Game.StageScene.Magnet
     /// - チャージに応じた射撃エフェクトとUI連動
     /// - 磁力モード中は射撃不可
     /// - 弾が衝突すると、現在の磁極に応じたPrefab（N/Sブロック）を生成
+    /// - チャージレベルに応じてMovingブロックの磁力付与可能範囲を変更
     /// </summary>
     public class BulletShootController : MonoBehaviour
     {
@@ -25,6 +26,7 @@ namespace Game.StageScene.Magnet
         // ======= 外部アクセス用プロパティ =======
         public bool IsCharging => _isCharging;
         public bool IsShooting => _canShooting;
+        public float CurrentChargePower => _currentPower; // チャージ量を外部から取得可能に
 
         // ======= コンポーネント参照 =======
         private InputHandler _inputHandler;
@@ -139,9 +141,12 @@ namespace Game.StageScene.Magnet
             if (rb != null)
                 rb.velocity = targetDirection * bulletSpeed;
 
-            // 弾に衝突処理を付与
-            var bulletCollision = gb.AddComponent<BulletCollisionHandler>();
-            bulletCollision.Initialize(_uiManager, fixedNBlockPrefab, fixedSBlockPrefab);
+            // BulletControllerにチャージパワーを渡す
+            var bulletController = gb.GetComponent<BulletController>();
+            if (bulletController != null)
+            {
+                bulletController.SetChargePower(_currentPower);
+            }
 
             // 射撃後処理
             _canShooting = false;

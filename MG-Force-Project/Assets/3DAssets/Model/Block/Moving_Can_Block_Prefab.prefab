@@ -53,7 +53,7 @@ BoxCollider:
   m_Enabled: 1
   serializedVersion: 3
   m_Size: {x: 1, y: 20, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
+  m_Center: {x: -0.08, y: 0, z: 0}
 --- !u!65 &303622687684244038
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -260,3 +260,5 @@ MonoBehaviour:
   _magnetCollider: {fileID: 0}
   magnetFixed: 0
   magnetFixedPower: 0
+  isFixedMagnet: 1
+  fixedPower: 1

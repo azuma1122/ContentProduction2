@@ -231,8 +231,8 @@ Rigidbody:
     m_Bits: 0
   m_ImplicitCom: 1
   m_ImplicitTensor: 1
-  m_UseGravity: 1
-  m_IsKinematic: 1
+  m_UseGravity: 0
+  m_IsKinematic: 0
   m_Interpolate: 0
   m_Constraints: 120
   m_CollisionDetection: 2
@@ -268,6 +268,8 @@ MonoBehaviour:
   _magnetCollider: {fileID: 0}
   magnetFixed: 0
   magnetFixedPower: 0
+  isFixedMagnet: 1
+  fixedPower: 1
 --- !u!114 &3842585988178089103
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -280,7 +282,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 30d73f5bae3bbb649b1774965098094a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  isBootActive: 0
   poleType: 0
   magneticForce: 10
   magneticRange: 3
