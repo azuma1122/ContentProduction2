@@ -97,6 +97,10 @@ namespace Game.StageScene.Magnet
         {
             _direction = (_targetPos - transform.position).normalized * _bulletSpeed;
             _rigidbody.AddForce(_direction, ForceMode.Impulse);
+            //SEプレイヤージャンプはこの一行（必要時にコメントアウト
+            SEManager.instance.PlaySE(SEManager.Bullet.BULLET_MOVE);
+
+            //ここまで
         }
 
         /// <summary>
