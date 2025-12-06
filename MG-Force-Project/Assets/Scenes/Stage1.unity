@@ -603,7 +603,7 @@ PrefabInstance:
     - target: {fileID: 9003840554618891985, guid: 98b11e885af74e44481581efe31dffcc,
         type: 3}
       propertyPath: m_text
-      value: "\u30EA\u30BB\u30C3\u30C8"
+      value: "\u30B9\u30C6\u30FC\u30B8\u306E\u30EA\u30BB\u30C3\u30C8"
       objectReference: {fileID: 0}
     - target: {fileID: 9003840554618891985, guid: 98b11e885af74e44481581efe31dffcc,
         type: 3}
@@ -904,7 +904,7 @@ RectTransform:
   m_Father: {fileID: 3299077}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 10, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -980,8 +980,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 85, y: 43}
-  m_SizeDelta: {x: 413.3139, y: 50}
+  m_AnchoredPosition: {x: 58, y: 43}
+  m_SizeDelta: {x: 472, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &255835851
 MonoBehaviour:
@@ -1193,7 +1193,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &445053184
 Transform:
   m_ObjectHideFlags: 0
@@ -2554,8 +2554,8 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 79191056}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 1, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 20, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -2947,7 +2947,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 35.5, y: -27}
-  m_SizeDelta: {x: 100, y: 100}
+  m_SizeDelta: {x: 112, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1160577612
 MonoBehaviour:
@@ -3859,8 +3859,8 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1829793957}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 1, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 20, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -4749,7 +4749,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1801445622
 Transform:
   m_ObjectHideFlags: 0
@@ -5110,7 +5110,7 @@ PrefabInstance:
         type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
-      objectReference: {fileID: 155983880}
+      objectReference: {fileID: 2067018945}
     - target: {fileID: 5822482458810644583, guid: 98b11e885af74e44481581efe31dffcc,
         type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
@@ -5119,12 +5119,12 @@ PrefabInstance:
     - target: {fileID: 5822482458810644583, guid: 98b11e885af74e44481581efe31dffcc,
         type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
-      value: ToggleConfigMenu
+      value: ShowTitleConfirm
       objectReference: {fileID: 0}
     - target: {fileID: 5822482458810644583, guid: 98b11e885af74e44481581efe31dffcc,
         type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
-      value: GlobalUIManager, Assembly-CSharp
+      value: Game.Stage.StageConfigMenuController, Assembly-CSharp
       objectReference: {fileID: 0}
     - target: {fileID: 5822482458810644583, guid: 98b11e885af74e44481581efe31dffcc,
         type: 3}
@@ -5139,7 +5139,7 @@ PrefabInstance:
     - target: {fileID: 9003840554618891985, guid: 98b11e885af74e44481581efe31dffcc,
         type: 3}
       propertyPath: m_text
-      value: "\u623B\u308B"
+      value: "\u30BF\u30A4\u30C8\u30EB\u306B\u623B\u308B"
       objectReference: {fileID: 0}
     - target: {fileID: 9003840554618891985, guid: 98b11e885af74e44481581efe31dffcc,
         type: 3}
@@ -5196,7 +5196,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 1240, y: 960}
+  m_SizeDelta: {x: 1800, y: 960}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2001513548
 MonoBehaviour:
@@ -5544,7 +5544,7 @@ RectTransform:
   m_Father: {fileID: 188356929}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 10, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
