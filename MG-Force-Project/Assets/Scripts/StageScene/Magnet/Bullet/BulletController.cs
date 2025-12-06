@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+using Game.GameSystem;
+using UnityEngine;
 
 namespace Game.StageScene.Magnet
 {
@@ -74,6 +75,9 @@ namespace Game.StageScene.Magnet
 
         private void Update()
         {
+            // ★★★ ポーズ中は時間経過をカウントしない ★★★
+            // Time.timeScale = 0 の時は Time.deltaTime も 0 になるため、
+            // 自動的にタイマーが進まなくなります
             _timer += Time.deltaTime;
             if (_timer > LIFE_TIME)
             {
@@ -98,10 +102,8 @@ namespace Game.StageScene.Magnet
             _direction = (_targetPos - transform.position).normalized * _bulletSpeed;
             _rigidbody.AddForce(_direction, ForceMode.Impulse);
 
-            //SE弾発射移動中はこの一行（必要時にコメントアウト
+            // SE弾発射移動中
             SEManager.instance.PlaySE(SEManager.Bullet.BULLET_MOVE);
-
-            //ここまで
         }
 
         /// <summary>
@@ -109,6 +111,10 @@ namespace Game.StageScene.Magnet
         /// </summary>
         private void OnTriggerEnter(Collider other)
         {
+            // ★★★ ポーズ中は衝突判定を行わない ★★★
+            if (GlobalUIManager.Instance != null && GlobalUIManager.Instance.IsPaused)
+                return;
+
             // Fixed_Not_Block_Prefab(Clone)に当ったら消去
             if (other.gameObject.name == "Fixed_Not_Block_Prefab(Clone)")
             {
@@ -126,7 +132,7 @@ namespace Game.StageScene.Magnet
                     ReplaceBlock(other.gameObject, prefabToSpawn);
                 }
 
-                Destroy(gameObject); // 弾を削除
+                Destroy(gameObject);
             }
             // Moving系ブロックに当たった場合（チャージレベル判定追加）
             else if (other.CompareTag(MOVING_TAG) || other.gameObject.name.Contains("Moving"))
@@ -222,7 +228,7 @@ namespace Game.StageScene.Magnet
         }
 
         /// <summary>
-        /// 対象ブロックをPrefabに置き換える（何度でも切り替え可能）
+        /// 対象ブロックをPrefabに置き換える
         /// </summary>
         private void ReplaceBlock(GameObject oldObj, GameObject newPrefab)
         {
