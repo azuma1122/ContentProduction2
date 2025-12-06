@@ -26,7 +26,7 @@ namespace Game.StageScene.Magnet
         // ======= 外部アクセス用プロパティ =======
         public bool IsCharging => _isCharging;
         public bool IsShooting => _canShooting;
-        public float CurrentChargePower => _currentPower; // チャージ量を外部から取得可能に
+        public float CurrentChargePower => _currentPower;
 
         // ======= コンポーネント参照 =======
         private InputHandler _inputHandler;
@@ -37,20 +37,20 @@ namespace Game.StageScene.Magnet
 
         // ======= UI・エフェクト関連 =======
         [Header("=== UI & エフェクト ===")]
-        [SerializeField] private GameObject _chargeGageObj;   // チャージUI親
-        [SerializeField] private Image _chargeGage;           // チャージゲージ
-        [SerializeField] private GameObject _powerEffectObj;  // チャージ中エフェクト
+        [SerializeField] private GameObject _chargeGageObj;
+        [SerializeField] private Image _chargeGage;
+        [SerializeField] private GameObject _powerEffectObj;
         private ParticleSystem _particleSystem;
-        private Image _bulletGage;                            // エネルギーゲージUI
+        private Image _bulletGage;
 
         // ======= 弾関係 =======
         [Header("=== 弾関連 ===")]
-        [SerializeField] private GameObject bulletPrefab;     // 発射弾
-        [SerializeField] private float bulletSpeed = 20f;     // 弾速
+        [SerializeField] private GameObject bulletPrefab;
+        [SerializeField] private float bulletSpeed = 20f;
 
         [Header("=== ブロックPrefab ===")]
-        [SerializeField] private GameObject fixedNBlockPrefab; // N極ブロック
-        [SerializeField] private GameObject fixedSBlockPrefab; // S極ブロック
+        [SerializeField] private GameObject fixedNBlockPrefab;
+        [SerializeField] private GameObject fixedSBlockPrefab;
 
         private void Start()
         {
@@ -72,6 +72,17 @@ namespace Game.StageScene.Magnet
 
         private void Update()
         {
+            // ★★★ ポーズ中は入力を一切受け付けない ★★★
+            if (GlobalUIManager.Instance != null && GlobalUIManager.Instance.IsPaused)
+            {
+                // ポーズ中にチャージ状態だった場合はリセット
+                if (_isCharging)
+                {
+                    ResetCharge();
+                }
+                return;
+            }
+
             // === チャージUIが常にカメラを向くようにする ===
             if (_chargeGageObj.activeSelf && _mainCamera != null)
             {
@@ -87,12 +98,7 @@ namespace Game.StageScene.Magnet
             // === 射撃処理 ===
             if (_canShooting)
             {
-                //SE弾射撃はこの一行（必要時にコメントアウト(
-
                 SEManager.instance.PlaySE(SEManager.Bullet.BULLET_SHOT);
-                //ここまで
-
-
                 ShootBullet();
                 _playerState.ForceSetState(State.STILLNESS);
                 return;
@@ -109,11 +115,7 @@ namespace Game.StageScene.Magnet
                     _chargeGageObj.SetActive(true);
                     _powerEffectObj.SetActive(true);
 
-                    //SE弾発射チャージ中はこの一行（必要時にコメントアウト（チャージのSEの音源長すぎるかも？弾射撃と合わせて要検証）
-
                     SEManager.instance.PlaySE(SEManager.Bullet.BULLET_CHARGE);
-                    //ここまで
-
                     _playerState.AddState(State.SHOOT);
                 }
 
@@ -126,6 +128,24 @@ namespace Game.StageScene.Magnet
                 _isCharging = false;
                 _chargeGageObj.SetActive(false);
                 _canShooting = true;
+            }
+        }
+
+        /// <summary>
+        /// チャージ状態をリセット（ポーズ時などに使用）
+        /// </summary>
+        private void ResetCharge()
+        {
+            _isCharging = false;
+            _canShooting = false;
+            _currentPower = 0f;
+            _chargeGageObj.SetActive(false);
+            _powerEffectObj.SetActive(false);
+
+            // プレイヤーステートもリセット
+            if (_playerState != null)
+            {
+                _playerState.RemoveState(State.SHOOT);
             }
         }
 
@@ -162,7 +182,7 @@ namespace Game.StageScene.Magnet
             // 射撃後処理
             _canShooting = false;
             _powerEffectObj.SetActive(false);
-            _bulletGage.fillAmount -= 0.1f; // エネルギー消費
+            _bulletGage.fillAmount -= 0.1f;
         }
 
         /// <summary>

@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using Game.GameSystem;
+using UnityEngine;
 
 namespace Game.StageScene.Magnet
 {
@@ -21,9 +22,9 @@ namespace Game.StageScene.Magnet
         private const float LIFE_TIME = 12.0f;
 
         // チャージレベルの閾値
-        private const float CHARGE_LEVEL_1 = 0f;    // 緑(0-33%) → Moving_1対応
-        private const float CHARGE_LEVEL_2 = 33f;   // 黄(33-66%) → Moving_2対応
-        private const float CHARGE_LEVEL_3 = 66f;   // 赤(66-100%) → Moving_3対応
+        private const float CHARGE_LEVEL_1 = 0f;
+        private const float CHARGE_LEVEL_2 = 33f;
+        private const float CHARGE_LEVEL_3 = 66f;
 
         // ===== 参照 =====
         [Header("物理挙動用"), SerializeField] private Rigidbody _rigidbody = null;
@@ -74,6 +75,10 @@ namespace Game.StageScene.Magnet
 
         private void Update()
         {
+            // ★★★ ポーズ中は時間経過をカウントしない ★★★
+            // Time.timeScale = 0 の時は Time.deltaTime も 0 になるため、
+            // 自動的にタイマーが進まなくなります
+
             _timer += Time.deltaTime;
             if (_timer > LIFE_TIME)
             {
@@ -97,10 +102,7 @@ namespace Game.StageScene.Magnet
         {
             _direction = (_targetPos - transform.position).normalized * _bulletSpeed;
             _rigidbody.AddForce(_direction, ForceMode.Impulse);
-            //SEプレイヤージャンプはこの一行（必要時にコメントアウト
             SEManager.instance.PlaySE(SEManager.Bullet.BULLET_MOVE);
-
-            //ここまで
         }
 
         /// <summary>
@@ -108,6 +110,10 @@ namespace Game.StageScene.Magnet
         /// </summary>
         private void OnTriggerEnter(Collider other)
         {
+            // ★★★ ポーズ中は衝突判定を行わない ★★★
+            if (GlobalUIManager.Instance != null && GlobalUIManager.Instance.IsPaused)
+                return;
+
             // Fixed_Not_Block_Prefab(Clone)に当ったら消去
             if (other.gameObject.name == "Fixed_Not_Block_Prefab(Clone)")
             {
@@ -125,7 +131,7 @@ namespace Game.StageScene.Magnet
                     ReplaceBlock(other.gameObject, prefabToSpawn);
                 }
 
-                Destroy(gameObject); // 弾を削除
+                Destroy(gameObject);
             }
             // Moving系ブロックに当たった場合（チャージレベル判定追加）
             else if (other.CompareTag(MOVING_TAG) || other.gameObject.name.Contains("Moving"))
@@ -221,7 +227,7 @@ namespace Game.StageScene.Magnet
         }
 
         /// <summary>
-        /// 対象ブロックをPrefabに置き換える（何度でも切り替え可能）
+        /// 対象ブロックをPrefabに置き換える
         /// </summary>
         private void ReplaceBlock(GameObject oldObj, GameObject newPrefab)
         {
