@@ -208,6 +208,8 @@ namespace Game.Stage
         {
             _confirmCallback?.Invoke();
             CloseConfirmDialog();
+            //ƒŠƒgƒ‰ƒCŽž‚ÌSE
+            SEManager.instance.PlaySE(SEManager.Stage.STAGE_RETRY); 
         }
 
         /// <summary>
