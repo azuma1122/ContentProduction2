@@ -1,4 +1,4 @@
-﻿using Game.GameSystem;
+using Game.GameSystem;
 using UnityEngine;
 
 namespace Game.StageScene.Magnet
@@ -22,9 +22,9 @@ namespace Game.StageScene.Magnet
         private const float LIFE_TIME = 12.0f;
 
         // チャージレベルの閾値
-        private const float CHARGE_LEVEL_1 = 0f;
-        private const float CHARGE_LEVEL_2 = 33f;
-        private const float CHARGE_LEVEL_3 = 66f;
+        private const float CHARGE_LEVEL_1 = 0f;    // 緑(0-33%) → Moving_1対応
+        private const float CHARGE_LEVEL_2 = 33f;   // 黄(33-66%) → Moving_2対応
+        private const float CHARGE_LEVEL_3 = 66f;   // 赤(66-100%) → Moving_3対応
 
         // ===== 参照 =====
         [Header("物理挙動用"), SerializeField] private Rigidbody _rigidbody = null;
@@ -78,7 +78,6 @@ namespace Game.StageScene.Magnet
             // ★★★ ポーズ中は時間経過をカウントしない ★★★
             // Time.timeScale = 0 の時は Time.deltaTime も 0 になるため、
             // 自動的にタイマーが進まなくなります
-
             _timer += Time.deltaTime;
             if (_timer > LIFE_TIME)
             {
@@ -102,6 +101,8 @@ namespace Game.StageScene.Magnet
         {
             _direction = (_targetPos - transform.position).normalized * _bulletSpeed;
             _rigidbody.AddForce(_direction, ForceMode.Impulse);
+
+            // SE弾発射移動中
             SEManager.instance.PlaySE(SEManager.Bullet.BULLET_MOVE);
         }
 

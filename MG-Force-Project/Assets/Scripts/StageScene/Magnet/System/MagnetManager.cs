@@ -63,6 +63,8 @@ namespace Game.StageScene.Magnet
             if (Input.GetKeyDown(KeyCode.R) && !IsMagnetBoot)
             {
                 ChangeMagnetType();
+
+
             }
 
             // ------------------------------------------------
@@ -72,6 +74,26 @@ namespace Game.StageScene.Magnet
             if (_input.IsActionPressed(InputConstants.Action.MAGNET_BOOT))
             {
                 ChangeMagnetBoot();
+
+
+                //磁力起動しているかどうかでSEの音源を切り替えて鳴らす
+                if (IsMagnetBoot)
+                {
+                    //SE磁力起動時はこの一行（必要時にコメントアウト
+
+                    SEManager.instance.PlaySE(SEManager.Magnet.MAGNET_ACTIVATE);
+
+                    //ここまで
+                }
+                else
+                {
+                    //SE磁力リセットはこの一行（必要時にコメントアウト
+
+                    SEManager.instance.PlaySE(SEManager.Magnet.MAGNET_RESET);
+                    //ここまで
+
+                }
+
             }
         }
 
