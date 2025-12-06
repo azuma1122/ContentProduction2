@@ -55,11 +55,15 @@ namespace Game
         {
             if (_input.IsActionPressed(InputConstants.Action.MENU_DECISION))
             {
+                SEManager.instance.PlaySE(SEManager.Menu.DECISION);
+
                 DataEraseDecision((int)_currentButton);
             }
 
             if (_input.IsActionPressed(InputConstants.Action.MENU_LEFT_SELECT))
             {
+                SEManager.instance.PlaySE(SEManager.Menu.SELECT);
+
                 if (_currentButton == ButtonType.NONE)
                 {
                     _currentButton = ButtonType.NO;
@@ -71,6 +75,8 @@ namespace Game
             }
             else if (_input.IsActionPressed(InputConstants.Action.MENU_RIGHT_SELECT))
             {
+                SEManager.instance.PlaySE(SEManager.Menu.SELECT);
+
                 if (_currentButton == ButtonType.NONE)
                 {
                     _currentButton = ButtonType.NO;
