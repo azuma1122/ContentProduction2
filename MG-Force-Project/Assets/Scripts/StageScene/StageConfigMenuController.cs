@@ -222,6 +222,8 @@ namespace Game.Stage
             _isConfirmActive = false;
             _confirmDialogObject.SetActive(false);
             _confirmCallback = null;
+            SEManager.instance.PlaySE(SEManager.Menu.CANCEL);
+
         }
 
         #endregion
