@@ -9,6 +9,7 @@ namespace Game.StageScene.Magnet
     /// 固定された磁石ブロック
     /// - 自身は動かないが、範囲内の移動可能な磁石（MovingMagnetBlock）に磁力を加える
     /// - 弾による極性反転（TogglePolarity）やUI表示にも対応
+    /// - MagnetManagerのBoot状態に応じて磁力のオン・オフを制御
     /// </summary>
     public class FixedMagnetBlock : MonoBehaviour
     {
@@ -28,17 +29,90 @@ namespace Game.StageScene.Magnet
         [Tooltip("磁力の強さをUIで表示するためのImage（FillAmountを使用）")]
         public Image magneticForceImage;
 
+        // MagnetManagerへの参照
+        private MagnetManager magnetManager;
+
         // UI表示などのための最大値（正規化用）
         private const float MAX_FORCE = 100f;
 
+        // 前フレームのBoot状態を記録
+        private bool _wasBoot = false;
+
         private void Start()
         {
+            // MagnetManagerを取得
+            magnetManager = FindObjectOfType<MagnetManager>();
+            if (magnetManager == null)
+            {
+                //Debug.LogError($"[FixedMagnetBlock] {gameObject.name} で MagnetManager が見つかりません！");
+            }
+            else
+            {
+                //Debug.Log($"[FixedMagnetBlock] {gameObject.name} で MagnetManager を取得しました");
+            }
+
             // ゲーム開始時に磁力表示UIを初期化
             UpdateMagneticForceUI();
         }
 
+        private void Update()
+        {
+            // デバッグ用：Bキー押下時の状態確認
+            if (Input.GetKeyDown(KeyCode.B))
+            {
+                Debug.Log($"========== Bキー押下 [{gameObject.name}] ==========");
+                Debug.Log($"  magnetManager: {(magnetManager != null ? "存在" : "null")}");
+                if (magnetManager != null)
+                {
+                    Debug.Log($"  IsMagnetBoot: {magnetManager.IsMagnetBoot}");
+                }
+                Debug.Log($"=======================================");
+            }
+        }
+
         private void FixedUpdate()
         {
+            // MagnetManagerが取得できていない場合は再取得を試みる
+            if (magnetManager == null)
+            {
+                magnetManager = FindObjectOfType<MagnetManager>();
+                if (magnetManager == null)
+                {
+                    return; // まだ見つからない場合はスキップ
+                }
+            }
+
+            // Boot状態を取得
+            bool isBootActive = magnetManager.IsMagnetBoot;
+
+            // Boot状態が変化した時の処理
+            if (isBootActive != _wasBoot)
+            {
+                if (isBootActive)
+                {
+                    // Bootがオンになった時
+                    Debug.Log($"[FixedMagnetBlock] {gameObject.name} - Boot ON: 範囲内のオブジェクトを起動します");
+
+                    // 範囲内の全てのMovingMagnetBlockをスリープから起こす
+                    WakeUpNearbyMovingBlocks();
+                }
+                else
+                {
+                    // Bootがオフになった時
+                    Debug.Log($"[FixedMagnetBlock] {gameObject.name} - Boot OFF");
+                }
+
+                _wasBoot = isBootActive;
+            }
+
+            // Bootがオフの場合は磁力処理をスキップ
+            if (!isBootActive)
+            {
+                return;
+            }
+
+            // --- ここから磁力処理（Bootがオンの時のみ実行） ---
+
             // 一定範囲内にあるオブジェクトを検出
             Collider[] colliders = Physics.OverlapSphere(transform.position, magneticRange);
 
@@ -56,6 +130,28 @@ namespace Game.StageScene.Magnet
         }
 
         /// <summary>
+        /// 範囲内の全てのMovingMagnetBlockをスリープから起こす
+        /// </summary>
+        private void WakeUpNearbyMovingBlocks()
+        {
+            Collider[] colliders = Physics.OverlapSphere(transform.position, magneticRange);
+
+            foreach (Collider collider in colliders)
+            {
+                MovingMagnetBlock movingBlock = collider.GetComponent<MovingMagnetBlock>();
+                if (movingBlock != null)
+                {
+                    Rigidbody rb = movingBlock.GetComponent<Rigidbody>();
+                    if (rb != null && rb.IsSleeping())
+                    {
+                        rb.WakeUp();
+                        Debug.Log($"[FixedMagnetBlock] {movingBlock.gameObject.name} をスリープから復帰させました");
+                    }
+                }
+            }
+        }
+
+        /// <summary>
         /// 移動可能な磁石に磁力を加える
         /// </summary>
         /// <param name="otherBlock">影響を与える対象の磁石</param>
@@ -64,6 +160,12 @@ namespace Game.StageScene.Magnet
             // 対象のRigidbodyを取得
             Rigidbody otherRb = otherBlock.GetComponent<Rigidbody>();
             if (otherRb == null) return;
+
+            // 対象がスリープ状態なら起こす
+            if (otherRb.IsSleeping())
+            {
+                otherRb.WakeUp();
+            }
 
             // 自分 → 相手への方向を計算
             Vector3 direction = transform.position - otherBlock.transform.position;

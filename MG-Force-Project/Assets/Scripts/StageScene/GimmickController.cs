@@ -9,7 +9,6 @@ using UnityEngine;
 public class GimmickController : MonoBehaviour
 {
     private ButtonController _button;
-
     [SerializeField] private GameObject _fixedBox;
 
     private void Start()
@@ -20,7 +19,14 @@ public class GimmickController : MonoBehaviour
 
     private void Update()
     {
-        // Destroyされた時にも安全に検出できる
+        // _fixedBoxが破壊されているかnullチェック
+        if (_fixedBox == null)
+        {
+            Debug.LogWarning("_fixedBox が破壊されているか設定されていません");
+            return;
+        }
+
+        // ボタンが破壊されているか確認（Unityの破壊されたオブジェクトは == null で検出可能）
         if (_button == null)
         {
             TryFindButton();
@@ -37,15 +43,21 @@ public class GimmickController : MonoBehaviour
     private void TryFindButton()
     {
         GameObject obj = GameObject.Find("Button(Clone)");
-
         if (obj != null)
         {
             _button = obj.GetComponent<ButtonController>();
-            Debug.Log("Button を取得しました: " + obj.name);
+            if (_button != null)
+            {
+                Debug.Log("Button を取得しました: " + obj.name);
+            }
+            else
+            {
+                Debug.LogWarning("ButtonController コンポーネントが見つかりません");
+            }
         }
         else
         {
-            _button = null; // Destroy検出s
+            _button = null; // Destroy検出
         }
     }
 }

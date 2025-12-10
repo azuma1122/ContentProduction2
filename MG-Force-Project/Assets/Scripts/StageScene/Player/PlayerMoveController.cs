@@ -51,9 +51,9 @@ namespace Game.StageScene.Player
         public override void OnUpdate()
         {
             // デバッグログ（動作確認用）
-            Debug.Log($"[PlayerMove] enabled={enabled}, isGrounded={isGrounded}, " +
-             $"State.RUN={HasState(State.RUN)}, currentDir={currentDir}, " +
-             $"moveDir={moveDir}, velocity={_rigidbody?.velocity}");
+            //Debug.Log($"[PlayerMove] enabled={enabled}, isGrounded={isGrounded}, " +
+            // $"State.RUN={HasState(State.RUN)}, currentDir={currentDir}, " +
+            // $"moveDir={moveDir}, velocity={_rigidbody?.velocity}");
 
             // 接地判定を更新
             CheckGrounded();
@@ -143,6 +143,12 @@ namespace Game.StageScene.Player
                 // 上方向に力を加える
                 moveDir.y = JUMP_FORCE;
                 _hasJumped = true;
+
+                //SEプレイヤージャンプはこの一行（必要時にコメントアウト
+                SEManager.instance.PlaySE(SEManager.Player.PLAYER_JUMP);
+
+                //ここまで
+
                 Debug.Log("[MoveController] ジャンプ実行");
             }
         }
@@ -173,6 +179,7 @@ namespace Game.StageScene.Player
                 ~0, // すべてのレイヤーを対象
                 QueryTriggerInteraction.Ignore // トリガーColliderは無視
             );
+          
 
             // Unity Editorでのデバッグ表示
 #if UNITY_EDITOR

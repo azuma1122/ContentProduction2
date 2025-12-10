@@ -12,6 +12,7 @@ namespace Game.StageScene.Magnet
     /// - チャージに応じた射撃エフェクトとUI連動
     /// - 磁力モード中は射撃不可
     /// - 弾が衝突すると、現在の磁極に応じたPrefab（N/Sブロック）を生成
+    /// - チャージレベルに応じてMovingブロックの磁力付与可能範囲を変更
     /// </summary>
     public class BulletShootController : MonoBehaviour
     {
@@ -25,6 +26,7 @@ namespace Game.StageScene.Magnet
         // ======= 外部アクセス用プロパティ =======
         public bool IsCharging => _isCharging;
         public bool IsShooting => _canShooting;
+        public float CurrentChargePower => _currentPower;
 
         // ======= コンポーネント参照 =======
         private InputHandler _inputHandler;
@@ -35,20 +37,20 @@ namespace Game.StageScene.Magnet
 
         // ======= UI・エフェクト関連 =======
         [Header("=== UI & エフェクト ===")]
-        [SerializeField] private GameObject _chargeGageObj;   // チャージUI親
-        [SerializeField] private Image _chargeGage;           // チャージゲージ
-        [SerializeField] private GameObject _powerEffectObj;  // チャージ中エフェクト
+        [SerializeField] private GameObject _chargeGageObj;
+        [SerializeField] private Image _chargeGage;
+        [SerializeField] private GameObject _powerEffectObj;
         private ParticleSystem _particleSystem;
-        private Image _bulletGage;                            // エネルギーゲージUI
+        private Image _bulletGage;
 
         // ======= 弾関係 =======
         [Header("=== 弾関連 ===")]
-        [SerializeField] private GameObject bulletPrefab;     // 発射弾
-        [SerializeField] private float bulletSpeed = 20f;     // 弾速
+        [SerializeField] private GameObject bulletPrefab;
+        [SerializeField] private float bulletSpeed = 20f;
 
         [Header("=== ブロックPrefab ===")]
-        [SerializeField] private GameObject fixedNBlockPrefab; // N極ブロック
-        [SerializeField] private GameObject fixedSBlockPrefab; // S極ブロック
+        [SerializeField] private GameObject fixedNBlockPrefab;
+        [SerializeField] private GameObject fixedSBlockPrefab;
 
         private void Start()
         {
@@ -70,6 +72,17 @@ namespace Game.StageScene.Magnet
 
         private void Update()
         {
+            // ★★★ ポーズ中は入力を一切受け付けない ★★★
+            if (GlobalUIManager.Instance != null && GlobalUIManager.Instance.IsPaused)
+            {
+                // ポーズ中にチャージ状態だった場合はリセット
+                if (_isCharging)
+                {
+                    ResetCharge();
+                }
+                return;
+            }
+
             // === チャージUIが常にカメラを向くようにする ===
             if (_chargeGageObj.activeSelf && _mainCamera != null)
             {
@@ -85,6 +98,7 @@ namespace Game.StageScene.Magnet
             // === 射撃処理 ===
             if (_canShooting)
             {
+                SEManager.instance.PlaySE(SEManager.Bullet.BULLET_SHOT);
                 ShootBullet();
                 _playerState.ForceSetState(State.STILLNESS);
                 return;
@@ -98,9 +112,10 @@ namespace Game.StageScene.Magnet
                     // チャージ開始
                     _isCharging = true;
                     _currentPower = 0f;
-
                     _chargeGageObj.SetActive(true);
                     _powerEffectObj.SetActive(true);
+
+                    SEManager.instance.PlaySE(SEManager.Bullet.BULLET_CHARGE);
                     _playerState.AddState(State.SHOOT);
                 }
 
@@ -113,6 +128,24 @@ namespace Game.StageScene.Magnet
                 _isCharging = false;
                 _chargeGageObj.SetActive(false);
                 _canShooting = true;
+            }
+        }
+
+        /// <summary>
+        /// チャージ状態をリセット（ポーズ時などに使用）
+        /// </summary>
+        private void ResetCharge()
+        {
+            _isCharging = false;
+            _canShooting = false;
+            _currentPower = 0f;
+            _chargeGageObj.SetActive(false);
+            _powerEffectObj.SetActive(false);
+
+            // プレイヤーステートもリセット
+            if (_playerState != null)
+            {
+                _playerState.RemoveState(State.SHOOT);
             }
         }
 
@@ -139,14 +172,17 @@ namespace Game.StageScene.Magnet
             if (rb != null)
                 rb.velocity = targetDirection * bulletSpeed;
 
-            // 弾に衝突処理を付与
-            var bulletCollision = gb.AddComponent<BulletCollisionHandler>();
-            bulletCollision.Initialize(_uiManager, fixedNBlockPrefab, fixedSBlockPrefab);
+            // BulletControllerにチャージパワーを渡す
+            var bulletController = gb.GetComponent<BulletController>();
+            if (bulletController != null)
+            {
+                bulletController.SetChargePower(_currentPower);
+            }
 
             // 射撃後処理
             _canShooting = false;
             _powerEffectObj.SetActive(false);
-            _bulletGage.fillAmount -= 0.1f; // エネルギー消費
+            _bulletGage.fillAmount -= 0.1f;
         }
 
         /// <summary>

@@ -10,7 +10,7 @@ using Game.StageScene.Player;
 namespace Game.StageScene
 {
     /// <summary>
-    /// JSON データからステージを生成するクラス（詳細コメント版）
+    /// JSON データからステージを生成するクラス
     /// 
     /// 【主な機能】
     /// 1. JSONファイルからステージデータを読み込み

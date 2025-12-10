@@ -75,13 +75,27 @@ namespace Game.StageScene
             if (collider.CompareTag(GameConstants.Tag.UNTAGGED)) return;
 
             // デバッグで何が乗っているか確認
-            Debug.LogWarning(collider.gameObject.tag);
+            // Debug.LogWarning(collider.gameObject.tag);
 
             // プレイヤー と Moving ブロックのときボタンを押す
             if (collider.gameObject.CompareTag(GameConstants.Tag.MOVING) ||
                 collider.gameObject.CompareTag(GameConstants.Tag.PLAYER))
             {
-                isUpButton = false;
+
+                //ボタンが押し上がっているので
+                if (isUpButton)
+                {
+                    //SE障害物のボタンを押した時はこの一行（必要時にコメントアウト
+
+                    SEManager.instance.PlaySE(SEManager.Obstacle.ButtonPress);
+
+                    //ここまで
+
+                    //ボタンを押し下げる
+                    isUpButton = false;
+
+                }
+                
             }
         }
 

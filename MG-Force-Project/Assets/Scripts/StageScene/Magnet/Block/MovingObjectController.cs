@@ -163,6 +163,20 @@ namespace Game.StageScene.Magnet
                     Debug.LogWarning($"[MovingObjectController] {gameObject.name} の magnetController が null だったため、初期化しました");
                 }
 
+                // 相手のオブジェクトのデータが初期化されているか確認
+                var otherManager = other.gameObject.GetComponent<MagnetObjectManager>();
+                if (otherManager == null)
+                {
+                    Debug.LogWarning($"[MovingObjectController] {other.gameObject.name} に MagnetObjectManager が見つかりません");
+                    return;
+                }
+
+                if (otherManager.MyData == null)
+                {
+                    // データが初期化されていない場合はスキップ（エラーログは出さない）
+                    return;
+                }
+
                 magnetController.MagnetUpdate(gameObject, other.gameObject);
             }
         }
