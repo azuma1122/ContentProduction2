@@ -1,343 +1,227 @@
 ﻿using UnityEngine;
-using Game.StageScene.Magnet; // Magnet名前空間は使用されていない可能性あり
+using Game.StageScene.Magnet;
 using Game.GameSystem;
 
 namespace Game.StageScene.Player
 {
     /// <summary>
-    /// プレイヤーの状態管理クラス。
-    /// 入力に応じて State（静止・走行・ジャンプ・射撃など）を更新し、
-    /// 他のコントローラー（移動、アニメーション）に現在の状態を伝達します。
+    /// プレイヤーの状態管理クラス（修正版）
+    /// - 入力に応じて State（静止・走行・ジャンプ・射撃など）を更新
+    /// - 射撃中は移動・ジャンプ操作を完全に無効化
+    /// - ジャンプ状態は空中にいる間維持
+    /// - アニメーション優先順位: JUMP > SHOOT > RUN > IDLE
     /// </summary>
     public class PlayerStateController : PlayerControllerBase
     {
         // ===== 参照するコンポーネント =====
-        private InputHandler _inputHandler;         // 入力処理管理（シングルトン）
-        private BulletShootController _bulletShoot; // 射撃制御
-        private Animator _animator;                 // Animator（現在は未使用）
-
-        // InputHandlerがない場合のフォールバックフラグ
-        private bool _useDirectInput = false;
-
-        // InputHandler取得の再試行制御
-        private int _inputHandlerRetryCount = 0;
-        private const int MAX_RETRY_COUNT = 30; // 最大30フレーム（約0.5秒）試行
+        private InputHandler _inputHandler;        // 入力処理を管理するクラス（キーボード・マウス入力）
+        private BulletShootController _bulletShoot; // 射撃関連の制御クラス（チャージ・発射など）
+        private Animator _animator;                 // プレイヤーのアニメーション制御用Animator（現在未使用）
 
         /// <summary>
-        /// 初期化処理（プレイヤー生成時1回）。
-        /// 必要なコンポーネントの取得と、InputHandlerの初期取得を試みます。
+        /// 初期化処理（プレイヤー生成時に1回だけ呼ばれる）
         /// </summary>
         public override void OnStart()
         {
-            Debug.Log("[PlayerStateController] OnStart開始");
+            // シーン上にある "Input" オブジェクトから入力管理クラスを取得
+            _inputHandler = GameObject.Find(GameConstants.Object.INPUT).GetComponent<InputHandler>();
 
-            // 射撃制御コンポーネント取得
+            // プレイヤー自身にアタッチされている射撃スクリプトを取得
             _bulletShoot = playerObject.GetComponent<BulletShootController>();
-            if (_bulletShoot == null)
-            {
-                Debug.LogWarning("[PlayerStateController] BulletShootControllerが見つかりません");
-            }
 
-            // Animator取得（現在は未使用）
+            // Animatorコンポーネントを取得（将来的に使う可能性があるため保持）
             _animator = playerObject.GetComponent<Animator>();
 
-            // 初期状態設定
+            // ゲーム開始時の初期状態を設定
             currentState = State.STILLNESS; // 静止状態からスタート
             currentDir = Direction.RIGHT;   // 右向きからスタート
-
-            // InputHandlerの取得を試みる（見つからなくても直接入力で続行）
-            TryGetInputHandler();
-
-            Debug.Log($"[PlayerStateController] 初期化完了 - useDirectInput={_useDirectInput}");
         }
 
         /// <summary>
-        /// InputHandlerのシングルトンインスタンスの取得を試みます。
-        /// 失敗した場合、_useDirectInputフラグを立てて直接入力に切り替えます。
-        /// </summary>
-        private void TryGetInputHandler()
-        {
-            _inputHandler = InputHandler.Instance;
-
-            if (_inputHandler == null)
-            {
-                Debug.LogWarning("[PlayerStateController] InputHandlerが見つかりません。直接入力を使用します");
-                _useDirectInput = true;
-            }
-            else
-            {
-                Debug.Log("[PlayerStateController] InputHandlerを取得しました");
-                _useDirectInput = false;
-            }
-        }
-
-        /// <summary>
-        /// 毎フレーム更新処理。
-        /// 入力状態をチェックし、プレイヤーの状態（State）を更新します。
+        /// 毎フレーム呼ばれる更新処理
+        /// 入力をチェックして、プレイヤーの状態を更新する
         /// </summary>
         public override void OnUpdate()
         {
-            // InputHandlerの取得を再試行（InputHandlerの初期化遅延に対応）
-            if (_useDirectInput && _inputHandlerRetryCount < MAX_RETRY_COUNT)
-            {
-                _inputHandlerRetryCount++;
-                if (_inputHandlerRetryCount % 10 == 0) // 10フレームごとに再試行
-                {
-                    TryGetInputHandler();
-                }
-            }
-
-            // ===== 1. 射撃優先チェック =====
-            // 射撃中は他の操作（移動・ジャンプ）を無効化するため、最優先でチェック
+            // ===== 1. 射撃状態のチェック（最優先） =====
+            // 射撃ボタンが押されているか、チャージ中か、発射中かをチェック
             bool isShooting = CheckShootInput();
+
             if (isShooting)
             {
-                currentState = State.NONE; // 全状態を一旦クリア
-                AddState(State.SHOOT);     // 射撃状態のみ追加
-                return;                    // 射撃中は移動・ジャンプ処理をスキップ
+                // 射撃中は他の状態を全て無効化（移動・ジャンプ不可）
+                currentState = State.NONE;  // 全ての状態フラグをクリア
+                AddState(State.SHOOT);      // 射撃状態のみを追加
+                return; // 移動やジャンプ処理を完全にスキップ
             }
-            RemoveState(State.SHOOT);       // 射撃が終了していれば射撃状態を解除
 
-            // ===== 2. ジャンプ状態更新 =====
-            // 接地状態とジャンプ入力をチェックし、JUMP状態を追加/解除
+            // ===== 2. 射撃していない場合のみ通常操作を処理 =====
+            RemoveState(State.SHOOT); // 射撃状態を解除
+
+            // ===== 3. ジャンプ状態の更新 =====
+            // ジャンプボタンの入力と着地をチェックして、State.JUMPを管理
             JumpUpdate();
 
-            // ===== 3. 移動入力更新 =====
-            // 左右の移動入力をチェックし、RUN/STILLNESS状態と向きを更新
+            // ===== 4. 移動入力の更新 =====
+            // 左右キーの入力をチェックして、State.RUNとcurrentDirを管理
             RunUpdate();
         }
 
         /// <summary>
-        /// 射撃入力の判定を行います。
-        /// InputHandlerまたは直接入力（Fire1/マウスボタン）を使用します。
+        /// 射撃入力と状態をチェック
         /// </summary>
-        /// <returns>射撃入力がある場合は true</returns>
+        /// <returns>射撃中（入力あり or チャージ中 or 発射中）ならtrue</returns>
         private bool CheckShootInput()
         {
-            bool isShooting = false;
+            // 以下のいずれかが真なら射撃中と判定
+            // - IsCharging: 射撃ボタンを押してチャージ中
+            // - IsShooting: 弾を発射する準備ができている
+            // - IsActionPressing: 射撃ボタンが現在押されている
+            bool isShooting = _bulletShoot.IsCharging ||
+                              _bulletShoot.IsShooting ||
+                              _inputHandler.IsActionPressing(InputConstants.Action.SHOOT);
 
-            // BulletShootControllerが射撃中/チャージ中の状態をチェック
-            if (_bulletShoot != null)
+            // 射撃中であれば射撃方向を更新
+            if (isShooting)
             {
-                isShooting = _bulletShoot.IsCharging || _bulletShoot.IsShooting;
+                UpdateShootDirection(); // 8方向 + 真上の射撃方向を決定
             }
-
-            // InputHandler経由での射撃入力をチェック
-            if (!_useDirectInput && _inputHandler != null)
-            {
-                try
-                {
-                    // InputHandlerのSHOOTアクションが押されているかチェック
-                    isShooting |= _inputHandler.IsActionPressing(InputConstants.Action.SHOOT);
-                }
-                catch (System.Exception e)
-                {
-                    Debug.LogWarning($"[PlayerStateController] InputHandler.IsActionPressingエラー: {e.Message} -> 直接入力に切り替え");
-                    _useDirectInput = true; // エラーが出た場合は直接入力に切り替え
-                }
-            }
-            // 直接入力（フォールバック）での射撃入力をチェック
-            else
-            {
-                // Fire1ボタン（スペースキーやマウス左クリック）またはマウス右クリック
-                isShooting |= Input.GetButton("Fire1") || Input.GetMouseButton(0) || Input.GetMouseButton(1);
-            }
-
-            // 射撃入力がある場合、射撃方向を更新
-            if (isShooting) UpdateShootDirection();
 
             return isShooting;
         }
 
         /// <summary>
-        /// 射撃方向を更新します（8方向+真上）。
-        /// InputHandlerまたは現在のプレイヤーの向きを使用します。
+        /// 射撃方向の更新（8方向 + 真上の9方向に対応）
+        /// 入力に応じてshootDir（角度）とcurrentDir（左右の向き）を更新
         /// </summary>
         private void UpdateShootDirection()
         {
-            // InputHandler経由での射撃方向入力をチェック
-            if (!_useDirectInput && _inputHandler != null)
+            // 真上への射撃
+            if (_inputHandler.IsActionPressing(InputConstants.Action.SHOOT_ANGLE, InputConstants.ActionVector.North))
             {
-                try
-                {
-                    // InputHandlerのSHOOT_ANGLEアクションから8方向の入力を判定し、shootDirとcurrentDirを更新
-                    // ... (8方向の複雑な判定ロジック) ...
-                    if (_inputHandler.IsActionPressing(InputConstants.Action.SHOOT_ANGLE, InputConstants.ActionVector.North))
-                    {
-                        shootDir = 0;
-                    }
-                    else if (_inputHandler.IsActionPressing(InputConstants.Action.SHOOT_ANGLE, InputConstants.ActionVector.NorthEast))
-                    {
-                        currentDir = Direction.RIGHT;
-                        shootDir = 45;
-                    }
-                    else if (_inputHandler.IsActionPressing(InputConstants.Action.SHOOT_ANGLE, InputConstants.ActionVector.East))
-                    {
-                        currentDir = Direction.RIGHT;
-                        shootDir = 90;
-                    }
-                    else if (_inputHandler.IsActionPressing(InputConstants.Action.SHOOT_ANGLE, InputConstants.ActionVector.SouthEast))
-                    {
-                        currentDir = Direction.RIGHT;
-                        shootDir = 135;
-                    }
-                    else if (_inputHandler.IsActionPressing(InputConstants.Action.SHOOT_ANGLE, InputConstants.ActionVector.NorthWest))
-                    {
-                        currentDir = Direction.LEFT;
-                        shootDir = 45;
-                    }
-                    else if (_inputHandler.IsActionPressing(InputConstants.Action.SHOOT_ANGLE, InputConstants.ActionVector.West))
-                    {
-                        currentDir = Direction.LEFT;
-                        shootDir = 90;
-                    }
-                    else if (_inputHandler.IsActionPressing(InputConstants.Action.SHOOT_ANGLE, InputConstants.ActionVector.SouthWest))
-                    {
-                        currentDir = Direction.LEFT;
-                        shootDir = 135;
-                    }
-                }
-                catch (System.Exception e)
-                {
-                    Debug.LogWarning($"[PlayerStateController] UpdateShootDirectionエラー: {e.Message}");
-                }
+                shootDir = 0; // 真上を0度とする
             }
-            // 直接入力の場合は現在のプレイヤーの向きを維持
-            else
+            // 右斜め上への射撃
+            else if (_inputHandler.IsActionPressing(InputConstants.Action.SHOOT_ANGLE, InputConstants.ActionVector.NorthEast))
             {
-                // 90度（右）または -90度（左）に設定
-                shootDir = currentDir == Direction.RIGHT ? 90 : -90;
+                currentDir = Direction.RIGHT; // キャラクターは右向き
+                shootDir = 45;                // 45度（右斜め上）
+            }
+            // 右への射撃
+            else if (_inputHandler.IsActionPressing(InputConstants.Action.SHOOT_ANGLE, InputConstants.ActionVector.East))
+            {
+                currentDir = Direction.RIGHT; // キャラクターは右向き
+                shootDir = 90;                // 90度（真横）
+            }
+            // 右斜め下への射撃
+            else if (_inputHandler.IsActionPressing(InputConstants.Action.SHOOT_ANGLE, InputConstants.ActionVector.SouthEast))
+            {
+                currentDir = Direction.RIGHT; // キャラクターは右向き
+                shootDir = 135;               // 135度（右斜め下）
+            }
+            // 左斜め上への射撃
+            else if (_inputHandler.IsActionPressing(InputConstants.Action.SHOOT_ANGLE, InputConstants.ActionVector.NorthWest))
+            {
+                currentDir = Direction.LEFT; // キャラクターは左向き
+                shootDir = 45;               // 45度（左斜め上）※左向きなので実際は315度相当
+            }
+            // 左への射撃
+            else if (_inputHandler.IsActionPressing(InputConstants.Action.SHOOT_ANGLE, InputConstants.ActionVector.West))
+            {
+                currentDir = Direction.LEFT; // キャラクターは左向き
+                shootDir = 90;               // 90度（真横）※左向きなので実際は270度相当
+            }
+            // 左斜めへの射撃
+            else if (_inputHandler.IsActionPressing(InputConstants.Action.SHOOT_ANGLE, InputConstants.ActionVector.SouthWest))
+            {
+                currentDir = Direction.LEFT; // キャラクターは左向き
+                shootDir = 135;              // 135度（左斜め下）※左向きなので実際は225度相当
             }
         }
 
         /// <summary>
-        /// 移動入力（左右）をチェックし、RUN/STILLNESS状態と向きを更新します。
-        /// 射撃中は呼び出されません。
+        /// 左右移動入力の更新処理
+        /// キーボード入力に応じてState.RUNとcurrentDirを管理
+        /// ジャンプ中は方向だけ更新（State.RUNは追加しない）
         /// </summary>
         private void RunUpdate()
         {
-            bool leftPressed = false;
-            bool rightPressed = false;
-
-            // InputHandler経由での移動入力をチェック
-            if (!_useDirectInput && _inputHandler != null)
-            {
-                try
-                {
-                    leftPressed = _inputHandler.IsActionPressed(InputConstants.Action.LEFTMOVE);
-                    rightPressed = _inputHandler.IsActionPressed(InputConstants.Action.RIGHTMOVE);
-                }
-                catch (System.Exception e)
-                {
-                    Debug.LogWarning($"[PlayerStateController] RunUpdate InputHandlerエラー: {e.Message} -> 直接入力に切り替え");
-                    _useDirectInput = true;
-                }
-            }
-
-            // 直接入力（フォールバック）での移動入力をチェック
-            if (_useDirectInput)
-            {
-                // Axis入力（ジョイスティックなど）
-                float horizontal = Input.GetAxis("Horizontal");
-                leftPressed = horizontal < -0.1f;
-                rightPressed = horizontal > 0.1f;
-
-                // キーボード入力（A/D, 左右矢印）
-                leftPressed |= Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow);
-                rightPressed |= Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow);
-            }
-
-            // ジャンプ中の処理
+            // ===== ジャンプ中の処理 =====
+            // ジャンプ中は移動状態フラグを立てない（アニメーションはジャンプ優先）
+            // ただし、方向入力は受け付ける（空中制御のため）
             if (HasState(State.JUMP))
             {
-                // ジャンプ中はRUN/STILLNESS状態を解除
+                // まずState.RUNを解除（走行アニメーションが出ないようにする）
                 RemoveState(State.RUN);
+                // State.STILLNESSも解除（Idleアニメーションが一瞬表示されるのを防ぐ）
                 RemoveState(State.STILLNESS);
 
-                // ジャンプ中でも向きの更新は行う
-                if (leftPressed)
-                    currentDir = Direction.LEFT;
-                else if (rightPressed)
-                    currentDir = Direction.RIGHT;
-
-                return; // ジャンプ中は走行状態にしない
+                // 左キーが押されている場合
+                if (_inputHandler.IsActionPressed(InputConstants.Action.LEFTMOVE))
+                {
+                    currentDir = Direction.LEFT; // 方向だけ更新（PlayerMoveControllerで横移動に使用）
+                }
+                // 右キーが押されている場合
+                else if (_inputHandler.IsActionPressed(InputConstants.Action.RIGHTMOVE))
+                {
+                    currentDir = Direction.RIGHT; // 方向だけ更新
+                }
+                return; // ジャンプ中はState.RUNを追加しない（アニメーションがジャンプのまま）
             }
 
-            // 地上での移動処理
-            if (leftPressed)
+            // ===== 地面にいる時の通常の移動処理 =====
+            // 左キーが押されている場合
+            if (_inputHandler.IsActionPressed(InputConstants.Action.LEFTMOVE))
             {
-                RemoveState(State.STILLNESS);
-                AddState(State.RUN);
-                currentDir = Direction.LEFT;
+                RemoveState(State.STILLNESS); // 静止状態を解除
+                AddState(State.RUN);          // 走行状態を追加（アニメーションが走行になる）
+                currentDir = Direction.LEFT;  // 向きを左に設定
             }
-            else if (rightPressed)
+            // 右キーが押されている場合
+            else if (_inputHandler.IsActionPressed(InputConstants.Action.RIGHTMOVE))
             {
-                RemoveState(State.STILLNESS);
-                AddState(State.RUN);
-                currentDir = Direction.RIGHT;
+                RemoveState(State.STILLNESS); // 静止状態を解除
+                AddState(State.RUN);          // 走行状態を追加
+                currentDir = Direction.RIGHT; // 向きを右に設定
             }
+            // 左右キーが押されていない場合
             else
             {
-                // 入力がない場合
-                RemoveState(State.RUN);
-                // ジャンプ中でなければ静止状態にする
+                RemoveState(State.RUN);       // 走行状態を解除
+                // ジャンプ中でない場合のみSTILLNESSを追加
                 if (!HasState(State.JUMP))
-                    AddState(State.STILLNESS);
+                {
+                    AddState(State.STILLNESS);    // 静止状態を追加（アニメーションが待機になる）
+                }
             }
         }
 
         /// <summary>
-        /// ジャンプ入力をチェックし、JUMP状態の開始/終了を更新します。
+        /// ジャンプ入力の更新処理（修正版）
+        /// - ジャンプボタンが押された瞬間にState.JUMPを追加
+        /// - 着地したらState.JUMPを解除
+        /// - 空中にいる間はState.JUMPを維持
         /// </summary>
         private void JumpUpdate()
         {
-            bool jumpPressed = false;
-
-            // InputHandler経由でのジャンプ入力をチェック
-            if (!_useDirectInput && _inputHandler != null)
+            // ===== ジャンプボタンが押された瞬間（地面にいる時のみ有効） =====
+            if (isGrounded && _inputHandler.IsActionPressed(InputConstants.Action.JUMP))
             {
-                try
-                {
-                    // JUMPアクションが押された瞬間をチェック
-                    jumpPressed = _inputHandler.IsActionPressed(InputConstants.Action.JUMP);
-                }
-                catch (System.Exception e)
-                {
-                    Debug.LogWarning($"[PlayerStateController] JumpUpdate InputHandlerエラー: {e.Message} -> 直接入力に切り替え");
-                    _useDirectInput = true;
-                }
+                RemoveState(State.STILLNESS); // 静止状態を解除
+                AddState(State.JUMP);         // ジャンプ状態を追加（PlayerMoveControllerでジャンプ力が与えられる）
+                Debug.Log("[StateController] ジャンプ状態追加");
             }
-
-            // 直接入力（フォールバック）でのジャンプ入力をチェック
-            if (_useDirectInput)
-            {
-                // Jumpボタン（デフォルトでスペースキー）またはW/上矢印キーが押された瞬間をチェック
-                jumpPressed = Input.GetButtonDown("Jump") || Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow);
-            }
-
-            // ジャンプ開始の条件: 地面に接地しており、ジャンプ入力があった場合
-            if (isGrounded && jumpPressed)
-            {
-                RemoveState(State.STILLNESS);
-                AddState(State.JUMP);
-                Debug.Log("[PlayerStateController] ジャンプ開始");
-            }
-            // 着地の条件: 地面に接地しており、かつJUMP状態であった場合
+            // ===== 地面についたらジャンプ状態を解除 =====
             else if (isGrounded && HasState(State.JUMP))
             {
-                RemoveState(State.JUMP);
+                RemoveState(State.JUMP); // ジャンプ状態を解除（着地完了）
+                Debug.Log("[StateController] ジャンプ状態解除（着地）");
 
-                Debug.Log("[PlayerStateController] 着地でジャンプ解除");
-
-                //SEプレイヤー着地中はこの一行（必要時にコメントアウト)
-
-                SEManager.instance.PlaySE(SEManager.Player.PLAYER_LAND);
-
-                //ここまで
-
-                // 走行中でなければ静止状態にする
+                // 移動キーが押されていなければ静止状態に戻す
                 if (!HasState(State.RUN))
+                {
                     AddState(State.STILLNESS);
+                }
             }
         }
     }
