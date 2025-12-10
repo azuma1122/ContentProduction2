@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -59,7 +60,7 @@ namespace Game.StageScene
         /// <summary>
         /// プレイヤーとの接触検知（Trigger）
         /// </summary>
-        private void OnTriggerEnter(Collider other)
+        private  void OnTriggerEnter(Collider other)
         {
             if (IsGoalEvent) return; // すでにゴール済みなら無視
 
@@ -68,11 +69,26 @@ namespace Game.StageScene
                 IsGoalEvent = true;
                 Debug.Log("ゴールに触れた: " + other.name);
 
+                //クリアSEとクリアシーンでのBGMのタイミングは要チェック
+                SEManager.instance.PlaySE(SEManager.Stage.STAGE_CLEAR);
+
                 // Clear画面へ遷移
-                LoadNextScene();
+                StartCoroutine(LoadSceneAfterDelay());
             }
         }
-
+        /// <summary>
+        /// SEが流れているかを確認してシーン遷移の関数を実行
+        /// </summary>
+        /// <returns>IEnumerator</returns>
+        private IEnumerator LoadSceneAfterDelay()
+        {
+            //SEが流れている間はシーン遷移させない
+            while (SEManager.instance._audioSource != null && SEManager.instance._audioSource.isPlaying)
+            {
+                yield return null;
+            }
+            LoadNextScene();
+        }
         /// <summary>
         /// シーン遷移処理
         /// </summary>
@@ -83,6 +99,7 @@ namespace Game.StageScene
                 Debug.LogWarning("遷移先のシーン名が設定されていません。");
                 return;
             }
+            //ステージクリア
 
             // Build Settings に登録されているシーンをロード
             SceneManager.LoadScene(_nextSceneName);
