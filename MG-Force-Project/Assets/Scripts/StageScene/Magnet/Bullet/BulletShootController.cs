@@ -12,7 +12,6 @@ namespace Game.StageScene.Magnet
     /// - チャージに応じた射撃エフェクトとUI連動
     /// - 磁力モード中は射撃不可
     /// - 弾が衝突すると、現在の磁極に応じたPrefab（N/Sブロック）を生成
-    /// - チャージレベルに応じてMovingブロックの磁力付与可能範囲を変更
     /// </summary>
     public class BulletShootController : MonoBehaviour
     {
@@ -104,7 +103,7 @@ namespace Game.StageScene.Magnet
                 return;
             }
 
-            // === チャージ中処理 ===
+            // === チャージ中処理 === 
             if (_inputHandler.IsActionPressing(InputConstants.Action.SHOOT))
             {
                 if (!_isCharging && _bulletGage.fillAmount > 0f)
@@ -163,11 +162,20 @@ namespace Game.StageScene.Magnet
             GameObject gb = Instantiate(bulletPrefab, pos, Quaternion.identity);
             Rigidbody rb = gb.GetComponent<Rigidbody>();
 
-            // 射撃方向（マウス位置 or 前方）
+            // 射撃方向の計算を改善
             Vector3 targetDirection = transform.forward;
             Ray ray = _mainCamera.ScreenPointToRay(Input.mousePosition);
+
             if (Physics.Raycast(ray, out RaycastHit hitInfo, 100f))
+            {
+                // 弾の生成位置からターゲット位置への方向を計算
                 targetDirection = (hitInfo.point - pos).normalized;
+            }
+            else
+            {
+                // ヒットしない場合は、レイの方向をそのまま使用
+                targetDirection = ray.direction;
+            }
 
             if (rb != null)
                 rb.velocity = targetDirection * bulletSpeed;
