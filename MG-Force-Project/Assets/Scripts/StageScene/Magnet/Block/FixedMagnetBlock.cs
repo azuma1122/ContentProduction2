@@ -44,11 +44,11 @@ namespace Game.StageScene.Magnet
             magnetManager = FindObjectOfType<MagnetManager>();
             if (magnetManager == null)
             {
-                Debug.LogError($"[FixedMagnetBlock] {gameObject.name} で MagnetManager が見つかりません！");
+                //Debug.LogError($"[FixedMagnetBlock] {gameObject.name} で MagnetManager が見つかりません！");
             }
             else
             {
-                Debug.Log($"[FixedMagnetBlock] {gameObject.name} で MagnetManager を取得しました");
+                //Debug.Log($"[FixedMagnetBlock] {gameObject.name} で MagnetManager を取得しました");
             }
 
             // ゲーム開始時に磁力表示UIを初期化

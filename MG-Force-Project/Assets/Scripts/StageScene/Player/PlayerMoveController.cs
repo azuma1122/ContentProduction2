@@ -51,9 +51,9 @@ namespace Game.StageScene.Player
         public override void OnUpdate()
         {
             // デバッグログ（動作確認用）
-            Debug.Log($"[PlayerMove] enabled={enabled}, isGrounded={isGrounded}, " +
-             $"State.RUN={HasState(State.RUN)}, currentDir={currentDir}, " +
-             $"moveDir={moveDir}, velocity={_rigidbody?.velocity}");
+            //Debug.Log($"[PlayerMove] enabled={enabled}, isGrounded={isGrounded}, " +
+            // $"State.RUN={HasState(State.RUN)}, currentDir={currentDir}, " +
+            // $"moveDir={moveDir}, velocity={_rigidbody?.velocity}");
 
             // 接地判定を更新
             CheckGrounded();

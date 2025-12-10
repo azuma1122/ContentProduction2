@@ -127,6 +127,13 @@ namespace Game.Title
             _deviceManager = GameObject.Find(GameConstants.Object.DEVICE_MANAGER).GetComponent<DeviceManager>();
             _sceneLoader = SceneLoader.Instance;
 
+            // SEManager の取得（nullチェック付き）
+            GameObject seManagerObj = GameObject.Find(GameConstants.Object.SE_MANAGER);
+            if (seManagerObj != null)
+            {
+                _seManager = seManagerObj.GetComponent<SEManager>();
+            }
+
             // 最初はタイトル画面ステップから開始
             _currentStep = TitleStep.TITLE;
         }
@@ -278,12 +285,20 @@ namespace Game.Title
             switch (button_index)
             {
                 case (int)GameMenu.CONFIG:
+                    // SE再生（SEManagerが初期化されている場合のみ）
+                    if (_seManager != null)
+                    {
+                        _seManager.PlaySE(SEManager.Menu.DECISION);
+                    }
                     SetStep(TitleStep.CONFIG_MENU);
-                    Button configButton = _gameMenu[(int)TitleStep.CONFIG_MENU].gameObject.GetComponent<Button>();
-                    configButton.onClick.AddListener(() =>SEManager.instance.PlaySE(SEManager.Menu.DECISION));  
                     break;
 
                 case (int)GameMenu.START:
+                    // SE再生
+                    if (_seManager != null)
+                    {
+                        _seManager.PlaySE(SEManager.Menu.DECISION);
+                    }
                     SetStep(TitleStep.START_MENU);
                     break;
 
