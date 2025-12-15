@@ -38,14 +38,21 @@ namespace Game.StageScene.Magnet
         [SerializeField] private GameObject _movingSPrefab;
         [SerializeField] private GameObject _movingNPrefab;
 
+        [Header("磁石UI参照（オプション: 自動検索も可能）")]
+        [SerializeField] private GameObject _uiNMagnetManual;
+        [SerializeField] private GameObject _uiSMagnetManual;
+
         // UIを自動検出（N / S 切り替え用）
         private GameObject _uiNMagnet;
         private GameObject _uiSMagnet;
 
+        // 代替案: MagnetManagerから直接極性を取得
+        private MagnetManager _magnetManager;
+        private bool _useAlternativeMethod = false;
+
         // 発射関連
-        private Vector3 _targetPos = Vector3.zero;
-        private Vector3 _direction = Vector3.zero;
-        private float _bulletSpeed = INIT_SPEED;
+        private Vector3 _shootDirection = Vector3.zero;
+        private bool _isDirectionSet = false;
         private float _timer = 0f;
 
         // チャージパワー
@@ -61,28 +68,149 @@ namespace Game.StageScene.Magnet
             // Animatorを取得
             _animator = GetComponent<Animator>();
 
-            // UIを自動検出（N/S UI）
-            _uiNMagnet = GameObject.Find("N_Magnet_UI") ?? GameObject.Find("N_Magnet");
-            _uiSMagnet = GameObject.Find("S_Magnet_UI") ?? GameObject.Find("S_Magnet");
+            // MagnetManagerを取得
+            _magnetManager = FindObjectOfType<MagnetManager>();
+            if (_magnetManager == null)
+            {
+                Debug.LogWarning("[BulletController] MagnetManagerが見つかりません");
+            }
 
-            if (_uiNMagnet == null || _uiSMagnet == null)
-                Debug.LogWarning("N_Magnet_UI または S_Magnet_UI がシーン内に見つかりません。");
+            // UIの検索は遅延初期化（衝突時に行う）
+            // ゲーム開始直後はUIがまだ初期化されていない可能性があるため
 
-            // 発射方向を設定
-            _targetPos = BulletLineController.GetDirection();
-            FiringBullet();
+            // SE弾発射移動中
+            try
+            {
+                if (SEManager.instance != null)
+                {
+                    SEManager.instance.PlaySE(SEManager.Bullet.BULLET_MOVE);
+                }
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning($"SE再生エラー: {e.Message}");
+            }
         }
 
         private void Update()
         {
-            // ★★★ ポーズ中は時間経過をカウントしない ★★★
-            // Time.timeScale = 0 の時は Time.deltaTime も 0 になるため、
-            // 自動的にタイマーが進まなくなります
+            // ポーズ中は時間経過をカウントしない 
             _timer += Time.deltaTime;
             if (_timer > LIFE_TIME)
             {
                 Destroy(gameObject);
             }
+        }
+
+        /// <summary>
+        /// UIオブジェクトを遅延初期化（必要になった時に検索）
+        /// </summary>
+        private void EnsureUIInitialized()
+        {
+            // 既に両方見つかっていればスキップ
+            if (_uiNMagnet != null && _uiSMagnet != null)
+                return;
+
+            // 既に代替方法を使用していればスキップ
+            if (_useAlternativeMethod)
+                return;
+
+            // まず手動設定をチェック
+            if (_uiNMagnetManual != null && _uiNMagnet == null)
+            {
+                _uiNMagnet = _uiNMagnetManual;
+                Debug.Log($"[BulletController] N磁石UI設定完了（手動）: {_uiNMagnet.name}");
+            }
+
+            if (_uiSMagnetManual != null && _uiSMagnet == null)
+            {
+                _uiSMagnet = _uiSMagnetManual;
+                Debug.Log($"[BulletController] S磁石UI設定完了（手動）: {_uiSMagnet.name}");
+            }
+
+            // 手動設定がない場合は自動検索
+            if (_uiNMagnet == null)
+            {
+                _uiNMagnet = FindUIObject(new string[] {
+                    "N_Magnet_UI", "N_Magnet", "NMagnetUI", "NMagnet",
+                    "N Magnet UI", "N Magnet", "MagnetUI_N", "UI_N_Magnet",
+                    "Button_N", "ButtonN", "N_Button", "NButton"
+                });
+                if (_uiNMagnet != null)
+                {
+                    Debug.Log($"[BulletController] N磁石UI検出（自動）: {_uiNMagnet.name}");
+                }
+            }
+
+            if (_uiSMagnet == null)
+            {
+                _uiSMagnet = FindUIObject(new string[] {
+                    "S_Magnet_UI", "S_Magnet", "SMagnetUI", "SMagnet",
+                    "S Magnet UI", "S Magnet", "MagnetUI_S", "UI_S_Magnet",
+                    "Button_S", "ButtonS", "S_Button", "SButton"
+                });
+                if (_uiSMagnet != null)
+                {
+                    Debug.Log($"[BulletController] S磁石UI検出（自動）: {_uiSMagnet.name}");
+                }
+            }
+
+            // どちらも見つからない場合は代替方法を使用
+            if (_uiNMagnet == null && _uiSMagnet == null)
+            {
+                Debug.LogWarning("[BulletController] 磁石UIが見つかりません。MagnetManagerから直接極性を取得します。");
+                Debug.Log("[BulletController] ヒント: BulletControllerのInspectorで「磁石UI参照」に手動でUIオブジェクトをドラッグ&ドロップしてください");
+                SearchAllUIObjects(); // デバッグ用：一度だけ全オブジェクトを検索
+                _useAlternativeMethod = true;
+            }
+        }
+
+        /// <summary>
+        /// シーン内の全UIオブジェクトを検索してログ出力（デバッグ用）
+        /// </summary>
+        private void SearchAllUIObjects()
+        {
+            GameObject[] allObjects = GameObject.FindObjectsOfType<GameObject>();
+            Debug.Log("[BulletController] === シーン内の全オブジェクト検索 ===");
+
+            int count = 0;
+            foreach (GameObject obj in allObjects)
+            {
+                // "Magnet" または "magnet" を含むオブジェクトのみログ出力
+                if (obj.name.ToLower().Contains("magnet"))
+                {
+                    Debug.Log($"  - {obj.name} (Layer: {obj.layer}, Tag: {obj.tag}, Active: {obj.activeSelf})");
+                    count++;
+                }
+            }
+
+            Debug.Log($"[BulletController] === 検索完了: {count}個の磁石関連オブジェクト発見 ===");
+        }
+
+        /// <summary>
+        /// 複数の候補名からUIオブジェクトを検索
+        /// </summary>
+        private GameObject FindUIObject(string[] candidateNames)
+        {
+            foreach (string name in candidateNames)
+            {
+                GameObject obj = GameObject.Find(name);
+                if (obj != null)
+                {
+                    return obj;
+                }
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// 発射方向を設定（BulletShootControllerから呼ばれる）
+        /// </summary>
+        public void SetShootDirection(Vector3 direction)
+        {
+            _shootDirection = direction.normalized;
+            _isDirectionSet = true;
+            Debug.Log($"[BulletController] 発射方向設定: {_shootDirection}");
         }
 
         /// <summary>
@@ -95,18 +223,6 @@ namespace Game.StageScene.Magnet
         }
 
         /// <summary>
-        /// 弾をターゲット方向へ発射
-        /// </summary>
-        private void FiringBullet()
-        {
-            _direction = (_targetPos - transform.position).normalized * _bulletSpeed;
-            _rigidbody.AddForce(_direction, ForceMode.Impulse);
-
-            // SE弾発射移動中
-            SEManager.instance.PlaySE(SEManager.Bullet.BULLET_MOVE);
-        }
-
-        /// <summary>
         /// 他オブジェクトとの衝突処理
         /// </summary>
         private void OnTriggerEnter(Collider other)
@@ -114,6 +230,9 @@ namespace Game.StageScene.Magnet
             // ★★★ ポーズ中は衝突判定を行わない ★★★
             if (GlobalUIManager.Instance != null && GlobalUIManager.Instance.IsPaused)
                 return;
+
+            // 衝突時にUIを初期化（遅延初期化）
+            EnsureUIInitialized();
 
             // Fixed_Not_Block_Prefab(Clone)に当ったら消去
             if (other.gameObject.name == "Fixed_Not_Block_Prefab(Clone)")
@@ -193,6 +312,28 @@ namespace Game.StageScene.Magnet
         /// </summary>
         private GameObject GetPrefabBasedOnUI(bool isMoving)
         {
+            // UIを再確認（念のため）
+            EnsureUIInitialized();
+
+            // 代替方法を使用する場合（UIが見つからない）
+            if (_useAlternativeMethod && _magnetManager != null)
+            {
+                // MagnetManagerから現在の極性を取得
+                bool isNorth = GetCurrentPolarityFromManager();
+
+                Debug.Log($"[BulletController] 代替方法使用: {(isNorth ? "N極" : "S極")}");
+
+                if (isMoving)
+                {
+                    return isNorth ? _movingNPrefab : _movingSPrefab;
+                }
+                else
+                {
+                    return isNorth ? _fixedNPrefab : _fixedSPrefab;
+                }
+            }
+
+            // 通常の方法（UIから取得）
             bool sMagnetActive = _uiSMagnet != null && _uiSMagnet.activeSelf;
             bool nMagnetActive = _uiNMagnet != null && _uiNMagnet.activeSelf;
 
@@ -225,6 +366,26 @@ namespace Game.StageScene.Magnet
 
             Debug.LogWarning("どちらのUIもアクティブではないため、置き換え対象なし");
             return null;
+        }
+
+        /// <summary>
+        /// MagnetManagerから現在の極性を取得（代替方法）
+        /// </summary>
+        private bool GetCurrentPolarityFromManager()
+        {
+            if (_magnetManager == null)
+            {
+                Debug.LogWarning("[BulletController] MagnetManagerが見つからないため、デフォルトでN極を返します");
+                return true; // デフォルトはN極
+            }
+
+            // MagnetManagerに極性を取得するメソッドがあればそれを使用
+            // ない場合は、プレイヤーの状態などから推測
+            // ここでは仮実装として、チャージパワーで判定
+            // 実際の実装はMagnetManagerのAPIに合わせて修正してください
+
+            // 仮実装: チャージパワーが50%以上ならN極、それ以外はS極
+            return _chargePower >= 50f;
         }
 
         /// <summary>

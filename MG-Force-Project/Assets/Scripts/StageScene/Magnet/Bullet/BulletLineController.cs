@@ -28,32 +28,44 @@ namespace Game.StageScene.Magnet
             }
             else
             {
-                Debug.LogError("[BulletLineController] プレイヤーオブジェクトが見つかりません！");
+                Debug.LogError("[BulletLineController] プレイヤーオブジェクトが見つかりません!");
             }
 
             _lineRenderer = GetComponent<LineRenderer>();
             if (_lineRenderer == null)
             {
-                Debug.LogError("[BulletLineController] LineRenderer がアタッチされていません！");
+                Debug.LogError("[BulletLineController] LineRenderer がアタッチされていません!");
+            }
+            else
+            {
+                // 初期状態ではラインを非表示にする
+                _lineRenderer.enabled = false;
             }
         }
 
         private void Update()
         {
             // プレイヤーが破壊されていたら処理をスキップ
-            if (_playerTransform == null) return;
+            if (_playerTransform == null || _lineRenderer == null) return;
 
-            // SHOOT 入力で表示、キャンセルで非表示
+            // SHOOT 入力で表示、それ以外で非表示
             if (_inputHandler.IsActionPressing(InputConstants.Action.SHOOT) &&
                 !_inputHandler.IsActionPressing(InputConstants.Action.SHOOT_CANCEL))
             {
-                gameObject.SetActive(true);
+                _lineRenderer.enabled = true;
+                UpdateLinePosition();
             }
             else
             {
-                gameObject.SetActive(false);
+                _lineRenderer.enabled = false;
             }
+        }
 
+        /// <summary>
+        /// ラインの位置を更新
+        /// </summary>
+        private void UpdateLinePosition()
+        {
             // ラインの開始位置をプレイヤーの少し上に設定
             Vector3 start_point = _playerTransform.position + Vector3.up * 1.0f;
 
@@ -88,6 +100,8 @@ namespace Game.StageScene.Magnet
         /// </summary>
         public static Vector3 GetDirection()
         {
+            if (_inputHandler == null) return _currentDirection;
+
             if (_inputHandler.IsActionPressing(InputConstants.Action.SHOOT_ANGLE, InputConstants.ActionVector.North)) return InputConstants.ActionVector.North;
             if (_inputHandler.IsActionPressing(InputConstants.Action.SHOOT_ANGLE, InputConstants.ActionVector.NorthEast)) return InputConstants.ActionVector.NorthEast;
             if (_inputHandler.IsActionPressing(InputConstants.Action.SHOOT_ANGLE, InputConstants.ActionVector.East)) return InputConstants.ActionVector.East;

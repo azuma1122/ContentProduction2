@@ -3,6 +3,7 @@ using Game.GameSystem;
 using UnityEngine.UI;
 using TMPro;
 using UnityEngine.SceneManagement;
+using System.Collections;
 
 namespace Game.Stage
 {
@@ -15,7 +16,7 @@ namespace Game.Stage
     /// </summary>
     public class StageConfigMenuController : MonoBehaviour
     {
-        // 入力制御（Keyboard/Gamepad）
+        // 入力制御(Keyboard/Gamepad)
         private InputHandler _input;
 
         // シーン切り替え管理
@@ -42,52 +43,56 @@ namespace Game.Stage
         {
             _input = GameObject.Find(GameConstants.Object.INPUT)?.GetComponent<InputHandler>();
 
-            // ★★★ デバッグ：InputHandler の状態確認 ★★★
-            if (_input == null)
+            // 初期状態は非表示(nullチェック付き)
+            if (_helpMenuObject != null)
             {
-                Debug.LogError($"[StageConfigMenu] InputHandler が見つかりません！ シーン: {SceneManager.GetActiveScene().name}");
+                _helpMenuObject.SetActive(false);
             }
             else
             {
-                Debug.Log($"[StageConfigMenu] InputHandler 取得成功: {_input.gameObject.name}");
+                Debug.LogWarning("[StageConfigMenu] _helpMenuObject が Inspector で設定されていません");
             }
 
-            // 初期状態は非表示
-            if (_helpMenuObject != null) _helpMenuObject.SetActive(false);
-            if (_confirmDialogObject != null) _confirmDialogObject.SetActive(false);
+            if (_confirmDialogObject != null)
+            {
+                _confirmDialogObject.SetActive(false);
+            }
+            else
+            {
+                Debug.LogWarning("[StageConfigMenu] _confirmDialogObject が Inspector で設定されていません");
+            }
 
             // 確認ダイアログの「はい/いいえ」ボタンイベント登録
-            if (_confirmYesButton != null) _confirmYesButton.onClick.AddListener(OnConfirmYes);
-            if (_confirmNoButton != null) _confirmNoButton.onClick.AddListener(CloseConfirmDialog);
+            if (_confirmYesButton != null)
+            {
+                _confirmYesButton.onClick.AddListener(OnConfirmYes);
+            }
+            else
+            {
+                Debug.LogWarning("[StageConfigMenu] _confirmYesButton が Inspector で設定されていません");
+            }
 
-            // ★★★ Awake時に自動診断 ★★★
-            Invoke("AutoDiagnoseOnStart", 1f);
+            if (_confirmNoButton != null)
+            {
+                _confirmNoButton.onClick.AddListener(CloseConfirmDialog);
+            }
+            else
+            {
+                Debug.LogWarning("[StageConfigMenu] _confirmNoButton が Inspector で設定されていません");
+            }
         }
 
         private void Update()
         {
-            // ★★★ Pキーは Input.GetKeyDown で直接チェック（InputHandler不要） ★★★
-            if (Input.GetKeyDown(KeyCode.P))
-            {
-                DebugTimeScale();
-            }
-
-            // ★★★ Iキーで詳細診断（InputHandler不要） ★★★
-            if (Input.GetKeyDown(KeyCode.I))
-            {
-                DiagnoseScene();
-            }
-
-            // ★★★ Oキーでボタン診断（InputHandler不要） ★★★
-            if (Input.GetKeyDown(KeyCode.O))
-            {
-                DiagnoseButtons();
-            }
 
             if (_input == null)
             {
-                // ★★★ InputHandlerがnullの場合、毎フレーム再取得を試みる ★★★
+                // InputHandlerがnullの場合、毎フレーム再取得を試みる
                 _input = GameObject.Find(GameConstants.Object.INPUT)?.GetComponent<InputHandler>();
+                if (_input == null)
+                {
+                    Debug.LogWarning("[StageConfigMenu] InputHandlerが見つかりません。再取得を試みます...");
+                }
                 return;
             }
 
@@ -105,178 +110,195 @@ namespace Game.Stage
                     return;
                 }
             }
-        }
 
-        #region--- デバッグ機能 ---
+            // 詳細デバッグ(Oキー)
+            if (Input.GetKeyDown(KeyCode.O))
+            {
+                DetailedDebug();
+            }
 
-        /// <summary>
-        /// 起動時の自動診断
-        /// </summary>
-        private void AutoDiagnoseOnStart()
-        {
-            Debug.Log("========================================");
-            Debug.Log($"=== {SceneManager.GetActiveScene().name} 自動診断 ===");
-            Debug.Log("========================================");
-
-            DiagnoseScene();
-            DiagnoseButtons();
-
-            Debug.Log("========================================");
-            Debug.Log("=== 診断完了 ===");
-            Debug.Log("Pキー: タイムスケール診断");
-            Debug.Log("Iキー: シーン診断");
-            Debug.Log("Oキー: ボタン診断");
-            Debug.Log("========================================");
+            // プレイヤー状態チェック(Lキー)
+            if (Input.GetKeyDown(KeyCode.L))
+            {
+                CheckPlayerStatus();
+            }
         }
 
         /// <summary>
-        /// シーン全体の診断
+        /// 詳細なデバッグ情報を出力
         /// </summary>
-        private void DiagnoseScene()
+        private void DetailedDebug()
         {
-            Debug.Log("========== シーン診断 ==========");
-            Debug.Log($"シーン名: {SceneManager.GetActiveScene().name}");
+            Debug.Log("========== 詳細デバッグ情報 ==========");
             Debug.Log($"Time.timeScale: {Time.timeScale}");
+            Debug.Log($"Time.deltaTime: {Time.deltaTime}");
             Debug.Log($"Physics.simulationMode: {Physics.simulationMode}");
+            Debug.Log($"Physics2D.simulationMode: {Physics2D.simulationMode}");
+
+            // プレイヤー検索
+            var player = GameObject.FindGameObjectWithTag("Player");
+            if (player != null)
+            {
+                Debug.Log($"プレイヤー発見: {player.name}");
+                Debug.Log($"  - Active: {player.activeSelf}");
+                Debug.Log($"  - Position: {player.transform.position}");
+
+                var rb = player.GetComponent<Rigidbody>();
+                if (rb != null)
+                {
+                    Debug.Log($"  - Rigidbody.isKinematic: {rb.isKinematic}");
+                    Debug.Log($"  - Rigidbody.velocity: {rb.velocity}");
+                    Debug.Log($"  - Rigidbody.useGravity: {rb.useGravity}");
+                }
+
+                var rb2d = player.GetComponent<Rigidbody2D>();
+                if (rb2d != null)
+                {
+                    Debug.Log($"  - Rigidbody2D.isKinematic: {rb2d.isKinematic}");
+                    Debug.Log($"  - Rigidbody2D.velocity: {rb2d.velocity}");
+                    Debug.Log($"  - Rigidbody2D.simulated: {rb2d.simulated}");
+                }
+
+                var scripts = player.GetComponents<MonoBehaviour>();
+                Debug.Log($"  - MonoBehaviour数: {scripts.Length}");
+                foreach (var script in scripts)
+                {
+                    Debug.Log($"    - {script.GetType().Name}: enabled={script.enabled}");
+                }
+            }
+            else
+            {
+                Debug.LogError("★★★ プレイヤーが見つかりません! ★★★");
+            }
 
             // InputHandler確認
             var inputObj = GameObject.Find(GameConstants.Object.INPUT);
             if (inputObj != null)
             {
-                Debug.Log($"InputObject発見: {inputObj.name}, Active: {inputObj.activeSelf}");
+                Debug.Log($"InputHandler GameObject: {inputObj.name}, Active: {inputObj.activeSelf}");
                 var handler = inputObj.GetComponent<InputHandler>();
-                Debug.Log($"  InputHandler: {(handler != null ? "あり" : "なし")}");
                 if (handler != null)
                 {
-                    Debug.Log($"  InputHandler.enabled: {handler.enabled}");
+                    Debug.Log($"  - InputHandler.enabled: {handler.enabled}");
                 }
             }
             else
             {
-                Debug.LogError($"InputObject が見つかりません！探索名: {GameConstants.Object.INPUT}");
+                Debug.LogError("★★★ InputHandlerが見つかりません! ★★★");
             }
 
-            // EventSystem確認
-            var eventSystem = FindObjectOfType<UnityEngine.EventSystems.EventSystem>();
-            if (eventSystem != null)
-            {
-                Debug.Log($"EventSystem: {eventSystem.gameObject.name}, enabled: {eventSystem.enabled}");
-                var inputModule = eventSystem.GetComponent<UnityEngine.EventSystems.StandaloneInputModule>();
-                if (inputModule != null)
-                {
-                    Debug.Log($"  StandaloneInputModule: enabled={inputModule.enabled}");
-                }
-            }
-            else
-            {
-                Debug.LogError("★★★ EventSystem が見つかりません！これが原因の可能性大 ★★★");
-            }
-
-            // Canvas確認
-            var canvases = FindObjectsOfType<Canvas>();
-            Debug.Log($"Canvas数: {canvases.Length}");
-            foreach (var canvas in canvases)
-            {
-                var raycaster = canvas.GetComponent<UnityEngine.UI.GraphicRaycaster>();
-                Debug.Log($"  Canvas: {canvas.name}");
-                Debug.Log($"    enabled: {canvas.enabled}");
-                Debug.Log($"    renderMode: {canvas.renderMode}");
-                Debug.Log($"    Raycaster: {(raycaster != null && raycaster.enabled ? "有効" : "無効")}");
-            }
-
-            Debug.Log("================================");
+            Debug.Log("====================================");
         }
 
         /// <summary>
-        /// ボタンの詳細診断
+        /// プレイヤーの詳細状態チェック（Lキーで呼び出し）
         /// </summary>
-        private void DiagnoseButtons()
+        private void CheckPlayerStatus()
         {
-            Debug.Log("========== ボタン診断 ==========");
+            Debug.Log("========== プレイヤー状態チェック (Lキー) ==========");
 
-            // UI Button確認
-            var allButtons = FindObjectsOfType<Button>();
-            Debug.Log($"UI Button数: {allButtons.Length}");
-            foreach (var btn in allButtons)
+            var player = GameObject.FindGameObjectWithTag("Player");
+            if (player == null)
             {
-                Debug.Log($"  Button: {btn.gameObject.name}");
-                Debug.Log($"    enabled: {btn.enabled}");
-                Debug.Log($"    interactable: {btn.interactable}");
-                Debug.Log($"    GameObject.active: {btn.gameObject.activeSelf}");
-                Debug.Log($"    親がアクティブ: {btn.transform.parent == null || btn.transform.parent.gameObject.activeSelf}");
+                Debug.LogError("★★★ プレイヤーが見つかりません！ ★★★");
 
-                // Canvas確認
-                var canvas = btn.GetComponentInParent<Canvas>();
-                if (canvas != null)
-                {
-                    Debug.Log($"    所属Canvas: {canvas.name}, enabled: {canvas.enabled}");
-                }
+                // Playerタグが付いているオブジェクトを全て検索
+                var allPlayers = GameObject.FindGameObjectsWithTag("Player");
+                Debug.Log($"「Player」タグのオブジェクト数: {allPlayers.Length}");
+
+                return;
             }
 
-            // Toggle確認
-            var allToggles = FindObjectsOfType<Toggle>();
-            Debug.Log($"Toggle数: {allToggles.Length}");
-            foreach (var toggle in allToggles)
+            // 基本情報
+            Debug.Log($"[基本] GameObject.name: {player.name}");
+            Debug.Log($"[基本] activeSelf: {player.activeSelf}");
+            Debug.Log($"[基本] activeInHierarchy: {player.activeInHierarchy}");
+            Debug.Log($"[基本] Position: {player.transform.position}");
+
+            // 子オブジェクトの情報
+            Debug.Log($"[階層] 子オブジェクト数: {player.transform.childCount}");
+            for (int i = 0; i < player.transform.childCount; i++)
             {
-                Debug.Log($"  Toggle: {toggle.gameObject.name}");
-                Debug.Log($"    enabled: {toggle.enabled}");
-                Debug.Log($"    interactable: {toggle.interactable}");
+                var child = player.transform.GetChild(i);
+                Debug.Log($"[階層]   [{i}] {child.name}, Active: {child.gameObject.activeSelf}");
             }
 
-            // 3Dボタン（Collider付き）確認
-            var allColliders = FindObjectsOfType<Collider>();
-            int buttonColliderCount = 0;
-            foreach (var col in allColliders)
+            // Time設定
+            Debug.Log($"[Time] Time.timeScale: {Time.timeScale}");
+            Debug.Log($"[Time] Time.deltaTime: {Time.deltaTime}");
+
+            // 物理設定
+            Debug.Log($"[Physics] simulationMode: {Physics.simulationMode}");
+            Debug.Log($"[Physics2D] simulationMode: {Physics2D.simulationMode}");
+
+            // Rigidbody（子を含めて検索）
+            var rb = player.GetComponentInChildren<Rigidbody>();
+            if (rb != null)
             {
-                if (col.gameObject.name.ToLower().Contains("button") ||
-                    col.gameObject.tag == "Button")
-                {
-                    buttonColliderCount++;
-                    Debug.Log($"  3Dボタン: {col.gameObject.name}");
-                    Debug.Log($"    Position: {col.transform.position}");
-                    Debug.Log($"    enabled: {col.enabled}");
-                    Debug.Log($"    isTrigger: {col.isTrigger}");
-                }
-            }
-            Debug.Log($"3Dボタン（Collider）数: {buttonColliderCount}");
-
-            Debug.Log("================================");
-        }
-
-        /// <summary>
-        /// 現在のTime.timeScaleとポーズ状態を詳細にログ出力
-        /// </summary>
-        private void DebugTimeScale()
-        {
-            Debug.Log("========== タイムスケール診断 ==========");
-            Debug.Log($"Time.timeScale: {Time.timeScale}");
-            Debug.Log($"Time.deltaTime: {Time.deltaTime}");
-            Debug.Log($"Time.unscaledDeltaTime: {Time.unscaledDeltaTime}");
-            Debug.Log($"Physics.simulationMode: {Physics.simulationMode}");
-
-            // GlobalUIManagerの状態確認
-            if (GlobalUIManager.Instance != null)
-            {
-                Debug.Log($"GlobalUIManager.IsPaused: {GlobalUIManager.Instance.IsPaused}");
-                Debug.Log($"GlobalUIManager GameObject: {GlobalUIManager.Instance.gameObject.name}");
+                Debug.Log($"[Rigidbody] 発見: {rb.gameObject.name}");
+                Debug.Log($"[Rigidbody] isKinematic: {rb.isKinematic}");
+                Debug.Log($"[Rigidbody] velocity: {rb.velocity}");
+                Debug.Log($"[Rigidbody] useGravity: {rb.useGravity}");
+                Debug.Log($"[Rigidbody] mass: {rb.mass}");
+                Debug.Log($"[Rigidbody] drag: {rb.drag}");
+                Debug.Log($"[Rigidbody] angularDrag: {rb.angularDrag}");
+                Debug.Log($"[Rigidbody] constraints: {rb.constraints}");
+                Debug.Log($"[Rigidbody] freezeRotation: {rb.freezeRotation}");
             }
             else
             {
-                Debug.LogWarning("GlobalUIManager.Instance が null です！");
+                Debug.LogWarning("[Rigidbody] ★ コンポーネントなし - 3Dキャラクターの場合は必須です");
             }
 
-            // シーン内のすべてのGlobalUIManagerを検索
-            var allManagers = FindObjectsOfType<GlobalUIManager>();
-            Debug.Log($"シーン内のGlobalUIManager数: {allManagers.Length}");
-            foreach (var manager in allManagers)
+            // 全スクリプト（子を含めて検索）
+            var scripts = player.GetComponentsInChildren<MonoBehaviour>();
+            Debug.Log($"[Scripts] 総数（子を含む）: {scripts.Length}");
+            foreach (var script in scripts)
             {
-                Debug.Log($"  - {manager.gameObject.name}, IsPaused: {manager.IsPaused}");
+                if (script != null)
+                {
+                    Debug.Log($"[Scripts]   {script.GetType().Name} ({script.gameObject.name}): enabled={script.enabled}");
+                }
             }
 
-            Debug.Log("======================================");
-        }
+            // InputHandler確認
+            var inputObj = GameObject.Find(GameConstants.Object.INPUT);
+            if (inputObj != null)
+            {
+                Debug.Log($"[Input] GameObject発見: {inputObj.name}, Active: {inputObj.activeSelf}");
+                var handler = inputObj.GetComponent<InputHandler>();
+                if (handler != null)
+                {
+                    Debug.Log($"[Input] InputHandler.enabled: {handler.enabled}");
+                }
+                else
+                {
+                    Debug.LogError("[Input] ★★★ InputHandlerコンポーネントがありません！");
+                }
+            }
+            else
+            {
+                Debug.LogError("[Input] ★★★ InputHandlerオブジェクトが見つかりません！");
+            }
 
-        #endregion
+            // GlobalUIManager確認
+            var managers = FindObjectsOfType<GlobalUIManager>();
+            Debug.Log($"[Manager] GlobalUIManager数: {managers.Length}");
+            if (managers.Length > 1)
+            {
+                Debug.LogWarning("[Manager] ★★★ GlobalUIManagerが複数存在します！");
+                for (int i = 0; i < managers.Length; i++)
+                {
+                    Debug.Log($"[Manager]   [{i}] {managers[i].gameObject.name}, IsPaused: {managers[i].IsPaused}");
+                }
+            }
+            else if (managers.Length == 1)
+            {
+                Debug.Log($"[Manager] IsPaused: {managers[0].IsPaused}");
+            }
+
+            Debug.Log("====================================================");
+        }
 
         #region--- 機能 ---
 
@@ -344,89 +366,290 @@ namespace Game.Stage
             BackToTitle();
         }
 
+        /// <summary>
+        /// リスタートボタンから直接呼び出し用
+        /// 確認ダイアログなしで即座にステージをリセット
+        /// </summary>
+        public void RestartStageDirect()
+        {
+            Debug.Log("[StageConfigMenu] リスタートボタン押下 - ステージをリセットします");
+            ResetStage();
+        }
+
+        /// <summary>
+        /// ステージをリスタート
+        /// </summary>
         private void ResetStage()
         {
-            Debug.Log("=== ステージリセット開始 ===");
-            DebugTimeScale();
-
+            // ダイアログとヘルプを閉じる
             if (_confirmDialogObject != null)
                 _confirmDialogObject.SetActive(false);
             if (_helpMenuObject != null)
                 _helpMenuObject.SetActive(false);
 
+            // ConfigMenuを閉じる
             if (GlobalUIManager.Instance != null)
             {
                 var configMenu = GameObject.Find("ConfigMenu");
                 if (configMenu != null)
                 {
-                    Debug.Log("設定メニューを強制的に閉じます");
                     configMenu.SetActive(false);
                 }
             }
 
+            // 状態をリセット
             ForceResumeAll();
-            Debug.Log($"リセット後のTime.timeScale: {Time.timeScale}");
 
-            string currentSceneName = SceneManager.GetActiveScene().name;
-            Debug.Log($"シーン再読み込み: {currentSceneName}");
+            // SE再生
+            try
+            {
+                if (SEManager.instance != null)
+                {
+                    SEManager.instance.PlaySE(SEManager.Stage.STAGE_RETRY);
+                }
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning($"SE再生エラー: {e.Message}");
+            }
 
-            _sceneLoader.LoadScene(currentSceneName);
+            // ロードシーンを経由してリロード
+            StartCoroutine(LoadSceneWithLoadingScreen());
         }
 
+        /// <summary>
+        /// タイトルに戻る
+        /// </summary>
         private void BackToTitle()
         {
-            Debug.Log("=== タイトルへ戻る ===");
-            DebugTimeScale();
-
+            // ダイアログとヘルプを閉じる
             if (_confirmDialogObject != null)
                 _confirmDialogObject.SetActive(false);
             if (_helpMenuObject != null)
                 _helpMenuObject.SetActive(false);
 
+            // 状態をリセット
             ForceResumeAll();
-            Debug.Log($"遷移直前のTime.timeScale: {Time.timeScale}");
 
-            _sceneLoader.LoadScene(GameConstants.Scene.Title.ToString());
+            // ロードシーンを経由してタイトルへ
+            StartCoroutine(LoadSceneWithLoadingScreen(GameConstants.Scene.Title.ToString()));
         }
 
+        /// <summary>
+        /// ロード画面を経由してシーンを読み込む
+        /// </summary>
+        /// <param name="targetScene">遷移先シーン名(nullの場合は現在のシーンをリロード)</param>
+        private IEnumerator LoadSceneWithLoadingScreen(string targetScene = null)
+        {
+            Debug.Log("[StageConfigMenu] LoadSceneWithLoadingScreen開始");
+
+            // 複数フレーム待って確実に状態をリセット
+            yield return null;
+            yield return null;
+
+            // 再度リセット確認（念押し）
+            Time.timeScale = 1f;
+            Physics.simulationMode = SimulationMode.FixedUpdate;
+            Physics2D.simulationMode = SimulationMode2D.FixedUpdate;
+
+            Debug.Log($"[StageConfigMenu] Time.timeScale={Time.timeScale}, Physics={Physics.simulationMode}, Physics2D={Physics2D.simulationMode}");
+
+            // プレイヤーのRigidbodyを強制的に再開
+            ForceResumePlayer();
+
+            // さらに1フレーム待機
+            yield return null;
+
+            // 最終確認
+            Time.timeScale = 1f;
+            Debug.Log($"[StageConfigMenu] 最終確認 Time.timeScale={Time.timeScale}");
+
+            // 現在のシーン名を取得
+            string currentSceneName = SceneManager.GetActiveScene().name;
+
+            // ターゲットシーンが指定されていない場合は現在のシーンをリロード
+            string sceneToLoad = string.IsNullOrEmpty(targetScene) ? currentSceneName : targetScene;
+
+            Debug.Log($"[StageConfigMenu] ロードシーン経由でシーン遷移: {sceneToLoad}");
+
+            // SceneLoaderを使用してロード画面経由で遷移
+            if (_sceneLoader != null)
+            {
+                _sceneLoader.LoadScene(sceneToLoad);
+            }
+            else
+            {
+                // SceneLoaderが利用できない場合は直接ロード
+                Debug.LogWarning("[StageConfigMenu] SceneLoaderが見つからないため直接ロードします");
+                SceneManager.LoadScene(sceneToLoad, LoadSceneMode.Single);
+            }
+        }
+
+        /// <summary>
+        /// プレイヤーの物理挙動を強制的に再開
+        /// </summary>
+        private void ForceResumePlayer()
+        {
+            // まずタグで検索
+            var player = GameObject.FindGameObjectWithTag("Player");
+
+            // タグで見つからない、または名前が"spine"の場合は名前で検索
+            if (player == null || player.name == "spine")
+            {
+                if (player != null && player.name == "spine")
+                {
+                    Debug.LogWarning("[StageConfigMenu] ★ 「spine」に「Player」タグが付いています。これは間違いです。");
+                }
+
+                // 名前で直接検索（MagForce_Prefabまたはそのクローン）
+                player = GameObject.Find("MagForce_Prefab(Clone)");
+
+                if (player == null)
+                {
+                    player = GameObject.Find("MagForce_Prefab");
+                }
+
+                if (player != null)
+                {
+                    Debug.Log($"[StageConfigMenu] 名前で検索してプレイヤーを発見: {player.name}");
+                }
+            }
+
+            if (player != null)
+            {
+                Debug.Log("[StageConfigMenu] プレイヤーの物理挙動を強制再開");
+                Debug.Log($"  - 検出されたオブジェクト: {player.name}");
+
+                // プレイヤーをアクティブ化
+                if (!player.activeSelf)
+                {
+                    player.SetActive(true);
+                    Debug.Log("  - Player をアクティブ化しました");
+                }
+
+                // 親子構造も含めて全てのRigidbodyを再開
+                var rb = player.GetComponentInChildren<Rigidbody>();
+                if (rb != null)
+                {
+                    Debug.Log($"  - Rigidbody発見: {rb.gameObject.name}");
+                    Debug.Log($"  - 修正前: isKinematic={rb.isKinematic}, useGravity={rb.useGravity}, constraints={rb.constraints}");
+
+                    rb.isKinematic = false;
+
+                    // ★★★ 注意: PlayerMoveControllerがuseGravity=falseでカスタム重力を使用しているため
+                    // useGravityはfalseのままにする（OnStart()で設定される）
+                    // rb.useGravity = false;
+
+                    // ★★★ 重要: constraintsを適切に設定 ★★★
+                    // 3Dキャラクターの場合、通常は回転のみ固定（FreezeRotation）
+                    rb.constraints = RigidbodyConstraints.FreezeRotation;
+
+                    rb.WakeUp();
+
+                    Debug.Log($"  - 修正後: isKinematic={rb.isKinematic}, useGravity={rb.useGravity}, constraints={rb.constraints}");
+                }
+
+                // Rigidbodyが見つからなかった場合の警告
+                if (rb == null)
+                {
+                    Debug.LogWarning("  - ★ Rigidbodyが見つかりません！プレイヤーにRigidbodyコンポーネントを追加してください");
+                }
+
+                // 親子構造も含めて全てのMonoBehaviourスクリプトを有効化
+                var scripts = player.GetComponentsInChildren<MonoBehaviour>();
+                Debug.Log($"  - MonoBehaviour数（子を含む）: {scripts.Length}");
+                foreach (var script in scripts)
+                {
+                    if (script != null && script != this)  // 自分自身は除外
+                    {
+                        script.enabled = true;
+                        Debug.Log($"    - {script.GetType().Name} ({script.gameObject.name}): enabled={script.enabled}");
+                    }
+                }
+
+                if (scripts.Length == 0)
+                {
+                    Debug.LogWarning("  - ★ プレイヤーにスクリプトが1つも付いていません！移動スクリプトを追加してください");
+                }
+            }
+            else
+            {
+                Debug.LogError("★★★ プレイヤーが見つかりません！タグ「Player」が設定されているか、またはオブジェクト名が「MagForce_Prefab」であることを確認してください ★★★");
+            }
+        }
+
+        /// <summary>
+        /// ゲーム状態を強制的にリセット
+        /// </summary>
         private void ForceResumeAll()
         {
-            Debug.Log("--- ポーズ状態の強制解除開始 ---");
+            Debug.Log("[StageConfigMenu] ========================================");
+            Debug.Log("[StageConfigMenu] ForceResumeAll() 実行開始");
+            Debug.Log("[StageConfigMenu] ========================================");
 
+            // Time.timeScaleをリセット（最優先）
             Time.timeScale = 1f;
-            Debug.Log($"Time.timeScale を 1f に設定: {Time.timeScale}");
+            Debug.Log($"[StageConfigMenu] Time.timeScale を 1f に設定: {Time.timeScale}");
 
+            // 物理シミュレーションもリセット
+            Physics.simulationMode = SimulationMode.FixedUpdate;
+            Physics2D.simulationMode = SimulationMode2D.FixedUpdate;
+            Debug.Log($"[StageConfigMenu] Physics.simulationMode: {Physics.simulationMode}");
+            Debug.Log($"[StageConfigMenu] Physics2D.simulationMode: {Physics2D.simulationMode}");
+
+            // プレイヤーの物理挙動を強制再開
+            ForceResumePlayer();
+
+            // GlobalUIManagerの複数インスタンスを削除
             var allManagers = FindObjectsOfType<GlobalUIManager>();
-            Debug.Log($"検出されたGlobalUIManager数: {allManagers.Length}");
+            Debug.Log($"[StageConfigMenu] GlobalUIManager数: {allManagers.Length}");
 
             if (allManagers.Length > 1)
             {
-                Debug.LogWarning("★★★ 複数のGlobalUIManagerが検出されました。余分なインスタンスを破棄します ★★★");
+                Debug.LogWarning($"[StageConfigMenu] ★★★ 複数のGlobalUIManager検出! 余分なインスタンスを削除します ★★★");
 
+                // 最初のインスタンス以外を即座に削除
                 for (int i = 1; i < allManagers.Length; i++)
                 {
-                    Debug.LogWarning($"  → {allManagers[i].gameObject.name} を破棄します");
-                    Destroy(allManagers[i].gameObject);
+                    if (allManagers[i] != null && allManagers[i].gameObject != null)
+                    {
+                        Debug.Log($"[StageConfigMenu] 削除: {allManagers[i].gameObject.name}");
+                        DestroyImmediate(allManagers[i].gameObject);
+                    }
                 }
             }
 
+            // ★★★ 重要: 全てのGlobalUIManagerインスタンスに対してForceResetを実行 ★★★
+            allManagers = FindObjectsOfType<GlobalUIManager>();
             foreach (var manager in allManagers)
             {
-                if (manager != null && manager.gameObject != null)
+                if (manager != null)
                 {
-                    Debug.Log($"  - {manager.gameObject.name} をリセット中...");
-                    manager.Resume();
+                    Debug.Log($"[StageConfigMenu] {manager.gameObject.name} の ForceResetGameState() を呼び出し");
+                    Debug.Log($"  - 修正前: IsPaused={manager.IsPaused}");
+
+                    manager.ForceResetGameState();
+
+                    Debug.Log($"  - 修正後: IsPaused={manager.IsPaused}");
                 }
             }
 
-            if (GlobalUIManager.Instance != null)
+            // ★★★ 追加: InputHandlerの状態もリセット ★★★
+            if (_input != null)
             {
-                Debug.Log("GlobalUIManager.Instance を明示的にリセット");
-                GlobalUIManager.Instance.Resume();
+                Debug.Log("[StageConfigMenu] InputHandlerの状態をリセット");
+                _input.ForceResetInputState();
+            }
+            else
+            {
+                Debug.LogWarning("[StageConfigMenu] InputHandlerが null です");
             }
 
+            // 最後にもう一度確認（念押し）
             Time.timeScale = 1f;
-            Debug.Log($"--- 強制解除完了: Time.timeScale = {Time.timeScale} ---");
+
+            Debug.Log($"[StageConfigMenu] ForceResumeAll() 完了 - Time.timeScale: {Time.timeScale}");
+            Debug.Log("[StageConfigMenu] ========================================");
         }
 
         #endregion
@@ -450,8 +673,6 @@ namespace Game.Stage
         {
             _confirmCallback?.Invoke();
             CloseConfirmDialog();
-            //リトライ時のSE
-            SEManager.instance.PlaySE(SEManager.Stage.STAGE_RETRY); 
         }
 
         private void CloseConfirmDialog()
@@ -461,8 +682,18 @@ namespace Game.Stage
             _isConfirmActive = false;
             _confirmDialogObject.SetActive(false);
             _confirmCallback = null;
-            SEManager.instance.PlaySE(SEManager.Menu.CANCEL);
 
+            try
+            {
+                if (SEManager.instance != null)
+                {
+                    SEManager.instance.PlaySE(SEManager.Menu.CANCEL);
+                }
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning($"SE再生エラー: {e.Message}");
+            }
         }
 
         #endregion

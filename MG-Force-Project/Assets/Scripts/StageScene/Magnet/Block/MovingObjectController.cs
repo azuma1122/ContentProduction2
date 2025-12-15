@@ -1,50 +1,55 @@
-using System.Collections.Generic;
+ï»¿using System.Collections.Generic;
 using UnityEngine;
 
 namespace Game.StageScene.Magnet
 {
     /// <summary>
-    /// ‰Â“®ƒIƒuƒWƒFƒNƒgƒNƒ‰ƒX
-    /// - ¥—Í‚É”½‰‚µ‚ÄˆÚ“®‰Â”\‚ÈƒIƒuƒWƒFƒNƒg
-    /// - ƒvƒŒƒCƒ„[‚Æ‚ÌÚG‚Å“®ì§Œä
-    /// - ã‰º¶‰E‚Ì‚İ‚ÌˆÚ“®§ŒÀ
+    /// å¯å‹•ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã‚¯ãƒ©ã‚¹
+    /// - ç£åŠ›ã«åå¿œã—ã¦ç§»å‹•å¯èƒ½ãªã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆ
+    /// - ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã¨ã®æ¥è§¦ã§å‹•ä½œåˆ¶å¾¡
+    /// - ä¸Šä¸‹å·¦å³ã®ã¿ã®ç§»å‹•åˆ¶é™
     /// </summary>
     public class MovingObjectController : MagnetObjectManager
     {
-        // ===== “à•”•Ï” =====
-        private bool _canMove;                     // “®ì‰Â”\‚©
-        private Rigidbody _rigitbody;              // RigidbodyƒRƒ“ƒ|[ƒlƒ“ƒg
-        private List<Collider> _isHitMagnet = new(); // ¥—Í”ÍˆÍ‚É“ü‚Á‚Ä‚¢‚éƒRƒ‰ƒCƒ_[‚ÌƒŠƒXƒg
+        // ===== å†…éƒ¨å¤‰æ•° =====
+        private bool _canMove;                     // å‹•ä½œå¯èƒ½ã‹
+        private Rigidbody _rigitbody;              // Rigidbodyã‚³ãƒ³ãƒãƒ¼ãƒãƒ³ãƒˆ
+        private List<Collider> _isHitMagnet = new(); // ç£åŠ›ç¯„å›²ã«å…¥ã£ã¦ã„ã‚‹ã‚³ãƒ©ã‚¤ãƒ€ãƒ¼ã®ãƒªã‚¹ãƒˆ
 
         /// <summary>
-        /// ‰Šú‰»ˆ—
+        /// åˆæœŸåŒ–å‡¦ç†
         /// </summary>
         protected override void Start()
         {
             base.Start();
 
-            // Rigidbody ‚ğæ“¾
+            // Rigidbody ã‚’å–å¾—
             _rigitbody = GetComponent<Rigidbody>();
             if (_rigitbody == null)
-                Debug.LogError("[MovingObjectController] Rigidbody ‚ªŒ©‚Â‚©‚è‚Ü‚¹‚ñI");
+                Debug.LogError("[MovingObjectController] Rigidbody ãŒè¦‹ã¤ã‹ã‚Šã¾ã›ã‚“ï¼");
 
-            _rigitbody.isKinematic = true;// Kinematic‚ğ‚·‚é‘O’ñ
+            // âœ… ä¿®æ­£: isKinematicã‚’falseã«è¨­å®šï¼ˆç‰©ç†æ¼”ç®—ã‚’æœ‰åŠ¹ã«ã™ã‚‹ï¼‰
+            _rigitbody.isKinematic = false;
+
+            // âœ… è¿½åŠ : ç‰©ç†æ¼”ç®—ã®æœ€é©åŒ–è¨­å®š
+            _rigitbody.collisionDetectionMode = CollisionDetectionMode.Continuous;
+            _rigitbody.interpolation = RigidbodyInterpolation.Interpolate;
 
             _canMove = true;
 
-            // magnetManager ‚ª null ‚Ìê‡‚Í©“®æ“¾
+            // magnetManager ãŒ null ã®å ´åˆã¯è‡ªå‹•å–å¾—
             if (magnetManager == null)
             {
                 magnetManager = FindObjectOfType<MagnetManager>();
                 if (magnetManager == null)
-                    Debug.LogError("[MovingObjectController] MagnetManager ‚ªŒ©‚Â‚©‚è‚Ü‚¹‚ñI");
+                    Debug.LogError("[MovingObjectController] MagnetManager ãŒè¦‹ã¤ã‹ã‚Šã¾ã›ã‚“ï¼");
             }
 
-            // magnetController ‚ª null ‚Ìê‡‚Í‰Šú‰»
+            // magnetController ãŒ null ã®å ´åˆã¯åˆæœŸåŒ–
             if (magnetController == null)
             {
                 magnetController = new MagnetController();
-                Debug.Log($"[MovingObjectController] {gameObject.name} ‚Å MagnetController ‚ğ‰Šú‰»‚µ‚Ü‚µ‚½");
+                Debug.Log($"[MovingObjectController] {gameObject.name} ã§ MagnetController ã‚’åˆæœŸåŒ–ã—ã¾ã—ãŸ");
             }
         }
 
@@ -52,69 +57,69 @@ namespace Game.StageScene.Magnet
         {
             base.Update();
 
-            // Rigidbody ‚ª‚È‚¢ê‡‚Íˆ—‚ğƒXƒLƒbƒv
+            // Rigidbody ãŒãªã„å ´åˆã¯å‡¦ç†ã‚’ã‚¹ã‚­ãƒƒãƒ—
             if (_rigitbody == null) return;
 
-            // “®ì‰Â”\‚Èê‡‚Ì§Œä
+            // å‹•ä½œå¯èƒ½ãªå ´åˆã®åˆ¶å¾¡
             if (_canMove)
             {
                 SetDefultConstraints();
 
-                // magnetManager ‚ª null ‚Ü‚½‚Í¥—Í‚ª‹N“®‚µ‚Ä‚¢‚È‚¢ê‡‚Í’â~
+                // magnetManager ãŒ null ã¾ãŸã¯ç£åŠ›ãŒèµ·å‹•ã—ã¦ã„ãªã„å ´åˆã¯åœæ­¢
                 if (magnetManager == null || !magnetManager.IsMagnetBoot)
                 {
                     _rigitbody.velocity = Vector3.zero;
                 }
                 else
                 {
-                    // ¥—Í‹N“®’†‚Í‘¬“x‚ğã‰º¶‰E‚Ì‚İ‚É§ŒÀ
+                    // ç£åŠ›èµ·å‹•ä¸­ã¯é€Ÿåº¦ã‚’ä¸Šä¸‹å·¦å³ã®ã¿ã«åˆ¶é™
                     RestrictVelocityToFourDirections();
                 }
             }
             else
             {
-                // ƒvƒŒƒCƒ„[‚Æ“–‚½‚Á‚½ê‡‚Ì§–ñ
+                // ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã¨å½“ãŸã£ãŸå ´åˆã®åˆ¶ç´„
                 SetHitPlayerConstraints();
             }
         }
 
         /// <summary>
-        /// ‘¬“x‚ğã‰º¶‰E‚Ì‚İ‚É§ŒÀ‚·‚é
+        /// é€Ÿåº¦ã‚’ä¸Šä¸‹å·¦å³ã®ã¿ã«åˆ¶é™ã™ã‚‹
         /// </summary>
         private void RestrictVelocityToFourDirections()
         {
             Vector3 velocity = _rigitbody.velocity;
 
-            // X²‚ÆY²‚Ìâ‘Î’l‚ğ”äŠr‚µ‚ÄA‘å‚«‚¢•ûŒü‚Ì‚İ‚ğc‚·
+            // Xè»¸ã¨Yè»¸ã®çµ¶å¯¾å€¤ã‚’æ¯”è¼ƒã—ã¦ã€å¤§ãã„æ–¹å‘ã®ã¿ã‚’æ®‹ã™
             if (Mathf.Abs(velocity.x) > Mathf.Abs(velocity.y))
             {
-                // ¶‰EˆÚ“®‚Ì‚İ
+                // å·¦å³ç§»å‹•ã®ã¿
                 _rigitbody.velocity = new Vector3(velocity.x, 0f, 0f);
             }
             else
             {
-                // ã‰ºˆÚ“®‚Ì‚İ
+                // ä¸Šä¸‹ç§»å‹•ã®ã¿
                 _rigitbody.velocity = new Vector3(0f, velocity.y, 0f);
             }
         }
 
-        #region -------- ”»’èˆ— --------
+        #region -------- åˆ¤å®šå‡¦ç† --------
 
         /// <summary>
-        /// ƒvƒŒƒCƒ„[‚ÆÕ“Ë‚µ‚½‚Ìˆ—
+        /// ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã¨è¡çªã—ãŸæ™‚ã®å‡¦ç†
         /// </summary>
         private void OnCollisionEnter(Collision collision)
         {
             if (magnetManager != null && magnetManager.IsMagnetBoot) return;
 
-            // ƒvƒŒƒCƒ„[ˆÈŠO‚Í–³‹
+            // ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ä»¥å¤–ã¯ç„¡è¦–
             if (!collision.gameObject.CompareTag(GameConstants.Tag.PLAYER.ToString())) return;
 
-            _canMove = false; // ƒvƒŒƒCƒ„[‚ÆÚG’†‚Í“®‚©‚È‚¢
+            _canMove = false; // ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã¨æ¥è§¦ä¸­ã¯å‹•ã‹ãªã„
         }
 
         /// <summary>
-        /// ƒvƒŒƒCƒ„[‚©‚ç—£‚ê‚½‚Ìˆ—
+        /// ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã‹ã‚‰é›¢ã‚ŒãŸæ™‚ã®å‡¦ç†
         /// </summary>
         private void OnCollisionExit(Collision collision)
         {
@@ -122,13 +127,13 @@ namespace Game.StageScene.Magnet
 
             if (!collision.gameObject.CompareTag(GameConstants.Tag.PLAYER.ToString())) return;
 
-            if (magnetFixed) return; // ŒÅ’èó‘Ô‚È‚ç–³‹
+            if (magnetFixed) return; // å›ºå®šçŠ¶æ…‹ãªã‚‰ç„¡è¦–
 
-            _canMove = true; // ƒvƒŒƒCƒ„[‚ª—£‚ê‚½‚çÄ“x“®ì‰Â”\
+            _canMove = true; // ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ãŒé›¢ã‚ŒãŸã‚‰å†åº¦å‹•ä½œå¯èƒ½
         }
 
         /// <summary>
-        /// ¥—Í”ÍˆÍ‚É“ü‚Á‚½‚Ìˆ—
+        /// ç£åŠ›ç¯„å›²ã«å…¥ã£ãŸæ™‚ã®å‡¦ç†
         /// </summary>
         protected override void OnTriggerEnter(Collider other)
         {
@@ -136,44 +141,44 @@ namespace Game.StageScene.Magnet
 
             if (other.gameObject.layer != (int)GameConstants.Layer.MAGNET_RANGE) return;
 
-            // ¥—Í”ÍˆÍƒŠƒXƒg‚É’Ç‰Á
+            // ç£åŠ›ç¯„å›²ãƒªã‚¹ãƒˆã«è¿½åŠ 
             if (!_isHitMagnet.Contains(other))
                 _isHitMagnet.Add(other);
         }
 
         /// <summary>
-        /// ¥—Í”ÍˆÍ“à‚É‚¢‚éŠÔ‚Ìˆ—
+        /// ç£åŠ›ç¯„å›²å†…ã«ã„ã‚‹é–“ã®å‡¦ç†
         /// </summary>
         private void OnTriggerStay(Collider other)
         {
-            // magnetManager ‚ª null ‚©¥—Í‚ª‹N“®‚µ‚Ä‚¢‚È‚¯‚ê‚ÎI—¹
+            // magnetManager ãŒ null ã‹ç£åŠ›ãŒèµ·å‹•ã—ã¦ã„ãªã‘ã‚Œã°çµ‚äº†
             if (magnetManager == null || !magnetManager.IsMagnetBoot) return;
 
-            // ‘ÎÛ‚ª¥—ÍƒIƒuƒWƒFƒNƒg‚Å‚È‚¢ê‡‚ÍI—¹
+            // å¯¾è±¡ãŒç£åŠ›ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã§ãªã„å ´åˆã¯çµ‚äº†
             if (other.gameObject.layer != (int)GameConstants.Layer.N_MAGNET &&
                 other.gameObject.layer != (int)GameConstants.Layer.S_MAGNET) return;
 
-            // ‚±‚ÌƒIƒuƒWƒFƒNƒg‚ª‰Â“®ƒIƒuƒWƒFƒNƒg‚Ìê‡‚Ì‚İ¥—Íˆ—
+            // ã“ã®ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆãŒå¯å‹•ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã®å ´åˆã®ã¿ç£åŠ›å‡¦ç†
             if (MyData.MyObjectType == GameConstants.Tag.MOVING)
             {
-                // magnetController ‚ª null ‚È‚ç‰Šú‰»
+                // magnetController ãŒ null ãªã‚‰åˆæœŸåŒ–
                 if (magnetController == null)
                 {
                     magnetController = new MagnetController();
-                    Debug.LogWarning($"[MovingObjectController] {gameObject.name} ‚Ì magnetController ‚ª null ‚¾‚Á‚½‚½‚ßA‰Šú‰»‚µ‚Ü‚µ‚½");
+                    Debug.LogWarning($"[MovingObjectController] {gameObject.name} ã® magnetController ãŒ null ã ã£ãŸãŸã‚ã€åˆæœŸåŒ–ã—ã¾ã—ãŸ");
                 }
 
-                // ‘Šè‚ÌƒIƒuƒWƒFƒNƒg‚Ìƒf[ƒ^‚ª‰Šú‰»‚³‚ê‚Ä‚¢‚é‚©Šm”F
+                // ç›¸æ‰‹ã®ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã®ãƒ‡ãƒ¼ã‚¿ãŒåˆæœŸåŒ–ã•ã‚Œã¦ã„ã‚‹ã‹ç¢ºèª
                 var otherManager = other.gameObject.GetComponent<MagnetObjectManager>();
                 if (otherManager == null)
                 {
-                    Debug.LogWarning($"[MovingObjectController] {other.gameObject.name} ‚É MagnetObjectManager ‚ªŒ©‚Â‚©‚è‚Ü‚¹‚ñ");
+                    Debug.LogWarning($"[MovingObjectController] {other.gameObject.name} ã« MagnetObjectManager ãŒè¦‹ã¤ã‹ã‚Šã¾ã›ã‚“");
                     return;
                 }
 
                 if (otherManager.MyData == null)
                 {
-                    // ƒf[ƒ^‚ª‰Šú‰»‚³‚ê‚Ä‚¢‚È‚¢ê‡‚ÍƒXƒLƒbƒviƒGƒ‰[ƒƒO‚Ío‚³‚È‚¢j
+                    // ãƒ‡ãƒ¼ã‚¿ãŒåˆæœŸåŒ–ã•ã‚Œã¦ã„ãªã„å ´åˆã¯ã‚¹ã‚­ãƒƒãƒ—ï¼ˆã‚¨ãƒ©ãƒ¼ãƒ­ã‚°ã¯å‡ºã•ãªã„ï¼‰
                     return;
                 }
 
@@ -182,7 +187,7 @@ namespace Game.StageScene.Magnet
         }
 
         /// <summary>
-        /// ¥—Í”ÍˆÍ‚©‚ço‚½‚Ìˆ—
+        /// ç£åŠ›ç¯„å›²ã‹ã‚‰å‡ºãŸæ™‚ã®å‡¦ç†
         /// </summary>
         private void OnTriggerExit(Collider other)
         {
@@ -191,7 +196,7 @@ namespace Game.StageScene.Magnet
             if (_isHitMagnet.Contains(other))
                 _isHitMagnet.Remove(other);
 
-            // ¥—Í”ÍˆÍ‚É’N‚à‚¢‚È‚¢ê‡‚Í’â~
+            // ç£åŠ›ç¯„å›²ã«èª°ã‚‚ã„ãªã„å ´åˆã¯åœæ­¢
             if (_isHitMagnet.Count == 0 && _rigitbody != null)
                 _rigitbody.velocity = Vector3.zero;
         }
@@ -199,7 +204,7 @@ namespace Game.StageScene.Magnet
         #endregion
 
         /// <summary>
-        /// ƒfƒtƒHƒ‹ƒg‚ÌRigidbody§–ñ
+        /// ãƒ‡ãƒ•ã‚©ãƒ«ãƒˆã®Rigidbodyåˆ¶ç´„
         /// </summary>
         private void SetDefultConstraints()
         {
@@ -207,7 +212,7 @@ namespace Game.StageScene.Magnet
         }
 
         /// <summary>
-        /// ƒvƒŒƒCƒ„[‚ÆÚG’†‚Ì§–ñ(•K—v‚È‚ç‚±‚±‚ÅŒÅ’è)
+        /// ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã¨æ¥è§¦ä¸­ã®åˆ¶ç´„(å¿…è¦ãªã‚‰ã“ã“ã§å›ºå®š)
         /// </summary>
         private void SetHitPlayerConstraints()
         {

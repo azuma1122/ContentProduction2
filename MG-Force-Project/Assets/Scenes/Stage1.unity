@@ -5256,13 +5256,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ebc146bb3fa5fa1479f27928e596b0ca, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _configMenuObject: {fileID: 1263406982}
   _helpMenuObject: {fileID: 0}
-  _helpText: {fileID: 1119301205}
   _confirmDialogObject: {fileID: 1801445621}
+  _configMenu:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  _soundSlider:
+  - {fileID: 628978157}
+  - {fileID: 905867919}
+  _keyToggle: {fileID: 384112490}
   _confirmMessageText: {fileID: 255835851}
   _confirmYesButton: {fileID: 1242364757}
   _confirmNoButton: {fileID: 115100434}
-  _keyToggle: {fileID: 0}
+  _helpText: {fileID: 1119301205}
 --- !u!4 &2067018946
 Transform:
   m_ObjectHideFlags: 0

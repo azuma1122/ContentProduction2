@@ -32,29 +32,27 @@ public class GlobalUIManager : MonoBehaviour
     {
         Debug.Log($"[GlobalUIManager] Awake() 開始 - GameObject: {gameObject.name}");
 
-        // ★★★ 修正：より厳密なシングルトンチェック ★★★
+        // ★★★ 修正：シングルトンチェックの改善 ★★★
         var allManagers = FindObjectsOfType<GlobalUIManager>();
         if (allManagers.Length > 1)
         {
-            Debug.LogError($"[GlobalUIManager] 複数インスタンス検出({allManagers.Length}個)！このインスタンスを破棄します");
+            Debug.LogWarning($"[GlobalUIManager] 複数インスタンス検出({allManagers.Length}個)");
 
-            // 最初のインスタンス以外を破棄
-            bool isFirst = true;
+            // _instanceが既に設定されている場合、自分が重複インスタンス
+            if (_instance != null && _instance != this)
+            {
+                Debug.LogWarning($"[GlobalUIManager] 重複インスタンスを即座に破棄: {gameObject.name}");
+                DestroyImmediate(gameObject);
+                return;
+            }
+
+            // _instanceがまだない場合、他のインスタンスを削除
             foreach (var manager in allManagers)
             {
-                if (isFirst)
+                if (manager != this)
                 {
-                    isFirst = false;
-                    if (manager != this)
-                    {
-                        // 自分が最初ではない
-                        Destroy(gameObject);
-                        return;
-                    }
-                }
-                else if (manager != this)
-                {
-                    Destroy(manager.gameObject);
+                    Debug.LogWarning($"[GlobalUIManager] 他のインスタンスを破棄: {manager.gameObject.name}");
+                    DestroyImmediate(manager.gameObject);
                 }
             }
         }
@@ -64,14 +62,16 @@ public class GlobalUIManager : MonoBehaviour
         // ★★★ 重要：初期化時に必ず状態をリセット ★★★
         ForceResetGameState();
 
-        Debug.Log($"[GlobalUIManager] 初期化完了: Time.timeScale = {Time.timeScale}, IsPaused = {IsPaused}, Physics.simulationMode = {Physics.simulationMode}");
+        Debug.Log($"[GlobalUIManager] 初期化完了: Time.timeScale = {Time.timeScale}, IsPaused = {IsPaused}");
     }
 
     /// <summary>
     /// ゲームの状態を強制的にリセット
     /// </summary>
-    private void ForceResetGameState()
+    public void ForceResetGameState()
     {
+        Debug.Log("[GlobalUIManager] ForceResetGameState() 実行");
+
         Time.timeScale = 1f;
         IsPaused = false;
 
@@ -82,12 +82,21 @@ public class GlobalUIManager : MonoBehaviour
             Physics.simulationMode = SimulationMode.FixedUpdate;
         }
 
-        // ★★★ 追加：Physics2D も確認 ★★★
+        // Physics2D も確認
         if (Physics2D.simulationMode != SimulationMode2D.FixedUpdate)
         {
             Debug.LogWarning($"[GlobalUIManager] Physics2D.simulationMode が異常 → FixedUpdate に変更");
             Physics2D.simulationMode = SimulationMode2D.FixedUpdate;
         }
+
+        // ConfigMenuが開いている場合は閉じる
+        if (configMenu != null && configMenu.activeSelf)
+        {
+            Debug.Log("[GlobalUIManager] ForceResetGameState: ConfigMenuを閉じます");
+            configMenu.SetActive(false);
+        }
+
+        Debug.Log($"[GlobalUIManager] ForceResetGameState完了: Time.timeScale={Time.timeScale}, IsPaused={IsPaused}");
     }
 
     void Update()
@@ -104,7 +113,7 @@ public class GlobalUIManager : MonoBehaviour
             DebugStatus();
         }
 
-        // ★★★ 追加：緊急リセットキー（F9キー） ★★★
+        // ★★★ 緊急リセットキー（F9キー） ★★★
         if (Input.GetKeyDown(KeyCode.F9))
         {
             Debug.LogWarning("[GlobalUIManager] 緊急リセット実行！");
@@ -129,7 +138,7 @@ public class GlobalUIManager : MonoBehaviour
             Debug.Log($"  - {manager.gameObject.name}, IsPaused: {manager.IsPaused}, _instance==this: {manager == _instance}");
         }
 
-        // ★★★ Canvas の状態も確認 ★★★
+        // Canvas の状態も確認
         var canvases = FindObjectsOfType<Canvas>();
         Debug.Log($"シーン内のCanvas数: {canvases.Length}");
         foreach (var canvas in canvases)
@@ -181,6 +190,12 @@ public class GlobalUIManager : MonoBehaviour
             Physics.simulationMode = SimulationMode.FixedUpdate;
         }
 
+        if (Physics2D.simulationMode != SimulationMode2D.FixedUpdate)
+        {
+            Debug.LogWarning("[GlobalUIManager] Resume時にPhysics2Dモードを修正");
+            Physics2D.simulationMode = SimulationMode2D.FixedUpdate;
+        }
+
         Debug.Log($"[GlobalUIManager:{gameObject.name}] ゲームを再開: Time.timeScale = 1f");
     }
 
@@ -188,9 +203,9 @@ public class GlobalUIManager : MonoBehaviour
     {
         Debug.Log($"[GlobalUIManager] OnDestroy() 呼び出し: GameObject={gameObject.name}");
 
-        //重要：破棄時は必ずリセット
-        ForceResetGameState();
-
+        // ★★★ 修正：OnDestroyでのリセットは条件付き ★★★
+        // シーン遷移時に次のシーンでリセットされるべきなので、
+        // ここでは_instanceの参照だけクリア
         if (_instance == this)
         {
             _instance = null;
@@ -213,6 +228,25 @@ public class GlobalUIManager : MonoBehaviour
         if (allManagers.Length > 1)
         {
             Debug.LogError($"[GlobalUIManager] Start時点で{allManagers.Length}個のインスタンスが存在！");
+
+            // 自分以外を削除
+            foreach (var manager in allManagers)
+            {
+                if (manager != this && manager != null)
+                {
+                    Debug.LogWarning($"[GlobalUIManager] Start時に重複削除: {manager.gameObject.name}");
+                    DestroyImmediate(manager.gameObject);
+                }
+            }
         }
+    }
+
+    /// <summary>
+    /// シーン遷移前の後処理
+    /// </summary>
+    private void OnApplicationQuit()
+    {
+        // アプリ終了時はリセット不要
+        _instance = null;
     }
 }

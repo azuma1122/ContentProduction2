@@ -5207,7 +5207,7 @@ PrefabInstance:
     - target: {fileID: 4938113357193661217, guid: 2e29ddacf1ad99343a5e86d2ee1e5b56,
         type: 3}
       propertyPath: m_TagString
-      value: Player
+      value: Untagged
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -5359,6 +5359,12 @@ MonoBehaviour:
     type: 3}
   fixedSBlockPrefab: {fileID: 6687628407338511429, guid: 3ad7dc385f0ab15418b3314a64023f20,
     type: 3}
+  useMouseAim: 1
+  aimLayerMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  showDebugLine: 1
+  debugLineLength: 10
 --- !u!137 &6801113512691744062 stripped
 SkinnedMeshRenderer:
   m_CorrespondingSourceObject: {fileID: -7471031925422525645, guid: 2e29ddacf1ad99343a5e86d2ee1e5b56,

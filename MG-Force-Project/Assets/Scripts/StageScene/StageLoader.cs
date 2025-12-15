@@ -9,6 +9,7 @@ namespace Game.StageScene
     /// StageCreater に渡してステージを生成するクラス（修正版）
     /// - シーン遷移時の初期化順序を改善
     /// - 重複削除処理を防止
+    /// - シーンリロード時の再生成に対応
     /// </summary>
     public class StageLoader : MonoBehaviour
     {
@@ -21,12 +22,15 @@ namespace Game.StageScene
         private StageCreater _stageCreater;
 
         // JSON 読み込み済みかどうか（多重生成防止用）
+        // ★★★ 修正：static削除（シーンリロード時にリセットされるように） ★★★
         private bool _loaded = false;
 
         private void Awake()
         {
-            // Awake では削除処理を行わない（StageCreater に任せる）
             Debug.Log("StageLoader: Awake - シーン初期化開始");
+
+            // ★★★ 追加：Awake時に必ずリセット ★★★
+            _loaded = false;
         }
 
         private void Start()
@@ -101,11 +105,15 @@ namespace Game.StageScene
             }
 
             string json = File.ReadAllText(filePath);
+
             if (string.IsNullOrEmpty(json))
             {
                 Debug.LogError("StageLoader: JSON が空です（読み込み失敗）");
                 return;
             }
+
+            // StageCreater側の_hasCreatedフラグをリセット
+            Debug.Log("StageLoader: ステージ生成を開始します");
 
             _stageCreater.SetJsonAndCreate(json);
             _stageCreater.BGCreate();

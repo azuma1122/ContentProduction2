@@ -229,21 +229,48 @@ namespace Game.GameSystem
 
         private void OnMenu()
         {
-            if (_isMenuOpen)
+            // ★★★ 修正: GlobalUIManagerと連携してメニュー状態を管理 ★★★
+            if (GlobalUIManager.Instance != null)
             {
-                // メニューを閉じる
-                if (_playerInput.actions[InputConstants.Action.MENU_CLOSE].triggered)
+                // GlobalUIManagerのIsPausedと同期
+                bool shouldBeMenuOpen = GlobalUIManager.Instance.IsPaused;
+
+                // 状態が変わった場合のみ切り替え
+                if (_isMenuOpen != shouldBeMenuOpen)
                 {
-                    _isMenuOpen = false;
+                    _isMenuOpen = shouldBeMenuOpen;
+
+                    if (_isMenuOpen)
+                    {
+                        Debug.Log("[InputHandler] メニューモードに切り替え");
+                        _playerInput.SwitchCurrentActionMap(InputConstants.ActionMaps.MENU_MAPS);
+                    }
+                    else
+                    {
+                        Debug.Log("[InputHandler] プレイヤーモードに切り替え");
+                        _playerInput.SwitchCurrentActionMap(InputConstants.ActionMaps.PLAYER_MAPS);
+                    }
                 }
             }
             else
             {
-                // メニューを開く
-                if (_playerInput.actions[InputConstants.Action.MENU_OPEN].triggered)
+                // GlobalUIManagerが存在しない場合は従来の処理
+                if (_isMenuOpen)
                 {
-                    _playerInput.SwitchCurrentActionMap(InputConstants.ActionMaps.MENU_MAPS);
-                    _isMenuOpen = true;
+                    // メニューを閉じる
+                    if (_playerInput.actions[InputConstants.Action.MENU_CLOSE].triggered)
+                    {
+                        _isMenuOpen = false;
+                    }
+                }
+                else
+                {
+                    // メニューを開く
+                    if (_playerInput.actions[InputConstants.Action.MENU_OPEN].triggered)
+                    {
+                        _playerInput.SwitchCurrentActionMap(InputConstants.ActionMaps.MENU_MAPS);
+                        _isMenuOpen = true;
+                    }
                 }
             }
         }
@@ -276,6 +303,23 @@ namespace Game.GameSystem
         {
             var magnetManager = GameObject.Find("MagnetManager")?.GetComponent<StageScene.Magnet.MagnetManager>();
             return magnetManager != null && magnetManager.IsMagnetBoot;
+        }
+
+        /// <summary>
+        /// 入力状態を強制的にリセット（外部から呼び出し用）
+        /// </summary>
+        public void ForceResetInputState()
+        {
+            Debug.Log("[InputHandler] ForceResetInputState() - 入力状態を強制リセット");
+
+            _isMenuOpen = false;
+            _isViewMode = false;
+
+            // プレイヤーマップに切り替え
+            _playerInput.SwitchCurrentActionMap(InputConstants.ActionMaps.PLAYER_MAPS);
+            _playerInput.actions.FindActionMap(InputConstants.ActionMaps.MAGNET_MAPS).Enable();
+
+            Debug.Log($"[InputHandler] リセット完了: _isMenuOpen={_isMenuOpen}, CurrentActionMap={_playerInput.currentActionMap.name}");
         }
 
         #endregion

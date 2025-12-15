@@ -25,26 +25,16 @@ namespace Game.StageScene
         public bool IsGoalEvent { get; private set; }
 
         private Vector3 _rotate;
-        private Transform _playerTransform;
 
         private void Start()
         {
             IsGoalEvent = false;
-
-            // Start時に一度 Player を検索
-            FindPlayer();
         }
 
         private void Update()
         {
             // クリスタルを回転
             RotateCrystal();
-
-            // Player が null の場合は毎フレーム検索
-            if (_playerTransform == null)
-            {
-                FindPlayer();
-            }
         }
 
         /// <summary>
@@ -59,8 +49,9 @@ namespace Game.StageScene
 
         /// <summary>
         /// プレイヤーとの接触検知（Trigger）
+        /// OnTriggerStayを使用することで接触中も継続的に判定
         /// </summary>
-        private  void OnTriggerEnter(Collider other)
+        private void OnTriggerStay(Collider other)
         {
             if (IsGoalEvent) return; // すでにゴール済みなら無視
 
@@ -69,26 +60,14 @@ namespace Game.StageScene
                 IsGoalEvent = true;
                 Debug.Log("ゴールに触れた: " + other.name);
 
-                //クリアSEとクリアシーンでのBGMのタイミングは要チェック
+                //クリアSEを再生（シーン遷移しても音は鳴り続ける）
                 SEManager.instance.PlaySE(SEManager.Stage.STAGE_CLEAR);
 
-                // Clear画面へ遷移
-                StartCoroutine(LoadSceneAfterDelay());
+                // 即座にClear画面へ遷移
+                LoadNextScene();
             }
         }
-        /// <summary>
-        /// SEが流れているかを確認してシーン遷移の関数を実行
-        /// </summary>
-        /// <returns>IEnumerator</returns>
-        private IEnumerator LoadSceneAfterDelay()
-        {
-            //SEが流れている間はシーン遷移させない
-            while (SEManager.instance._audioSource != null && SEManager.instance._audioSource.isPlaying)
-            {
-                yield return null;
-            }
-            LoadNextScene();
-        }
+
         /// <summary>
         /// シーン遷移処理
         /// </summary>
@@ -103,34 +82,6 @@ namespace Game.StageScene
 
             // Build Settings に登録されているシーンをロード
             SceneManager.LoadScene(_nextSceneName);
-        }
-
-        /// <summary>
-        /// プレイヤーオブジェクトを探す
-        /// </summary>
-        private void FindPlayer()
-        {
-            GameObject player = GameObject.FindWithTag(_playerTag);
-            if (player != null)
-            {
-                _playerTransform = player.transform;
-                Debug.Log("Player を検出: " + player.name);
-            }
-            else
-            {
-                _playerTransform = null;
-                Debug.LogWarning("Player が見つかりません。再生成待ち。");
-            }
-        }
-
-        /// <summary>
-        /// 他スクリプトから直接 Player をセットする用のメソッド
-        /// （動的生成後に確実に検出させたい場合に使用）
-        /// </summary>
-        public void SetPlayer(Transform playerTransform)
-        {
-            _playerTransform = playerTransform;
-            Debug.Log("Player を手動セット: " + playerTransform.name);
         }
     }
 }
