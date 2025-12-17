@@ -60,12 +60,29 @@ namespace Game.StageScene
                 IsGoalEvent = true;
                 Debug.Log("ゴールに触れた: " + other.name);
 
-                //クリアSEを再生（シーン遷移しても音は鳴り続ける）
+                // Clear画面へ遷移
+                LoadNextScene();
+                Debug.Log("ゴールに触れた: " + other.name);
+
+                //クリアSEとクリアシーンでのBGMのタイミングは要チェック
                 SEManager.instance.PlaySE(SEManager.Stage.STAGE_CLEAR);
 
-                // 即座にClear画面へ遷移
-                LoadNextScene();
+                // Clear画面へ遷移
+                StartCoroutine(LoadSceneAfterDelay());
             }
+        }
+        /// <summary>
+        /// SEが流れているかを確認してシーン遷移の関数を実行
+        /// </summary>
+        /// <returns>IEnumerator</returns>
+        private IEnumerator LoadSceneAfterDelay()
+        {
+            //SEが流れている間はシーン遷移させない
+            while (SEManager.instance._audioSource != null && SEManager.instance._audioSource.isPlaying)
+            {
+                yield return null;
+            }
+            LoadNextScene();
         }
 
         /// <summary>
