@@ -12,8 +12,8 @@ GameObject:
   - component: {fileID: 7492207673357889366}
   - component: {fileID: -6067058868173284706}
   - component: {fileID: 7444583821415356857}
-  - component: {fileID: 4341454291289158882}
   - component: {fileID: -2771168790800295984}
+  - component: {fileID: 7768475872063431726}
   m_Layer: 0
   m_Name: Bullet_Prefab
   m_TagString: Untagged
@@ -110,6 +110,8 @@ MonoBehaviour:
     type: 3}
   _movingNPrefab: {fileID: 4001629709848593178, guid: 394a206cf2d8fec459c6e2169796ff57,
     type: 3}
+  _uiNMagnetManual: {fileID: 0}
+  _uiSMagnetManual: {fileID: 0}
 --- !u!54 &7444583821415356857
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -134,30 +136,9 @@ Rigidbody:
   m_ImplicitTensor: 1
   m_UseGravity: 0
   m_IsKinematic: 0
-  m_Interpolate: 0
+  m_Interpolate: 1
   m_Constraints: 112
-  m_CollisionDetection: 0
---- !u!65 &4341454291289158882
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5006926018254083275}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 0.5, y: 0.5, z: 0.5}
-  m_Center: {x: 0, y: 0, z: 0}
+  m_CollisionDetection: 2
 --- !u!95 &-2771168790800295984
 Animator:
   serializedVersion: 5
@@ -179,3 +160,24 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!135 &7768475872063431726
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5006926018254083275}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 0.64
+  m_Center: {x: 0, y: 0, z: 0}

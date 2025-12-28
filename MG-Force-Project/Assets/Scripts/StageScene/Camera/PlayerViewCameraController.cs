@@ -8,19 +8,23 @@ namespace Game.StageScene.Camera
     /// </summary>
     public class PlayerViewCameraController : MonoBehaviour
     {
+        // プレイヤーとの Y 軸の差分
+        [SerializeField]
+        private const float Y_DIFF_TO_PLAYER = 1.0f;
+        // カメラの高さオフセット
+        [SerializeField]
+        private const float CAMERA_HEIGHT_OFFSET = 6.0f;
+        // プレイヤー追尾スピード
+        [SerializeField]
+        private float followSpeed = 5.0f;
+
         // 左下の頂点座標（カメラ移動制限用）
         private Vector3 lowerLeft = GameConstants.LowerLeftCamera;
         // 右上の頂点座標（カメラ移動制限用）
         private Vector3 topRight = GameConstants.TopRightCamera;
         // 現在のプレイヤーの Transform
         private Transform currentPlayerTransform;
-        // プレイヤー追尾スピード
-        [SerializeField]
-        private float followSpeed = 5.0f;
-        // プレイヤーとの Y 軸の差分
-        private const float Y_DIFF_TO_PLAYER = 1.0f;
-        // カメラの高さオフセット（この値を変更してカメラの高さを調整）
-        private const float CAMERA_HEIGHT_OFFSET = 3.0f;
+        
 
         /// <summary>
         /// 初期化処理（Start時にプレイヤーを探す）

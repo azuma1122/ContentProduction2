@@ -8,6 +8,7 @@ TagManager:
   - Fixed
   - Ground
   - MainStage
+  - Magnet
   layers:
   - Default
   - TransparentFX

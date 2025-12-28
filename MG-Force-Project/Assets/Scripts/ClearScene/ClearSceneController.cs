@@ -49,7 +49,7 @@ namespace Game.ClearScene
         {
             if (_inputHandler.IsActionPressed(InputConstants.Action.MENU_DECISION))
             {
-                _sceneLoader.LoadScene(GameConstants.Scene.Title.ToString());
+                _sceneLoader.LoadScene(GameConstants.Scene.StageSelect.ToString());
             }
         }
 

@@ -4,130 +4,194 @@ namespace Game.StageScene.Player
 {
     /// <summary>
     /// プレイヤーの各コントローラーの共通ベースクラス
-    /// 
-    /// 【役割】
-    /// - 各プレイヤー関連スクリプト（移動・アニメーション・射撃など）が継承する基底クラス
-    /// - プレイヤーの状態（State / Direction / isGrounded など）を保持・共有
-    /// - プレイヤーの Transform / GameObject 参照を保持
-    /// - 各コントローラーで共通処理を統一し、重複を防ぐ
     /// </summary>
     public class PlayerControllerBase : MonoBehaviour
     {
         #region ===== 初期化 =====
-        /// <summary>
-        /// プレイヤーオブジェクトを初期化
-        /// - 各継承クラスで呼び出すことを想定
-        /// - Transform / GameObject の参照をセット
-        /// - 初期状態を待機(STILLNESS)・右向き(RIGHT)に設定
-        /// </summary>
-        /// <param name="player">プレイヤーのGameObject</param>
         public virtual void Initialize(GameObject player)
         {
             playerObject = player;
             playerTransform = player.transform;
-
             // 初期値を設定
             currentState = State.STILLNESS;
             currentDir = Direction.RIGHT;
             isGrounded = true;
             shootDir = 1f;
+
+            // Animatorの自動取得
+            if (_animator == null)
+            {
+                _animator = player.GetComponent<Animator>();
+            }
         }
         #endregion
 
         #region ===== 状態定義 =====
-        /// <summary>
-        /// プレイヤーの行動状態を定義する列挙体
-        /// Flags 属性により、複数の状態をビットフラグとして併用可能
-        /// </summary>
         [System.Flags]
         public enum State
         {
             NONE = 0,
-            NOT_STATE = 0,     // 状態なし
-            STILLNESS = 1 << 0, // 静止中
-            RUN = 1 << 1,       // 走行中
-            JUMP = 1 << 2,      // ジャンプ中
-            SHOOT = 1 << 3,     // 射撃中
+            NOT_STATE = 0,
+            STILLNESS = 1 << 0,
+            RUN = 1 << 1,
+            JUMP = 1 << 2,
+            SHOOT = 1 << 3,
+            GOAL = 1 << 4,   // ゴール状態
         }
 
-        /// <summary>
-        /// プレイヤーの向き
-        /// </summary>
         public enum Direction
         {
-            LEFT,   // 左向き
-            RIGHT,  // 右向き
+            LEFT,
+            RIGHT,
         }
         #endregion
 
         #region ===== 共通フィールド =====
-        /// <summary>現在のプレイヤー状態（複数状態を同時保持可能）</summary>
         public static State currentState = State.STILLNESS;
-
-        /// <summary>プレイヤーの向き</summary>
         public static Direction currentDir = Direction.RIGHT;
-
-        /// <summary>射撃方向（1:右 / -1:左）</summary>
         public static float shootDir = 1f;
-
-        /// <summary>プレイヤーが地面に接地しているかどうか</summary>
         public static bool isGrounded = false;
-
-        /// <summary>プレイヤー本体の GameObject 参照</summary>
         public static GameObject playerObject;
-
-        /// <summary>プレイヤーの Transform 参照</summary>
         public static Transform playerTransform;
         #endregion
 
+        #region ===== ゴール演出設定 =====
+        [Header("ゴール演出設定")]
+        [SerializeField] private Animator _animator;
+        [SerializeField] private string _goalAnimationTrigger = "Goal"; // トリガー名（使用しない場合は空）
+        [SerializeField] private bool _disablePhysicsOnGoal = true; // 物理演算を停止するか
+        #endregion
+
         #region ===== State操作メソッド =====
-        /// <summary>
-        /// 状態を追加（例：RUN中にJUMPを追加するなど）
-        /// </summary>
         public void AddState(State state) => currentState |= state;
-
-        /// <summary>
-        /// 指定状態を削除（例：JUMP状態を解除）
-        /// </summary>
         public void RemoveState(State state) => currentState &= ~state;
-
-        /// <summary>
-        /// 現在の状態を強制的に上書き（他の状態をすべてリセットして新しい状態に変更）
-        /// </summary>
         public void ForceSetState(State newState) => currentState = newState;
-
-        /// <summary>
-        /// 状態を通常の方法で上書き（用途は ForceSetState と同じ）
-        /// </summary>
         public void SetState(State newState) => currentState = newState;
-
-        /// <summary>
-        /// 指定した状態を現在保持しているかどうかを返す
-        /// </summary>
         public bool HasState(State state) => (currentState & state) != 0;
-
-        /// <summary>
-        /// 現在の状態を取得
-        /// </summary>
         public State GetState() => currentState;
-
-        /// <summary>
-        /// すべての状態をクリア（NOT_STATEにリセット）
-        /// </summary>
         public void ClearState() => currentState = State.NOT_STATE;
         #endregion
 
-        #region ===== 基底メソッド =====
+        #region ===== ゴール処理 =====
         /// <summary>
-        /// 各コントローラーの Start 相当処理
-        /// - 継承先で必要に応じてオーバーライドして使用
+        /// ゴール到達時に CrystalController から呼ばれる
         /// </summary>
-        public virtual void OnStart() { }
+        public virtual void SetGoal()
+        {
+            // すでにゴール状態なら何もしない
+            if (HasState(State.GOAL)) return;
+
+            Debug.Log("Player : ゴール到達");
+
+            // 状態をゴールに固定（操作停止用）
+            ClearState();
+            AddState(State.GOAL);
+
+            // ゴール演出を実行
+            OnGoal();
+        }
 
         /// <summary>
-        /// 各コントローラーの Update 相当処理
-        /// - 継承先で必要に応じてオーバーライドして使用
+        /// ゴール時の演出処理
+        /// - 勝利ポーズアニメーション（shourishouri）再生
+        /// - 物理演算の停止
+        /// ※ PlayerAnimationController で上書きされる場合があります
         /// </summary>
+        protected virtual void OnGoal()
+        {
+            // 勝利ポーズアニメーション再生
+            PlayVictoryAnimation();
+
+            // 物理演算を停止
+            if (_disablePhysicsOnGoal)
+            {
+                DisablePhysics();
+            }
+        }
+
+        /// <summary>
+        /// 勝利ポーズアニメーション（shourishouri）を再生
+        /// PlayerAnimationControllerが整数パラメータ方式を使用している場合、
+        /// CurrentState = 5 を設定することでゴールアニメーションが再生されます
+        /// </summary>
+        private void PlayVictoryAnimation()
+        {
+            if (_animator == null)
+            {
+                Debug.LogWarning("Animatorが設定されていません。Playerに設定してください。");
+                return;
+            }
+
+            bool animationTriggered = false;
+
+            // 方式1: 整数パラメータ方式（PlayerAnimationController用）
+            // CurrentState = 5 (GOAL) を設定
+            foreach (var param in _animator.parameters)
+            {
+                if (param.name == "CurrentState" && param.type == AnimatorControllerParameterType.Int)
+                {
+                    _animator.SetInteger("CurrentState", 5); // AnimationState.GOAL = 5
+                    Debug.Log("[ゴール] CurrentState = 5 (GOAL) に設定");
+                    animationTriggered = true;
+                    break;
+                }
+            }
+
+            // 方式2: トリガー方式（従来の方法）
+            // Goalトリガーが存在する場合のみ実行
+            if (!animationTriggered && !string.IsNullOrEmpty(_goalAnimationTrigger))
+            {
+                bool hasTrigger = false;
+                foreach (var param in _animator.parameters)
+                {
+                    if (param.name == _goalAnimationTrigger && param.type == AnimatorControllerParameterType.Trigger)
+                    {
+                        hasTrigger = true;
+                        break;
+                    }
+                }
+
+                if (hasTrigger)
+                {
+                    _animator.SetTrigger(_goalAnimationTrigger);
+                    Debug.Log($"[ゴール] トリガー発火: {_goalAnimationTrigger}");
+                    animationTriggered = true;
+                }
+            }
+
+            if (!animationTriggered)
+            {
+                Debug.LogWarning("[ゴール] アニメーションパラメータが見つかりません。Animatorに「CurrentState」(Int)または「Goal」(Trigger)を設定してください。");
+            }
+        }
+
+        /// <summary>
+        /// 物理演算を停止
+        /// </summary>
+        private void DisablePhysics()
+        {
+            // CharacterControllerを使用している場合
+            var characterController = GetComponent<CharacterController>();
+            if (characterController != null)
+            {
+                characterController.enabled = false;
+                Debug.Log("CharacterController停止");
+            }
+
+            // Rigidbodyを使用している場合
+            var rb = GetComponent<Rigidbody>();
+            if (rb != null)
+            {
+                rb.velocity = Vector3.zero;
+                rb.angularVelocity = Vector3.zero;
+                rb.isKinematic = true;
+                Debug.Log("Rigidbody停止");
+            }
+        }
+        #endregion
+
+        #region ===== 基底メソッド =====
+        public virtual void OnStart() { }
         public virtual void OnUpdate() { }
         #endregion
     }

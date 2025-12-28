@@ -4,199 +4,292 @@ namespace Game.StageScene.Player
 {
     /// <summary>
     /// プレイヤーのアニメーション制御クラス
-    /// - ジャンプアニメーションを最優先（地面についたら解除）
-    /// - 優先順位: JUMP > SHOOT > RUN > IDLE
-    /// - アニメーションの遷移とループ制御を管理
+    /// - ゴールアニメーションを最優先
+    /// - 優先順位: GOAL > JUMP > SHOOT > RUN > IDLE
+    /// - アニメーションの遷移と制御を管理
+    /// - ゴール後も物理演算は継続（停止なし）
     /// </summary>
     public class PlayerAnimationController : PlayerControllerBase
     {
         #region -------- Animation 定数 --------
-        // Animatorのパラメータ名（Animatorウィンドウで設定した名前と一致させる）
-        private const string CURRENT_STATE = "CurrentState";       // 現在の状態（0=NONE, 1=IDLE, 2=RUN, 3=JUMP, 4=SHOOT）
-        private const string CURRENT_DIRECTION = "CurrentDirection"; // 射撃方向（角度）
+        private const string CURRENT_STATE = "CurrentState";          // 0=NONE,1=IDLE,2=RUN,3=JUMP,4=SHOOT,5=GOAL
+        private const string CURRENT_DIRECTION = "CurrentDirection"; // 射撃方向
         #endregion
 
         /// <summary>
-        /// アニメーション状態の種類
-        /// AnimatorのCurrentStateパラメータに対応
+        /// アニメーション状態
         /// </summary>
         private enum AnimationState
         {
-            NONE = 0,  // 状態なし
-            IDLE = 1,  // 待機アニメーション
-            RUN = 2,   // 走行アニメーション
-            JUMP = 3,  // ジャンプアニメーション
-            SHOOT = 4, // 射撃アニメーション
+            NONE = 0,
+            IDLE = 1,
+            RUN = 2,
+            JUMP = 3,
+            SHOOT = 4,
+            GOAL = 5,
         }
 
         /// <summary>
-        /// アニメーションレイヤー（左右の向きに対応）
+        /// アニメーションレイヤー
         /// </summary>
         private enum AnimationLayer
         {
-            BASE = 0,  // ベースレイヤー（使用しない）
-            RIGHT = 1, // 右向き用レイヤー
-            LEFT = 2,  // 左向き用レイヤー
+            BASE = 0,
+            RIGHT = 1,
+            LEFT = 2,
         }
 
         // ===== 内部変数 =====
-        private Animator _animator;                      // プレイヤーのAnimatorコンポーネント
-        private AnimationState _currentAnimationState;   // 現在再生中のアニメーション状態
-        private AnimationLayer _currentAnimationLayer;   // 現在アクティブなレイヤー（左 or 右）
-        private float _currentAnimationTime;             // 現在のアニメーション再生時間（0.0～1.0の正規化された値）
+        private Animator _animator;
+        private AnimationState _currentAnimationState;
+        private AnimationLayer _currentAnimationLayer;
+        private float _currentAnimationTime;
+
+        // ===== ゴール演出用 =====
+        private bool _isGoalAnimationStarted = false;
+        private bool _goalAnimationCompleted = false;
 
         /// <summary>
-        /// 初期化処理（プレイヤー生成時に1回だけ呼ばれる）
+        /// 初期化
         /// </summary>
         public override void OnStart()
         {
-            // プレイヤーオブジェクトからAnimatorコンポーネントを取得
             _animator = playerObject.GetComponent<Animator>();
 
-            // 初期状態を設定
-            _currentAnimationState = AnimationState.IDLE;     // 待機アニメーションからスタート
-            _currentAnimationLayer = AnimationLayer.RIGHT;    // 右向きからスタート
+            if (_animator == null)
+            {
+                Debug.LogError("[PlayerAnimationController] Animatorが見つかりません。Playerオブジェクトに設定してください。");
+                return;
+            }
+
+            Debug.Log($"[PlayerAnimationController] 初期化完了 - Animator: {_animator.name}");
+
+            _currentAnimationState = AnimationState.IDLE;
+            _currentAnimationLayer = AnimationLayer.RIGHT;
+            _isGoalAnimationStarted = false;
+            _goalAnimationCompleted = false;
         }
 
         /// <summary>
-        /// 毎フレーム呼ばれる更新処理
-        /// アニメーションの状態を決定し、Animatorに反映する
+        /// 毎フレーム更新
         /// </summary>
         public override void OnUpdate()
         {
-            // ===== 1. アニメーションレイヤーの切り替え =====
-            // 現在のレイヤーのウェイトを0にする（非表示）
+            if (_animator == null) return;
+
+            // ===== ゴール状態の場合は向きやレイヤー変更をスキップ =====
+            if (HasState(State.GOAL))
+            {
+                // ゴール状態が始まった瞬間の処理
+                if (!_isGoalAnimationStarted)
+                {
+                    _isGoalAnimationStarted = true;
+                    _currentAnimationState = AnimationState.GOAL;
+                    _currentAnimationTime = 0f;
+
+                    // アニメーション速度を明示的に1に設定
+                    _animator.speed = 1f;
+
+                    // BaseLayerをアクティブにする（ゴールアニメーションはBaseLayerに配置）
+                    _animator.SetLayerWeight((int)AnimationLayer.BASE, 1);
+                    _animator.SetLayerWeight((int)AnimationLayer.RIGHT, 0);
+                    _animator.SetLayerWeight((int)AnimationLayer.LEFT, 0);
+
+                    Debug.Log("[Animation] ゴールアニメーション開始");
+                    Debug.Log($"[Animation] BaseLayer Weight = {_animator.GetLayerWeight((int)AnimationLayer.BASE)}");
+                    Debug.Log($"[Animation] RightLayer Weight = {_animator.GetLayerWeight((int)AnimationLayer.RIGHT)}");
+                    Debug.Log($"[Animation] LeftLayer Weight = {_animator.GetLayerWeight((int)AnimationLayer.LEFT)}");
+                }
+
+                // Animator反映を実行
+                UpdateAnimatorParameters();
+
+                // 現在のアニメーション状態をチェック
+                AnimatorStateInfo stateInfo = _animator.GetCurrentAnimatorStateInfo((int)AnimationLayer.BASE);
+
+                // デバッグ：現在の状態を表示
+                Debug.Log($"[Animation] Current State Name: {(stateInfo.IsName("Goal") ? "Goal" : "Other")}, " +
+                         $"NormalizedTime: {stateInfo.normalizedTime:F3}, " +
+                         $"Speed: {_animator.speed}, " +
+                         $"CurrentState Param: {_animator.GetInteger(CURRENT_STATE)}");
+
+                // ===== アニメーション完了後の処理（停止なし） =====
+                if (stateInfo.IsName("Goal") && stateInfo.normalizedTime >= 1.0f && !_goalAnimationCompleted)
+                {
+                    _goalAnimationCompleted = true;
+                    Debug.Log("[Animation] ゴールアニメーション完了 - 継続再生");
+
+                    // ❌ 削除: _animator.speed = 0;
+                    // アニメーションを停止せず、ループまたは最終フレームを維持
+                    // Animatorの設定でLoop Timeをオフにしていれば、最終フレームで自動的に止まります
+                }
+
+                return;
+            }
+
+            // ===== 1. レイヤー切り替え =====
             _animator.SetLayerWeight((int)_currentAnimationLayer, 0);
 
-            // プレイヤーの向き（currentDir）に応じて新しいレイヤーを決定
-            _currentAnimationLayer = currentDir == Direction.RIGHT ? AnimationLayer.RIGHT : AnimationLayer.LEFT;
+            _currentAnimationLayer =
+                currentDir == Direction.RIGHT ? AnimationLayer.RIGHT : AnimationLayer.LEFT;
 
-            // 新しいレイヤーのウェイトを1にする（表示）
             _animator.SetLayerWeight((int)_currentAnimationLayer, 1);
 
-            // ===== 2. モデルの向き設定 =====
-            // 3Dモデルを左右に回転させる
+            // ===== 2. 向き設定 =====
             SetAnimationDir();
 
-            // ===== 3. アニメーション状態の更新 =====
-            // プレイヤーの状態（State）に基づいて、どのアニメーションを再生するか決定
+            // ===== 3. 状態更新 =====
             StateUpdate();
 
-            // ===== 4. Animatorパラメータの反映 =====
-            // 決定したアニメーション状態をAnimatorに送信
+            // ===== 4. Animator反映 =====
             UpdateAnimatorParameters();
         }
 
         /// <summary>
-        /// 状態に基づいてアニメーションを決定
-        /// 優先順位：JUMP > SHOOT > RUN > IDLE
+        /// アニメーション状態決定
+        /// 優先順位: GOAL > JUMP > SHOOT > RUN > IDLE
         /// </summary>
         private void StateUpdate()
         {
-            // ===== 優先度1: ジャンプアニメーション =====
-            // 空中にいる場合は必ずジャンプアニメーションを再生
-            // State.RUNが立っていてもジャンプアニメーションを優先
+            // ===== 最優先:ゴール演出 =====
+            if (HasState(State.GOAL))
+            {
+                if (_currentAnimationState != AnimationState.GOAL)
+                {
+                    _currentAnimationTime = 0f;
+                    Debug.Log("[Animation] ゴール状態に遷移");
+                }
+
+                _currentAnimationState = AnimationState.GOAL;
+                return;
+            }
+
+            // ===== ジャンプ =====
             if (!isGrounded)
             {
-                // 別のアニメーションからジャンプに切り替わった場合、再生時間をリセット
                 if (_currentAnimationState != AnimationState.JUMP)
                 {
-                    _currentAnimationTime = 0.0f;
-                    Debug.Log("[Animation] ジャンプアニメーション開始");
+                    _currentAnimationTime = 0f;
                 }
 
-                _currentAnimationState = AnimationState.JUMP; // ジャンプアニメーションに設定
-                JumpUpdate(); // ジャンプアニメーションのループ制御
-                return; // ここでreturnするので、State.RUNがあっても走行アニメーションは再生されない
+                _currentAnimationState = AnimationState.JUMP;
+                JumpUpdate();
+                return;
             }
 
-            // ===== 優先度2: 射撃アニメーション =====
-            // 地面にいる時のみ射撃アニメーションが有効
-            // State.RUNが立っていても射撃アニメーションを優先
+            // ===== 射撃 =====
             if (HasState(State.SHOOT))
             {
-                // 別のアニメーションから射撃に切り替わった場合、再生時間をリセット
                 if (_currentAnimationState != AnimationState.SHOOT)
                 {
-                    _currentAnimationTime = 0.0f;
+                    _currentAnimationTime = 0f;
                 }
 
-                _currentAnimationState = AnimationState.SHOOT; // 射撃アニメーションに設定
-                ShootUpdate(); // 射撃アニメーションのループ制御
-                return; // ここでreturnするので、State.RUNがあっても走行アニメーションは再生されない
+                _currentAnimationState = AnimationState.SHOOT;
+                ShootUpdate();
+                return;
             }
 
-            // ===== 優先度3: 走行アニメーション =====
-            // 地面にいて、ジャンプ中でも射撃中でもなく、RUN状態の時のみ走行アニメーションを再生
+            // ===== 走行 =====
             if (isGrounded && HasState(State.RUN))
             {
                 _currentAnimationState = AnimationState.RUN;
                 return;
             }
 
-            // ===== 優先度4: 待機アニメーション =====
-            // 上記のどれにも当てはまらない場合はアイドル（待機）
+            // ===== 待機 =====
             _currentAnimationState = AnimationState.IDLE;
         }
 
         /// <summary>
-        /// モデルの向きを設定（3Dモデルを左右に回転）
+        /// モデルの向き設定
         /// </summary>
         private void SetAnimationDir()
         {
-            // 右向きの場合：Y軸を90度回転
-            // 左向きの場合：Y軸を270度回転
-            playerTransform.eulerAngles = _currentAnimationLayer == AnimationLayer.RIGHT
-                ? new Vector3(0f, 90f, 0f)   // 右向き
-                : new Vector3(0f, 270f, 0f); // 左向き
+            playerTransform.eulerAngles =
+                _currentAnimationLayer == AnimationLayer.RIGHT
+                    ? new Vector3(0f, 90f, 0f)
+                    : new Vector3(0f, 270f, 0f);
         }
 
         /// <summary>
-        /// Animatorパラメータを更新
-        /// 決定したアニメーション状態と射撃方向をAnimatorに送信
+        /// Animatorパラメータ反映
         /// </summary>
         private void UpdateAnimatorParameters()
         {
-            // 現在Animatorに設定されている値を取得
-            int currentDirValue = _animator.GetInteger(CURRENT_DIRECTION);
-            int currentStateValue = _animator.GetInteger(CURRENT_STATE);
-
-            // 射撃方向が変わっている場合のみ更新（無駄な更新を避ける）
-            if (currentDirValue != (int)shootDir)
+            if (_animator.GetInteger(CURRENT_DIRECTION) != (int)shootDir)
             {
                 _animator.SetInteger(CURRENT_DIRECTION, (int)shootDir);
             }
 
-            // アニメーション状態が変わっている場合のみ更新
-            if (currentStateValue != (int)_currentAnimationState)
+            if (_animator.GetInteger(CURRENT_STATE) != (int)_currentAnimationState)
             {
                 _animator.SetInteger(CURRENT_STATE, (int)_currentAnimationState);
+                Debug.Log($"[Animation] CurrentState = {(int)_currentAnimationState} ({_currentAnimationState})");
             }
-            _animator.Update(0); // 即時反映
         }
 
         /// <summary>
-        /// ジャンプアニメーションのループ制御
+        /// ジャンプアニメーション制御
         /// </summary>
         private void JumpUpdate()
         {
-            // 現在アクティブなレイヤーのアニメーション状態を取得
-            AnimatorStateInfo stateInfo = _animator.GetCurrentAnimatorStateInfo((int)_currentAnimationLayer);
-
-            // 正規化された再生時間を取得（0.0～1.0）
-            _currentAnimationTime = stateInfo.normalizedTime;
+            AnimatorStateInfo info =
+                _animator.GetCurrentAnimatorStateInfo((int)_currentAnimationLayer);
+            _currentAnimationTime = info.normalizedTime;
         }
 
         /// <summary>
-        /// 射撃アニメーションのループ制御
+        /// 射撃アニメーション制御
         /// </summary>
         private void ShootUpdate()
         {
-            // 現在アクティブなレイヤーのアニメーション状態を取得
-            AnimatorStateInfo stateInfo = _animator.GetCurrentAnimatorStateInfo((int)_currentAnimationLayer);
+            AnimatorStateInfo info =
+                _animator.GetCurrentAnimatorStateInfo((int)_currentAnimationLayer);
+            _currentAnimationTime = info.normalizedTime;
+        }
 
-            // 正規化された再生時間を取得（0.0～1.0）
-            _currentAnimationTime = stateInfo.normalizedTime;
+        /// <summary>
+        /// ゴール到達時の演出処理（オーバーライド）
+        /// ※ 物理演算停止なし版
+        /// </summary>
+        protected override void OnGoal()
+        {
+            // ===== オプション1: 物理演算を完全に停止しない場合 =====
+            // 以下をコメントアウトすると、ゴール後も重力や移動が継続します
+
+            /*
+            var rb = GetComponent<Rigidbody>();
+            if (rb != null)
+            {
+                rb.velocity = Vector3.zero;
+                rb.angularVelocity = Vector3.zero;
+                rb.isKinematic = true;
+                Debug.Log("[ゴール] Rigidbody停止");
+            }
+
+            var characterController = GetComponent<CharacterController>();
+            if (characterController != null)
+            {
+                characterController.enabled = false;
+                Debug.Log("[ゴール] CharacterController停止");
+            }
+            */
+
+            // ===== オプション2: 速度だけゼロにして物理演算は継続 =====
+            var rb = GetComponent<Rigidbody>();
+            if (rb != null)
+            {
+                rb.velocity = Vector3.zero;
+                rb.angularVelocity = Vector3.zero;
+                // rb.isKinematic = true; ← コメントアウト（物理演算は継続）
+                Debug.Log("[ゴール] Rigidbody速度リセット（物理演算は継続）");
+            }
+
+            // ゴールアニメーション準備
+            _isGoalAnimationStarted = false;
+            _goalAnimationCompleted = false;
+            Debug.Log("[Animation] OnGoal呼び出し - 次のOnUpdateでゴールアニメーション開始");
         }
     }
 }

@@ -6,6 +6,7 @@ namespace Game.StageScene.Player
     /// プレイヤーの物理的な移動を制御するクラス。
     /// - Rigidbodyを操作し、横移動、ジャンプ、カスタム重力処理を行います。
     /// - PlayerStateControllerから受け取った状態（RUN, JUMP, SHOOT）に基づいて動作します。
+    /// - ゴール後も移動を継続（オプション切り替え可能）
     /// </summary>
     public class PlayerMoveController : PlayerControllerBase
     {
@@ -18,14 +19,17 @@ namespace Game.StageScene.Player
         private const float RAYCAST_LENGTH = 0.2f; // 接地判定用Rayの長さ
         #endregion
 
+        #region ===== 設定 =====
+        [Header("ゴール後の挙動")]
+        [SerializeField] private bool _freezeOnGoal = false; // trueにするとゴール時に移動停止
+        #endregion
+
         // ===== 内部変数 =====
-        public Vector2 inputDir { get; set; } = Vector2.zero; // 外部からの入力方向（現在は未使用の可能性あり）
+        public Vector2 inputDir { get; set; } = Vector2.zero;
 
         private Rigidbody _rigidbody;
-        private Vector3 moveDir = Vector3.zero; // 現在の移動ベクトル（Rigidbody.velocityに設定される）
-
-        private bool _hasJumped = false; // ジャンプが実行されたかどうかのフラグ（ジャンプ入力の重複防止）
-
+        private Vector3 moveDir = Vector3.zero;
+        private bool _hasJumped = false;
         private CapsuleCollider _capsuleCollider;
 
         /// <summary>
@@ -33,12 +37,8 @@ namespace Game.StageScene.Player
         /// </summary>
         public override void OnStart()
         {
-            // Rigidbodyコンポーネントを取得
             _rigidbody = playerObject.GetComponent<Rigidbody>();
-            // カスタム重力処理を行うため、Unityの標準重力を無効化
             _rigidbody.useGravity = false;
-
-            // CapsuleColliderコンポーネントを取得
             _capsuleCollider = playerObject.GetComponent<CapsuleCollider>();
 
             if (playerTransform == null)
@@ -50,10 +50,18 @@ namespace Game.StageScene.Player
         /// </summary>
         public override void OnUpdate()
         {
-            // デバッグログ（動作確認用）
-            //Debug.Log($"[PlayerMove] enabled={enabled}, isGrounded={isGrounded}, " +
-            // $"State.RUN={HasState(State.RUN)}, currentDir={currentDir}, " +
-            // $"moveDir={moveDir}, velocity={_rigidbody?.velocity}");
+            // ===== ゴール状態の場合の処理 =====
+            if (HasState(State.GOAL))
+            {
+                // オプション: ゴール時に移動を完全停止する場合
+                if (_freezeOnGoal)
+                {
+                    return; // 移動処理をスキップ
+                }
+
+                // ゴール状態でも移動処理を継続する場合は、このままフォールスルー
+                Debug.Log("[PlayerMove] ゴール状態だが移動処理は継続");
+            }
 
             // 接地判定を更新
             CheckGrounded();
@@ -67,23 +75,20 @@ namespace Game.StageScene.Player
             // ===== 1. 射撃状態の処理 =====
             if (HasState(State.SHOOT))
             {
-                // 射撃中は横移動を停止
                 moveDir.x = 0f;
                 moveDir.z = 0f;
-                moveDir.y = _rigidbody.velocity.y; // 縦方向の速度は維持
+                moveDir.y = _rigidbody.velocity.y;
 
-                if (!isGrounded) GravityUpdate(); // 空中にいる場合は重力処理
+                if (!isGrounded) GravityUpdate();
                 _rigidbody.velocity = moveDir;
-                return; // 射撃中は以降の移動・ジャンプ処理をスキップ
+                return;
             }
 
             // ===== 2. 静止状態の処理 =====
-            // STILLNESS状態かつJUMP状態でない場合、移動を停止
             if (HasState(State.STILLNESS) && !HasState(State.JUMP))
                 StopMoving();
 
             // ===== 3. ジャンプ入力の処理 =====
-            // JUMP状態がセットされており、かつまだジャンプが実行されていない場合
             if (HasState(State.JUMP) && !_hasJumped)
                 JumpUpdate();
 
@@ -92,124 +97,80 @@ namespace Game.StageScene.Player
 
             // ===== 5. 重力処理 =====
             if (!isGrounded)
-                GravityUpdate(); // 空中にいる場合はカスタム重力を適用
+                GravityUpdate();
             else if (moveDir.y < 0f)
-                moveDir.y = MIN_SPEED; // 地面にいる場合はY速度をリセット（めり込み防止）
+                moveDir.y = MIN_SPEED;
 
             // 最終的な移動ベクトルをRigidbodyに適用
             _rigidbody.velocity = moveDir;
         }
 
-        /// <summary>
-        /// 横方向の移動を停止します。
-        /// </summary>
         private void StopMoving()
         {
             moveDir.x = 0f;
             moveDir.z = 0f;
         }
 
-        /// <summary>
-        /// 移動入力（RUN状態）に基づいて横方向の速度を更新します。
-        /// </summary>
         private void MoveInputUpdate()
         {
-            // RUN状態またはJUMP状態の場合
             if (HasState(State.RUN) || HasState(State.JUMP))
             {
-                // 加速処理
                 if (currentDir == Direction.RIGHT)
-                    // 右方向に加速し、最大速度を超えないように制限
                     moveDir.x = Mathf.Min(moveDir.x + MOVE_SPEED, MAX_SPEED);
                 else if (currentDir == Direction.LEFT)
-                    // 左方向に加速し、最大速度を超えないように制限
                     moveDir.x = Mathf.Max(moveDir.x - MOVE_SPEED, -MAX_SPEED);
             }
             else
             {
-                // 入力がない場合、減速処理
                 if (moveDir.x > 0f) moveDir.x = Mathf.Max(moveDir.x - MOVE_SPEED, 0f);
                 else if (moveDir.x < 0f) moveDir.x = Mathf.Min(moveDir.x + MOVE_SPEED, 0f);
             }
         }
 
-        /// <summary>
-        /// ジャンプを実行します。
-        /// </summary>
         private void JumpUpdate()
         {
             if (isGrounded)
             {
-                // 上方向に力を加える
                 moveDir.y = JUMP_FORCE;
                 _hasJumped = true;
-
-                //SEプレイヤージャンプはこの一行（必要時にコメントアウト
                 SEManager.instance.PlaySE(SEManager.Player.PLAYER_JUMP);
-
-                //ここまで
-
                 Debug.Log("[MoveController] ジャンプ実行");
             }
         }
 
-        // =====================================================
-        //  接地判定処理
-        // =====================================================
-        /// <summary>
-        /// Raycastを使用してプレイヤーの接地判定を行います。
-        /// </summary>
         private void CheckGrounded()
         {
             if (_capsuleCollider == null)
                 _capsuleCollider = playerObject.GetComponent<CapsuleCollider>();
 
-            // Rayの始点をカプセルコライダーの下端から少し上に設定
             Vector3 rayStart = new Vector3(
                 _capsuleCollider.bounds.center.x,
-                _capsuleCollider.bounds.min.y + 0.01f, // 0.01fはコライダーの表面から開始するためのオフセット
+                _capsuleCollider.bounds.min.y + 0.01f,
                 _capsuleCollider.bounds.center.z
             );
 
-            // 下方向にRayを飛ばし、地面との接触を判定
             isGrounded = Physics.Raycast(
                 rayStart,
                 Vector3.down,
                 RAYCAST_LENGTH,
-                ~0, // すべてのレイヤーを対象
-                QueryTriggerInteraction.Ignore // トリガーColliderは無視
+                ~0,
+                QueryTriggerInteraction.Ignore
             );
-          
 
-            // Unity Editorでのデバッグ表示
 #if UNITY_EDITOR
             Debug.DrawRay(rayStart, Vector3.down * RAYCAST_LENGTH,
                 isGrounded ? Color.green : Color.red);
 #endif
         }
 
-        /// <summary>
-        /// 移動処理を有効化します。
-        /// </summary>
         public void EnableMovement() => this.enabled = true;
-
-        /// <summary>
-        /// 移動処理を無効化します。
-        /// </summary>
         public void DisableMovement() => this.enabled = false;
 
-        /// <summary>
-        /// カスタム重力処理。Y軸の速度に重力を加算します。
-        /// </summary>
         private void GravityUpdate()
         {
-            // moveDir.y = moveDir.y + (Physics.gravity.y * GRAVITY_SCALE * Time.deltaTime)
             moveDir.y += Physics.gravity.y * GRAVITY_SCALE * Time.deltaTime;
         }
 
-        /// <summary>
-        /// プレイヤーの位置と速度を初期化します。
-        /// </summary>
         public void InitPlayer(Vector3 spawnPos, Quaternion spawnRot)
         {
             playerTransform.position = spawnPos;

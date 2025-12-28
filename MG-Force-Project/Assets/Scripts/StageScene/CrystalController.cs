@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Game.StageScene.Player;
 
 namespace Game.StageScene
 {
@@ -8,7 +9,7 @@ namespace Game.StageScene
     /// クリスタルの回転とプレイヤー接触検知を管理するクラス
     /// - 回転処理
     /// - プレイヤー接触検知
-    /// - ゴール到達時のシーン遷移（Clear画面）
+    /// - ゴール演出 → SE再生 → Clearシーン遷移
     /// </summary>
     public class CrystalController : MonoBehaviour
     {
@@ -19,9 +20,11 @@ namespace Game.StageScene
         [SerializeField] private string _playerTag = GameConstants.Tag.PLAYER.ToString();
 
         [Header("遷移先ステージ名")]
-        [SerializeField] private string _nextSceneName = "Clear"; // ゴール後に遷移するScene名
+        [SerializeField] private string _nextSceneName = "Clear";
 
-        // ゴール到達フラグ
+        /// <summary>
+        /// ゴール到達フラグ（二重判定防止）
+        /// </summary>
         public bool IsGoalEvent { get; private set; }
 
         private Vector3 _rotate;
@@ -33,12 +36,11 @@ namespace Game.StageScene
 
         private void Update()
         {
-            // クリスタルを回転
             RotateCrystal();
         }
 
         /// <summary>
-        /// クリスタルを回転させる
+        /// クリスタル回転処理
         /// </summary>
         private void RotateCrystal()
         {
@@ -48,45 +50,51 @@ namespace Game.StageScene
         }
 
         /// <summary>
-        /// プレイヤーとの接触検知（Trigger）
-        /// OnTriggerStayを使用することで接触中も継続的に判定
+        /// プレイヤー接触判定
         /// </summary>
         private void OnTriggerStay(Collider other)
         {
-            if (IsGoalEvent) return; // すでにゴール済みなら無視
+            if (IsGoalEvent) return;
 
-            if (other.CompareTag(_playerTag))
+            if (!other.CompareTag(_playerTag)) return;
+
+            IsGoalEvent = true;
+            Debug.Log("ゴールに触れた: " + other.name);
+
+            // ===== プレイヤーにゴール通知 =====
+            PlayerControllerBase player =
+                other.GetComponent<PlayerControllerBase>();
+
+            if (player != null)
             {
-                IsGoalEvent = true;
-                Debug.Log("ゴールに触れた: " + other.name);
-
-                // Clear画面へ遷移
-                LoadNextScene();
-                Debug.Log("ゴールに触れた: " + other.name);
-
-                //クリアSEとクリアシーンでのBGMのタイミングは要チェック
-                SEManager.instance.PlaySE(SEManager.Stage.STAGE_CLEAR);
-
-                // Clear画面へ遷移
-                StartCoroutine(LoadSceneAfterDelay());
+                player.SetGoal(); // ゴールアニメーション開始
             }
+
+            // ===== クリアSE再生 =====
+            SEManager.instance.PlaySE(SEManager.Stage.STAGE_CLEAR);
+
+            // ===== SE終了後にシーン遷移 =====
+            StartCoroutine(LoadSceneAfterDelay());
         }
+
         /// <summary>
-        /// SEが流れているかを確認してシーン遷移の関数を実行
+        /// SE再生終了を待ってからシーン遷移
         /// </summary>
-        /// <returns>IEnumerator</returns>
         private IEnumerator LoadSceneAfterDelay()
         {
-            //SEが流れている間はシーン遷移させない
-            while (SEManager.instance._audioSource != null && SEManager.instance._audioSource.isPlaying)
+            // SE再生中は待機
+            while (SEManager.instance != null &&
+                   SEManager.instance._audioSource != null &&
+                   SEManager.instance._audioSource.isPlaying)
             {
                 yield return null;
             }
+
             LoadNextScene();
         }
 
         /// <summary>
-        /// シーン遷移処理
+        /// Clearシーン遷移
         /// </summary>
         private void LoadNextScene()
         {
@@ -95,9 +103,7 @@ namespace Game.StageScene
                 Debug.LogWarning("遷移先のシーン名が設定されていません。");
                 return;
             }
-            //ステージクリア
 
-            // Build Settings に登録されているシーンをロード
             SceneManager.LoadScene(_nextSceneName);
         }
     }

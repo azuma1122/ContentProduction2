@@ -7,13 +7,14 @@ namespace Game.StageScene.Magnet
     /// 弾の方向表示ラインを制御するクラス
     /// - プレイヤーの位置を起点にラインを描画
     /// - 入力に応じて方向を更新
+    /// ※ Sceneビュー専用（Gameビューには表示されない）
     /// </summary>
     public class BulletLineController : MonoBehaviour
     {
         private static InputHandler _inputHandler;
 
         private Transform _playerTransform;     // プレイヤーのTransform
-        private LineRenderer _lineRenderer;     // ラインレンダラー
+        private LineRenderer _lineRenderer;     // （※使用しないが既存構成維持）
         private static Vector3 _currentDirection = Vector3.zero;
 
         private void Start()
@@ -32,68 +33,44 @@ namespace Game.StageScene.Magnet
             }
 
             _lineRenderer = GetComponent<LineRenderer>();
-            if (_lineRenderer == null)
+            if (_lineRenderer != null)
             {
-                Debug.LogError("[BulletLineController] LineRenderer がアタッチされていません!");
-            }
-            else
-            {
-                // 初期状態ではラインを非表示にする
+                // ★ 修正：Gameビューに出ないよう常に無効
                 _lineRenderer.enabled = false;
             }
         }
 
         private void Update()
         {
-            // プレイヤーが破壊されていたら処理をスキップ
-            if (_playerTransform == null || _lineRenderer == null) return;
+            // ★ 修正：LineRenderer は一切使わない
+            if (_playerTransform == null) return;
 
-            // SHOOT 入力で表示、それ以外で非表示
+            // 方向だけ更新（ロジックは維持）
             if (_inputHandler.IsActionPressing(InputConstants.Action.SHOOT) &&
                 !_inputHandler.IsActionPressing(InputConstants.Action.SHOOT_CANCEL))
             {
-                _lineRenderer.enabled = true;
-                UpdateLinePosition();
-            }
-            else
-            {
-                _lineRenderer.enabled = false;
+                _currentDirection = GetDirection();
             }
         }
 
+#if UNITY_EDITOR
         /// <summary>
-        /// ラインの位置を更新
+        /// Sceneビュー専用の方向ライン表示
         /// </summary>
-        private void UpdateLinePosition()
+        private void OnDrawGizmos()
         {
-            // ラインの開始位置をプレイヤーの少し上に設定
-            Vector3 start_point = _playerTransform.position + Vector3.up * 1.0f;
+            if (!Application.isPlaying) return;
+            if (_playerTransform == null || _inputHandler == null) return;
 
-            float maxDistance = 10f;
+            if (!_inputHandler.IsActionPressing(InputConstants.Action.SHOOT)) return;
 
-            // 入力方向を取得
-            _currentDirection = GetDirection();
+            Vector3 startPoint = _playerTransform.position + Vector3.up * 1.0f;
+            Vector3 direction = _currentDirection == Vector3.zero ? Vector3.forward : _currentDirection;
 
-            // Raycast で衝突判定
-            if (Physics.Raycast(start_point, _currentDirection, out RaycastHit hit, maxDistance))
-            {
-                if (!hit.collider.isTrigger)
-                {
-                    _lineRenderer.SetPosition(0, start_point);
-                    _lineRenderer.SetPosition(1, hit.point);
-                }
-                else
-                {
-                    _lineRenderer.SetPosition(0, start_point);
-                    _lineRenderer.SetPosition(1, start_point + _currentDirection * maxDistance);
-                }
-            }
-            else
-            {
-                _lineRenderer.SetPosition(0, start_point);
-                _lineRenderer.SetPosition(1, start_point + _currentDirection * maxDistance);
-            }
+            Gizmos.color = Color.yellow;
+            Gizmos.DrawRay(startPoint, direction * 10f);
         }
+#endif
 
         /// <summary>
         /// 入力から射撃方向を取得
