@@ -6,7 +6,7 @@ namespace Game.StageScene.Player
     /// プレイヤーの物理的な移動を制御するクラス。
     /// - Rigidbodyを操作し、横移動、ジャンプ、カスタム重力処理を行います。
     /// - PlayerStateControllerから受け取った状態（RUN, JUMP, SHOOT）に基づいて動作します。
-    /// - ゴール後も移動を継続（オプション切り替え可能）
+    /// - ゴール後は移動処理を完全停止
     /// </summary>
     public class PlayerMoveController : PlayerControllerBase
     {
@@ -17,11 +17,6 @@ namespace Game.StageScene.Player
         private const float JUMP_FORCE = 5.0f;     // ジャンプ時に与える上方向の力
         private const float GRAVITY_SCALE = 1.25f; // 重力の強さ（Unity標準重力の1.25倍）
         private const float RAYCAST_LENGTH = 0.2f; // 接地判定用Rayの長さ
-        #endregion
-
-        #region ===== 設定 =====
-        [Header("ゴール後の挙動")]
-        [SerializeField] private bool _freezeOnGoal = false; // trueにするとゴール時に移動停止
         #endregion
 
         // ===== 内部変数 =====
@@ -50,17 +45,11 @@ namespace Game.StageScene.Player
         /// </summary>
         public override void OnUpdate()
         {
-            // ===== ゴール状態の場合の処理 =====
+            // ===== ゴール状態の場合は移動処理を完全停止 =====
             if (HasState(State.GOAL))
             {
-                // オプション: ゴール時に移動を完全停止する場合
-                if (_freezeOnGoal)
-                {
-                    return; // 移動処理をスキップ
-                }
-
-                // ゴール状態でも移動処理を継続する場合は、このままフォールスルー
-                Debug.Log("[PlayerMove] ゴール状態だが移動処理は継続");
+                // kinematicエラーを防ぐため、velocity設定を一切行わない
+                return;
             }
 
             // 接地判定を更新

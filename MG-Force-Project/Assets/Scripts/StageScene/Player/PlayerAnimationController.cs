@@ -7,7 +7,6 @@ namespace Game.StageScene.Player
     /// - ゴールアニメーションを最優先
     /// - 優先順位: GOAL > JUMP > SHOOT > RUN > IDLE
     /// - アニメーションの遷移と制御を管理
-    /// - ゴール後も物理演算は継続（停止なし）
     /// </summary>
     public class PlayerAnimationController : PlayerControllerBase
     {
@@ -47,7 +46,12 @@ namespace Game.StageScene.Player
 
         // ===== ゴール演出用 =====
         private bool _isGoalAnimationStarted = false;
-        private bool _goalAnimationCompleted = false;
+
+        [Header("ゴール時の物理演算")]
+        [SerializeField] private bool _stopPhysicsOnGoal = true;
+
+        [Header("ゴールアニメーション設定")]
+        [SerializeField] private bool _useBaseLayerForGoal = true; // BaseLayerにゴールアニメーションがある
 
         /// <summary>
         /// 初期化
@@ -67,7 +71,9 @@ namespace Game.StageScene.Player
             _currentAnimationState = AnimationState.IDLE;
             _currentAnimationLayer = AnimationLayer.RIGHT;
             _isGoalAnimationStarted = false;
-            _goalAnimationCompleted = false;
+
+            // アニメーター速度を確認
+            Debug.Log($"[PlayerAnimationController] Animator初期速度: {_animator.speed}");
         }
 
         /// <summary>
@@ -77,7 +83,7 @@ namespace Game.StageScene.Player
         {
             if (_animator == null) return;
 
-            // ===== ゴール状態の場合は向きやレイヤー変更をスキップ =====
+            // ===== ゴール状態の場合は特殊処理 =====
             if (HasState(State.GOAL))
             {
                 // ゴール状態が始まった瞬間の処理
@@ -89,45 +95,45 @@ namespace Game.StageScene.Player
 
                     // アニメーション速度を明示的に1に設定
                     _animator.speed = 1f;
+                    Debug.Log($"[Animation] Animator速度を1に設定: {_animator.speed}");
 
-                    // BaseLayerをアクティブにする（ゴールアニメーションはBaseLayerに配置）
-                    _animator.SetLayerWeight((int)AnimationLayer.BASE, 1);
-                    _animator.SetLayerWeight((int)AnimationLayer.RIGHT, 0);
-                    _animator.SetLayerWeight((int)AnimationLayer.LEFT, 0);
+                    // ゴールアニメーションのレイヤー設定
+                    if (_useBaseLayerForGoal)
+                    {
+                        // BaseLayerを使用する場合
+                        _animator.SetLayerWeight((int)AnimationLayer.BASE, 1);
+                        _animator.SetLayerWeight((int)AnimationLayer.RIGHT, 0);
+                        _animator.SetLayerWeight((int)AnimationLayer.LEFT, 0);
+                        Debug.Log("[Animation] ゴールアニメーション: BaseLayer使用");
+                    }
+                    else
+                    {
+                        // 現在のレイヤーをそのまま使用
+                        Debug.Log($"[Animation] ゴールアニメーション: {_currentAnimationLayer}レイヤー使用");
+                    }
 
-                    Debug.Log("[Animation] ゴールアニメーション開始");
-                    Debug.Log($"[Animation] BaseLayer Weight = {_animator.GetLayerWeight((int)AnimationLayer.BASE)}");
-                    Debug.Log($"[Animation] RightLayer Weight = {_animator.GetLayerWeight((int)AnimationLayer.RIGHT)}");
-                    Debug.Log($"[Animation] LeftLayer Weight = {_animator.GetLayerWeight((int)AnimationLayer.LEFT)}");
+                    Debug.Log("[Animation] ゴールアニメーション開始準備完了");
                 }
 
-                // Animator反映を実行
+                // Animator反映を実行（ゴール状態でも必ず実行）
                 UpdateAnimatorParameters();
 
-                // 現在のアニメーション状態をチェック
-                AnimatorStateInfo stateInfo = _animator.GetCurrentAnimatorStateInfo((int)AnimationLayer.BASE);
+                // デバッグ: 現在のアニメーション状態を確認
+                int layerToCheck = _useBaseLayerForGoal ? (int)AnimationLayer.BASE : (int)_currentAnimationLayer;
+                AnimatorStateInfo stateInfo = _animator.GetCurrentAnimatorStateInfo(layerToCheck);
 
-                // デバッグ：現在の状態を表示
-                Debug.Log($"[Animation] Current State Name: {(stateInfo.IsName("Goal") ? "Goal" : "Other")}, " +
-                         $"NormalizedTime: {stateInfo.normalizedTime:F3}, " +
-                         $"Speed: {_animator.speed}, " +
-                         $"CurrentState Param: {_animator.GetInteger(CURRENT_STATE)}");
-
-                // ===== アニメーション完了後の処理（停止なし） =====
-                if (stateInfo.IsName("Goal") && stateInfo.normalizedTime >= 1.0f && !_goalAnimationCompleted)
+                if (Time.frameCount % 30 == 0) // 30フレームごとにログ出力
                 {
-                    _goalAnimationCompleted = true;
-                    Debug.Log("[Animation] ゴールアニメーション完了 - 継続再生");
-
-                    // ❌ 削除: _animator.speed = 0;
-                    // アニメーションを停止せず、ループまたは最終フレームを維持
-                    // Animatorの設定でLoop Timeをオフにしていれば、最終フレームで自動的に止まります
+                    Debug.Log($"[Animation] レイヤー{layerToCheck} - IsName(Goal): {stateInfo.IsName("Goal")}, " +
+                              $"normalizedTime: {stateInfo.normalizedTime:F2}, " +
+                              $"CurrentState param: {_animator.GetInteger(CURRENT_STATE)}");
                 }
 
                 return;
             }
 
-            // ===== 1. レイヤー切り替え =====
+            // ===== 通常の処理 =====
+            // 1. レイヤー切り替え
             _animator.SetLayerWeight((int)_currentAnimationLayer, 0);
 
             _currentAnimationLayer =
@@ -135,13 +141,13 @@ namespace Game.StageScene.Player
 
             _animator.SetLayerWeight((int)_currentAnimationLayer, 1);
 
-            // ===== 2. 向き設定 =====
+            // 2. 向き設定
             SetAnimationDir();
 
-            // ===== 3. 状態更新 =====
+            // 3. 状態更新
             StateUpdate();
 
-            // ===== 4. Animator反映 =====
+            // 4. Animator反映
             UpdateAnimatorParameters();
         }
 
@@ -217,15 +223,18 @@ namespace Game.StageScene.Player
         /// </summary>
         private void UpdateAnimatorParameters()
         {
+            // 射撃方向の更新
             if (_animator.GetInteger(CURRENT_DIRECTION) != (int)shootDir)
             {
                 _animator.SetInteger(CURRENT_DIRECTION, (int)shootDir);
             }
 
-            if (_animator.GetInteger(CURRENT_STATE) != (int)_currentAnimationState)
+            // 状態の更新
+            int newState = (int)_currentAnimationState;
+            if (_animator.GetInteger(CURRENT_STATE) != newState)
             {
-                _animator.SetInteger(CURRENT_STATE, (int)_currentAnimationState);
-                Debug.Log($"[Animation] CurrentState = {(int)_currentAnimationState} ({_currentAnimationState})");
+                _animator.SetInteger(CURRENT_STATE, newState);
+                Debug.Log($"[Animation] ★★★ CurrentState更新: {newState} ({_currentAnimationState}) ★★★");
             }
         }
 
@@ -251,45 +260,54 @@ namespace Game.StageScene.Player
 
         /// <summary>
         /// ゴール到達時の演出処理（オーバーライド）
-        /// ※ 物理演算停止なし版
         /// </summary>
         protected override void OnGoal()
         {
-            // ===== オプション1: 物理演算を完全に停止しない場合 =====
-            // 以下をコメントアウトすると、ゴール後も重力や移動が継続します
+            Debug.Log("[Animation] ===== OnGoal呼び出し =====");
 
-            /*
-            var rb = GetComponent<Rigidbody>();
-            if (rb != null)
+            // Animator速度を確認・修正
+            if (_animator != null)
             {
-                rb.velocity = Vector3.zero;
-                rb.angularVelocity = Vector3.zero;
-                rb.isKinematic = true;
-                Debug.Log("[ゴール] Rigidbody停止");
+                if (_animator.speed != 1f)
+                {
+                    Debug.LogWarning($"[Animation] Animator速度が異常: {_animator.speed} -> 1.0に修正");
+                    _animator.speed = 1f;
+                }
             }
 
-            var characterController = GetComponent<CharacterController>();
-            if (characterController != null)
+            // ===== 物理演算の停止（オプション） =====
+            if (_stopPhysicsOnGoal)
             {
-                characterController.enabled = false;
-                Debug.Log("[ゴール] CharacterController停止");
-            }
-            */
+                var rb = GetComponent<Rigidbody>();
+                if (rb != null)
+                {
+                    rb.velocity = Vector3.zero;
+                    rb.angularVelocity = Vector3.zero;
+                    rb.isKinematic = true;
+                    Debug.Log("[ゴール] Rigidbody停止");
+                }
 
-            // ===== オプション2: 速度だけゼロにして物理演算は継続 =====
-            var rb = GetComponent<Rigidbody>();
-            if (rb != null)
+                var characterController = GetComponent<CharacterController>();
+                if (characterController != null)
+                {
+                    characterController.enabled = false;
+                    Debug.Log("[ゴール] CharacterController停止");
+                }
+            }
+            else
             {
-                rb.velocity = Vector3.zero;
-                rb.angularVelocity = Vector3.zero;
-                // rb.isKinematic = true; ← コメントアウト（物理演算は継続）
-                Debug.Log("[ゴール] Rigidbody速度リセット（物理演算は継続）");
+                var rb = GetComponent<Rigidbody>();
+                if (rb != null)
+                {
+                    rb.velocity = Vector3.zero;
+                    rb.angularVelocity = Vector3.zero;
+                    Debug.Log("[ゴール] Rigidbody速度リセット（物理演算は継続）");
+                }
             }
 
             // ゴールアニメーション準備
             _isGoalAnimationStarted = false;
-            _goalAnimationCompleted = false;
-            Debug.Log("[Animation] OnGoal呼び出し - 次のOnUpdateでゴールアニメーション開始");
+            Debug.Log("[Animation] 次のOnUpdateでゴールアニメーション開始");
         }
     }
 }

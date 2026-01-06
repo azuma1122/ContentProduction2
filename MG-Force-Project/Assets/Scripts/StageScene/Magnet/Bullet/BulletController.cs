@@ -52,7 +52,6 @@ namespace Game.StageScene.Magnet
 
         // 発射関連
         private Vector3 _shootDirection = Vector3.zero;
-        private bool _isDirectionSet = false;
         private float _timer = 0f;
 
         // チャージパワー
@@ -138,13 +137,11 @@ namespace Game.StageScene.Magnet
             if (_uiNMagnetManual != null && _uiNMagnet == null)
             {
                 _uiNMagnet = _uiNMagnetManual;
-                // Debug.Log($"[BulletController] N磁石UI設定完了（手動）: {_uiNMagnet.name}");
             }
 
             if (_uiSMagnetManual != null && _uiSMagnet == null)
             {
                 _uiSMagnet = _uiSMagnetManual;
-                // Debug.Log($"[BulletController] S磁石UI設定完了（手動）: {_uiSMagnet.name}");
             }
 
             // 手動設定がない場合は自動検索
@@ -155,10 +152,6 @@ namespace Game.StageScene.Magnet
                     "N Magnet UI", "N Magnet", "MagnetUI_N", "UI_N_Magnet",
                     "Button_N", "ButtonN", "N_Button", "NButton"
                 });
-                // if (_uiNMagnet != null)
-                // {
-                //     Debug.Log($"[BulletController] N磁石UI検出（自動）: {_uiNMagnet.name}");
-                // }
             }
 
             if (_uiSMagnet == null)
@@ -168,41 +161,14 @@ namespace Game.StageScene.Magnet
                     "S Magnet UI", "S Magnet", "MagnetUI_S", "UI_S_Magnet",
                     "Button_S", "ButtonS", "S_Button", "SButton"
                 });
-                // if (_uiSMagnet != null)
-                // {
-                //     Debug.Log($"[BulletController] S磁石UI検出（自動）: {_uiSMagnet.name}");
-                // }
             }
 
             // どちらも見つからない場合は代替方法を使用
             if (_uiNMagnet == null && _uiSMagnet == null)
             {
                 Debug.LogWarning("[BulletController] 磁石UIが見つかりません。MagnetManagerから直接極性を取得します。");
-                // Debug.Log("[BulletController] ヒント: BulletControllerのInspectorで「磁石UI参照」に手動でUIオブジェクトをドラッグ&ドロップしてください");
-                // SearchAllUIObjects(); // デバッグ用：一度だけ全オブジェクトを検索
                 _useAlternativeMethod = true;
             }
-        }
-
-        /// <summary>
-        /// シーン内の全UIオブジェクトを検索してログ出力（デバッグ用）
-        /// </summary>
-        private void SearchAllUIObjects()
-        {
-            GameObject[] allObjects = GameObject.FindObjectsOfType<GameObject>();
-            // Debug.Log("[BulletController] === シーン内の全オブジェクト検索 ===");
-
-            int count = 0;
-            foreach (GameObject obj in allObjects)
-            {
-                if (obj.name.ToLower().Contains("magnet"))
-                {
-                    // Debug.Log($"  - {obj.name} (Layer: {obj.layer}, Tag: {obj.tag}, Active: {obj.activeSelf})");
-                    count++;
-                }
-            }
-
-            // Debug.Log($"[BulletController] === 検索完了: {count}個の磁石関連オブジェクト発見 ===");
         }
 
         /// <summary>
@@ -227,8 +193,6 @@ namespace Game.StageScene.Magnet
         public void SetShootDirection(Vector3 direction)
         {
             _shootDirection = direction.normalized;
-            _isDirectionSet = true;
-            // Debug.Log($"[BulletController] 発射方向設定: {_shootDirection}");
         }
 
         /// <summary>
@@ -360,18 +324,12 @@ namespace Game.StageScene.Magnet
             // Moving_2_Block → 黄以上(33%以上)で動かせる
             else if (blockName.Contains("Moving_2_Block"))
             {
-                bool canMove = _chargePower >= CHARGE_LEVEL_2;
-                // if (!canMove)
-                //     Debug.Log($"Moving_2_Blockには黄色チャージ(33%以上)が必要です");
-                return canMove;
+                return _chargePower >= CHARGE_LEVEL_2;
             }
             // Moving_3_Block → 赤のみ(66%以上)で動かせる
             else if (blockName.Contains("Moving_3_Block"))
             {
-                bool canMove = _chargePower >= CHARGE_LEVEL_3;
-                // if (!canMove)
-                //     Debug.Log($"Moving_3_Blockには赤チャージ(66%以上)が必要です");
-                return canMove;
+                return _chargePower >= CHARGE_LEVEL_3;
             }
 
             // デフォルトでは影響可能

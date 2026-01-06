@@ -17,12 +17,6 @@ namespace Game.StageScene.Player
             currentDir = Direction.RIGHT;
             isGrounded = true;
             shootDir = 1f;
-
-            // Animatorの自動取得
-            if (_animator == null)
-            {
-                _animator = player.GetComponent<Animator>();
-            }
         }
         #endregion
 
@@ -57,9 +51,7 @@ namespace Game.StageScene.Player
 
         #region ===== ゴール演出設定 =====
         [Header("ゴール演出設定")]
-        [SerializeField] private Animator _animator;
-        [SerializeField] private string _goalAnimationTrigger = "Goal"; // トリガー名（使用しない場合は空）
-        [SerializeField] private bool _disablePhysicsOnGoal = true; // 物理演算を停止するか
+        [SerializeField] private bool _disablePhysicsOnGoal = true;
         #endregion
 
         #region ===== State操作メソッド =====
@@ -78,90 +70,26 @@ namespace Game.StageScene.Player
         /// </summary>
         public virtual void SetGoal()
         {
-            // すでにゴール状態なら何もしない
             if (HasState(State.GOAL)) return;
 
-            Debug.Log("Player : ゴール到達");
+            Debug.Log("[Player] ゴール到達");
 
-            // 状態をゴールに固定（操作停止用）
             ClearState();
             AddState(State.GOAL);
 
-            // ゴール演出を実行
+            // アニメーション制御は PlayerAnimationController で処理
             OnGoal();
         }
 
         /// <summary>
         /// ゴール時の演出処理
-        /// - 勝利ポーズアニメーション（shourishouri）再生
-        /// - 物理演算の停止
-        /// ※ PlayerAnimationController で上書きされる場合があります
+        /// ※ アニメーション制御は PlayerAnimationController に任せる
         /// </summary>
         protected virtual void OnGoal()
         {
-            // 勝利ポーズアニメーション再生
-            PlayVictoryAnimation();
-
-            // 物理演算を停止
             if (_disablePhysicsOnGoal)
             {
                 DisablePhysics();
-            }
-        }
-
-        /// <summary>
-        /// 勝利ポーズアニメーション（shourishouri）を再生
-        /// PlayerAnimationControllerが整数パラメータ方式を使用している場合、
-        /// CurrentState = 5 を設定することでゴールアニメーションが再生されます
-        /// </summary>
-        private void PlayVictoryAnimation()
-        {
-            if (_animator == null)
-            {
-                Debug.LogWarning("Animatorが設定されていません。Playerに設定してください。");
-                return;
-            }
-
-            bool animationTriggered = false;
-
-            // 方式1: 整数パラメータ方式（PlayerAnimationController用）
-            // CurrentState = 5 (GOAL) を設定
-            foreach (var param in _animator.parameters)
-            {
-                if (param.name == "CurrentState" && param.type == AnimatorControllerParameterType.Int)
-                {
-                    _animator.SetInteger("CurrentState", 5); // AnimationState.GOAL = 5
-                    Debug.Log("[ゴール] CurrentState = 5 (GOAL) に設定");
-                    animationTriggered = true;
-                    break;
-                }
-            }
-
-            // 方式2: トリガー方式（従来の方法）
-            // Goalトリガーが存在する場合のみ実行
-            if (!animationTriggered && !string.IsNullOrEmpty(_goalAnimationTrigger))
-            {
-                bool hasTrigger = false;
-                foreach (var param in _animator.parameters)
-                {
-                    if (param.name == _goalAnimationTrigger && param.type == AnimatorControllerParameterType.Trigger)
-                    {
-                        hasTrigger = true;
-                        break;
-                    }
-                }
-
-                if (hasTrigger)
-                {
-                    _animator.SetTrigger(_goalAnimationTrigger);
-                    Debug.Log($"[ゴール] トリガー発火: {_goalAnimationTrigger}");
-                    animationTriggered = true;
-                }
-            }
-
-            if (!animationTriggered)
-            {
-                Debug.LogWarning("[ゴール] アニメーションパラメータが見つかりません。Animatorに「CurrentState」(Int)または「Goal」(Trigger)を設定してください。");
             }
         }
 
@@ -170,22 +98,20 @@ namespace Game.StageScene.Player
         /// </summary>
         private void DisablePhysics()
         {
-            // CharacterControllerを使用している場合
             var characterController = GetComponent<CharacterController>();
             if (characterController != null)
             {
                 characterController.enabled = false;
-                Debug.Log("CharacterController停止");
+                Debug.Log("[Player] CharacterController停止");
             }
 
-            // Rigidbodyを使用している場合
             var rb = GetComponent<Rigidbody>();
             if (rb != null)
             {
                 rb.velocity = Vector3.zero;
                 rb.angularVelocity = Vector3.zero;
                 rb.isKinematic = true;
-                Debug.Log("Rigidbody停止");
+                Debug.Log("[Player] Rigidbody停止");
             }
         }
         #endregion
