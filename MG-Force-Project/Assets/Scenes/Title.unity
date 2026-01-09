@@ -9331,7 +9331,7 @@ MonoBehaviour:
   - {fileID: 1045414231}
   _keyToggle: {fileID: 1867855094}
   _eraseContrller: {fileID: 1533570732}
-  _doubleClickPreventionTime: 0.189
+  _doubleClickPreventionTime: 0.2
 --- !u!4 &2042523702
 Transform:
   m_ObjectHideFlags: 0
