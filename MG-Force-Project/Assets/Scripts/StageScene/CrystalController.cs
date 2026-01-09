@@ -78,7 +78,13 @@ namespace Game.StageScene
             PlayerControllerBase player = other.GetComponent<PlayerControllerBase>();
             if (player != null)
             {
+                // =====  クリアSE再生（アニメーションの前に鳴らす） =====　
+                SEManager.instance.PlaySE(SEManager.Stage.STAGE_CLEAR);
+                Debug.Log("[Crystal]  クリアSE再生開始");
+                
+
                 player.SetGoal(); // ゴールアニメーション開始（PlayerAnimationControllerが処理）
+
                 Debug.Log("[Crystal] プレイヤーにゴール通知完了");
             }
             else
@@ -149,14 +155,11 @@ namespace Game.StageScene
             yield return new WaitForSeconds(_goalAnimationDuration);
             Debug.Log("[Crystal] ゴールアニメーション待機完了");
 
-            // ===== 2. クリアSE再生 =====
-            SEManager.instance.PlaySE(SEManager.Stage.STAGE_CLEAR);
-            Debug.Log("[Crystal]  クリアSE再生開始");
-
-            // ===== 3. SE終了を待つ =====
+        
+            // ===== 2. SE終了を待つ =====
             yield return StartCoroutine(WaitForSEComplete());
 
-            // ===== 4. Clearシーン遷移 =====
+            // ===== 3. Clearシーン遷移 =====
             LoadNextScene();
         }
 
