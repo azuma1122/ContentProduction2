@@ -2,6 +2,7 @@ using UnityEngine;
 using Game.GameSystem;
 using UnityEngine.UI;
 using TMPro;
+using System.Collections;
 
 namespace Game.Title
 {
@@ -99,10 +100,11 @@ namespace Game.Title
         [SerializeField] private Toggle _keyToggle;                                                     // キー設定トグル
 
         [SerializeField] private GameDataEraseController _eraseContrller; // セーブデータ削除管理
+        [SerializeField, Range(0f, 1f)] private float _doubleClickPreventionTime; //ダブルクリック防止時間   
 
         private int _currentButton = INIT_BUTTON;                         // 現在選択中のボタン番号
         private bool _isExistGameData;                                    // セーブデータが存在するかどうか
-
+        private bool _isStepChanging = false; // ステップ遷移中フラグ
         // 選択中／非選択時のボタン拡大率
         private Vector3 _targetButton = new Vector3(1.2f, 1.2f, 1.2f);
         private Vector3 _offTargetButton = new Vector3(1.0f, 1.0f, 1.0f);
@@ -231,14 +233,16 @@ namespace Game.Title
             // 決定ボタンで実行
             if (_input.IsActionPressed(InputConstants.Action.MENU_DECISION))
             {
-                 SEManager.instance.PlaySE(SEManager.Menu.DECISION);
+                SEManager.instance.PlaySE(SEManager.Menu.DECISION);
 
                 GameMenuDecision(_currentButton);
+                return;
+
             }
             // 左右キーでボタン選択
             else if (_input.IsActionPressed(InputConstants.Action.MENU_LEFT_SELECT))
             {
-                 SEManager.instance.PlaySE(SEManager.Menu.SELECT);
+                SEManager.instance.PlaySE(SEManager.Menu.SELECT);
 
                 if (_currentButton == INIT_BUTTON)
                     _currentButton = (int)GameMenu.START;
@@ -247,7 +251,7 @@ namespace Game.Title
             }
             else if (_input.IsActionPressed(InputConstants.Action.MENU_RIGHT_SELECT))
             {
-                 SEManager.instance.PlaySE(SEManager.Menu.SELECT);
+                SEManager.instance.PlaySE(SEManager.Menu.SELECT);
 
                 if (_currentButton == INIT_BUTTON)
                     _currentButton = (int)GameMenu.START;
@@ -257,7 +261,7 @@ namespace Game.Title
             // 戻るキーでタイトルに戻る
             else if (_input.IsActionPressed(InputConstants.Action.MENU_BACK))
             {
-                 SEManager.instance.PlaySE(SEManager.Menu.CANCEL);
+                SEManager.instance.PlaySE(SEManager.Menu.CANCEL);
 
                 SetStep(TitleStep.TITLE);
             }
@@ -282,6 +286,15 @@ namespace Game.Title
         /// </summary>
         public void GameMenuDecision(int button_index)
         {
+            // すでに遷移処理中なら、SEも再生せず処理を抜ける
+            if (_isStepChanging) return;
+            // ここで一定時間ロックをかける
+            StartCoroutine(ResetInputLock());
+
+            if (button_index != INIT_BUTTON)
+            {
+                _currentButton = button_index;
+            }
             switch (button_index)
             {
                 case (int)GameMenu.CONFIG:
@@ -311,6 +324,13 @@ namespace Game.Title
                     break;
             }
         }
+        // マウスがボタンに乗った時にインデックスを強制同期する
+        public void OnPointerEnterButton(int button_index)
+        {
+            _currentButton = button_index;
+            SEManager.instance.PlaySE(SEManager.Menu.SELECT);
+
+        }
 
         /// <summary>
         /// ゲーム終了処理（エディタ／実機対応）
@@ -332,13 +352,12 @@ namespace Game.Title
         {
             if (_input.IsActionPressed(InputConstants.Action.MENU_DECISION))
             {
-                 SEManager.instance.PlaySE(SEManager.Menu.DECISION);
 
                 StartMenuDecision(_currentButton);
             }
             else if (_input.IsActionPressed(InputConstants.Action.MENU_LEFT_SELECT))
             {
-                 SEManager.instance.PlaySE(SEManager.Menu.SELECT);
+                SEManager.instance.PlaySE(SEManager.Menu.SELECT);
 
                 if (_currentButton == INIT_BUTTON)
                     _currentButton = (_isExistGameData) ? (int)StartMenu.RE_START : (int)StartMenu.NEW_START;
@@ -347,7 +366,7 @@ namespace Game.Title
             }
             else if (_input.IsActionPressed(InputConstants.Action.MENU_RIGHT_SELECT))
             {
-                 SEManager.instance.PlaySE(SEManager.Menu.SELECT);
+                SEManager.instance.PlaySE(SEManager.Menu.SELECT);
 
                 if (_currentButton == INIT_BUTTON)
                     _currentButton = (_isExistGameData) ? (int)StartMenu.RE_START : (int)StartMenu.NEW_START;
@@ -357,7 +376,7 @@ namespace Game.Title
             else if (_input.IsActionPressed(InputConstants.Action.MENU_BACK))
             {
                 SetStep(TitleStep.GAME_MENU);
-                 SEManager.instance.PlaySE(SEManager.Menu.CANCEL);
+                SEManager.instance.PlaySE(SEManager.Menu.CANCEL);
 
             }
 
@@ -380,6 +399,16 @@ namespace Game.Title
         /// </summary>
         public void StartMenuDecision(int button_index)
         {
+            // すでに遷移処理中なら、SEも再生せず処理を抜ける
+
+            if (_isStepChanging) return;
+            if (button_index == INIT_BUTTON)
+            {
+                _currentButton = _isExistGameData ? (int)StartMenu.RE_START : (int)StartMenu.NEW_START;
+                return;
+            }
+            _isStepChanging = true;      //遷移中フラグをTrueに
+            SEManager.instance.PlaySE(SEManager.Menu.DECISION);
             switch (button_index)
             {
                 case (int)StartMenu.NEW_START:
@@ -394,6 +423,9 @@ namespace Game.Title
                     _currentButton = _isExistGameData ? (int)StartMenu.RE_START : (int)StartMenu.NEW_START;
                     return;
             }
+            //シーン遷移中をデバッグログで確認
+            Debug.Log("Scene Transition to: " + GameConstants.Scene.StageSelect.ToString());
+
 
             // ステージ選択シーンへ遷移
             _sceneLoader.LoadScene(GameConstants.Scene.StageSelect.ToString());
@@ -557,6 +589,16 @@ namespace Game.Title
             _menuObjects[(int)_currentStep].SetActive(true);
         }
 
+        /// <summary>
+        /// _doubleClickPreventionTime秒ほど入力を無視する
+        /// </summary>
+        /// <returns></returns>
+        private IEnumerator ResetInputLock()
+        {
+            _isStepChanging = true;
+            yield return new WaitForSeconds(_doubleClickPreventionTime);
+            _isStepChanging = false;
+        }
         /// <summary>
         /// ボタンから呼び出す用のステップ変更
         /// </summary>
