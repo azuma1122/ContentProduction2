@@ -203,7 +203,6 @@ public class GlobalUIManager : MonoBehaviour
     {
         Debug.Log($"[GlobalUIManager] OnDestroy() 呼び出し: GameObject={gameObject.name}");
 
-        // ★★★ 修正：OnDestroyでのリセットは条件付き ★★★
         // シーン遷移時に次のシーンでリセットされるべきなので、
         // ここでは_instanceの参照だけクリア
         if (_instance == this)

@@ -2,7 +2,6 @@
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
-
 namespace Game.StageScene
 {
     /// <summary>
@@ -16,20 +15,25 @@ namespace Game.StageScene
         [SerializeField] private Image HighlightRing;   // ハイライト用リング
         [SerializeField] private Image Arrow;           // 指し示す矢印
         [SerializeField] private Button[] PlanetButtons; // 惑星ボタン群
+        [SerializeField] private Button BackButton;     // 戻るボタン
 
         private void Start()
         {
             // 最初は非表示
             HighlightRing.gameObject.SetActive(false);
             Arrow.gameObject.SetActive(false);
-
             // 各ボタンにイベントを登録
             foreach (Button btn in PlanetButtons)
             {
                 AddHoverEvents(btn);
-
                 // クリックイベント登録
                 btn.onClick.AddListener(() => OnClickStage(btn));
+            }
+
+            // 戻るボタンのイベント登録
+            if (BackButton != null)
+            {
+                BackButton.onClick.AddListener(OnClickBack);
             }
         }
 
@@ -41,13 +45,11 @@ namespace Game.StageScene
             EventTrigger trigger = button.gameObject.GetComponent<EventTrigger>();
             if (trigger == null)
                 trigger = button.gameObject.AddComponent<EventTrigger>();
-
             // マウスが乗った時のイベント
             EventTrigger.Entry enter = new EventTrigger.Entry();
             enter.eventID = EventTriggerType.PointerEnter;
             enter.callback.AddListener((eventData) => OnHoverEnter(button));
             trigger.triggers.Add(enter);
-
             // マウスが離れた時のイベント
             EventTrigger.Entry exit = new EventTrigger.Entry();
             exit.eventID = EventTriggerType.PointerExit;
@@ -62,7 +64,6 @@ namespace Game.StageScene
         {
             HighlightRing.gameObject.SetActive(true);
             Arrow.gameObject.SetActive(true);
-
             RectTransform planetRect = button.GetComponent<RectTransform>();
             HighlightRing.rectTransform.position = planetRect.position;
             HighlightRing.rectTransform.localScale = Vector3.one * 1.2f;
@@ -85,7 +86,6 @@ namespace Game.StageScene
         {
             string stageName = button.name;
             //Debug.Log("Clicked: " + stageName);
-
             // 名前に応じてシーンを切り替え
             if (stageName.Contains("Stage1"))
             {
@@ -99,6 +99,14 @@ namespace Game.StageScene
             {
                 SceneManager.LoadScene("Stage3");
             }
+        }
+
+        /// <summary>
+        /// 戻るボタンがクリックされたときの処理
+        /// </summary>
+        private void OnClickBack()
+        {
+            SceneManager.LoadScene("Title");
         }
     }
 }

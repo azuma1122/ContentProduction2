@@ -7,7 +7,7 @@ namespace Game.StageScene
     /// <summary>
     /// ボタン（踏みスイッチ）の ON / OFF 状態を管理するクラス。
     /// 
-    /// ● 主な機能
+    /// 主な機能
     /// - プレイヤー or Moving オブジェクトが踏むとボタンが「DOWN」になる
     /// - 離れると「UP」に戻る（現在はコメントアウトで OFF）
     /// - ボタンの見た目（上/下）の切り替え
@@ -78,8 +78,7 @@ namespace Game.StageScene
             // Debug.LogWarning(collider.gameObject.tag);
 
             // プレイヤー と Moving ブロックのときボタンを押す
-            if (collider.gameObject.CompareTag(GameConstants.Tag.MOVING) ||
-                collider.gameObject.CompareTag(GameConstants.Tag.PLAYER))
+            if (collider.gameObject.CompareTag(GameConstants.Tag.MOVING))
             {
 
                 //ボタンが押し上がっているので
@@ -102,19 +101,18 @@ namespace Game.StageScene
 
         // ---------------------------------------------------------
         // ボタンから離れたときに呼ばれる
-        // ※ 現状では戻らない仕様なのでコメントアウト
         // ---------------------------------------------------------
-        private void OnTriggerExit(Collider collider)
-        {
-            if (collider.CompareTag(GameConstants.Tag.UNTAGGED)) return;
+        //private void OnTriggerExit(Collider collider)
+        //{
+        //    if (collider.CompareTag(GameConstants.Tag.UNTAGGED)) return;
 
-            if (collider.gameObject.CompareTag(GameConstants.Tag.MOVING) ||
-                collider.gameObject.CompareTag(GameConstants.Tag.PLAYER))
-            {
-                // isUpButton = true; 
+        //    if (collider.gameObject.CompareTag(GameConstants.Tag.MOVING) ||
+        //        collider.gameObject.CompareTag(GameConstants.Tag.PLAYER))
+        //    {
+        //        isUpButton = true; 
                 
-            }
-        }
+        //    }
+        //}
 
 
         // ---------------------------------------------------------

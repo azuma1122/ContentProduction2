@@ -262,3 +262,5 @@ MonoBehaviour:
   magnetFixedPower: 0
   isFixedMagnet: 1
   fixedPower: 1
+  restrictToFourDirections: 1
+  directionThreshold: 0.3

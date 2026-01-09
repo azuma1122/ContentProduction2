@@ -96,19 +96,22 @@ namespace Game.Stage
                 return;
             }
 
-            // ESCキー押下でウィンドウ類を閉じる
-            if (_input.IsActionPressed(InputConstants.Action.MENU_BACK))
+            // ESCキー押下時の処理（直接キー入力も追加）
+            if (_input.IsActionPressed(InputConstants.Action.MENU_BACK) || Input.GetKeyDown(KeyCode.Escape))
             {
-                if (_isConfirmActive)
-                {
-                    CloseConfirmDialog();
-                    return;
-                }
+                Debug.Log("[StageConfigMenu] ESCキー検出");
+
+                // ヘルプが開いている場合は閉じる
                 if (_isHelpActive)
                 {
+                    Debug.Log("[StageConfigMenu] ヘルプを閉じます");
                     CloseHelp();
                     return;
                 }
+                // ヘルプが開いていない場合は即時リスタート
+                Debug.Log("[StageConfigMenu] ESCキー押下 - ステージを即時リスタートします");
+                ResetStage();
+                return;
             }
 
             // 詳細デバッグ(Oキー)
@@ -191,7 +194,7 @@ namespace Game.Stage
         }
 
         /// <summary>
-        /// プレイヤーの詳細状態チェック（Lキーで呼び出し）
+        /// プレイヤーの詳細状態チェック(Lキーで呼び出し)
         /// </summary>
         private void CheckPlayerStatus()
         {
@@ -231,7 +234,7 @@ namespace Game.Stage
             Debug.Log($"[Physics] simulationMode: {Physics.simulationMode}");
             Debug.Log($"[Physics2D] simulationMode: {Physics2D.simulationMode}");
 
-            // Rigidbody（子を含めて検索）
+            // Rigidbody(子を含めて検索)
             var rb = player.GetComponentInChildren<Rigidbody>();
             if (rb != null)
             {
@@ -250,7 +253,7 @@ namespace Game.Stage
                 Debug.LogWarning("[Rigidbody] ★ コンポーネントなし - 3Dキャラクターの場合は必須です");
             }
 
-            // 全スクリプト（子を含めて検索）
+            // 全スクリプト(子を含めて検索)
             var scripts = player.GetComponentsInChildren<MonoBehaviour>();
             Debug.Log($"[Scripts] 総数（子を含む）: {scripts.Length}");
             foreach (var script in scripts)
@@ -447,7 +450,7 @@ namespace Game.Stage
             yield return null;
             yield return null;
 
-            // 再度リセット確認（念押し）
+            // 再度リセット確認(念押し)
             Time.timeScale = 1f;
             Physics.simulationMode = SimulationMode.FixedUpdate;
             Physics2D.simulationMode = SimulationMode2D.FixedUpdate;
@@ -501,7 +504,7 @@ namespace Game.Stage
                     Debug.LogWarning("[StageConfigMenu] ★ 「spine」に「Player」タグが付いています。これは間違いです。");
                 }
 
-                // 名前で直接検索（MagForce_Prefabまたはそのクローン）
+                // 名前で直接検索(MagForce_Prefabまたはそのクローン)
                 player = GameObject.Find("MagForce_Prefab(Clone)");
 
                 if (player == null)
@@ -536,12 +539,12 @@ namespace Game.Stage
 
                     rb.isKinematic = false;
 
-                    // ★★★ 注意: PlayerMoveControllerがuseGravity=falseでカスタム重力を使用しているため
-                    // useGravityはfalseのままにする（OnStart()で設定される）
+                    // 注意: PlayerMoveControllerがuseGravity=falseでカスタム重力を使用しているため
+                    // useGravityはfalseのままにする(OnStart()で設定される)
                     // rb.useGravity = false;
 
-                    // ★★★ 重要: constraintsを適切に設定 ★★★
-                    // 3Dキャラクターの場合、通常は回転のみ固定（FreezeRotation）
+                    // 重要: constraintsを適切に設定 
+                    // 3Dキャラクターの場合、通常は回転のみ固定(FreezeRotation)
                     rb.constraints = RigidbodyConstraints.FreezeRotation;
 
                     rb.WakeUp();
@@ -552,7 +555,7 @@ namespace Game.Stage
                 // Rigidbodyが見つからなかった場合の警告
                 if (rb == null)
                 {
-                    Debug.LogWarning("  - ★ Rigidbodyが見つかりません！プレイヤーにRigidbodyコンポーネントを追加してください");
+                    Debug.LogWarning("  - Rigidbodyが見つかりません！プレイヤーにRigidbodyコンポーネントを追加してください");
                 }
 
                 // 親子構造も含めて全てのMonoBehaviourスクリプトを有効化
@@ -569,12 +572,12 @@ namespace Game.Stage
 
                 if (scripts.Length == 0)
                 {
-                    Debug.LogWarning("  - ★ プレイヤーにスクリプトが1つも付いていません！移動スクリプトを追加してください");
+                    Debug.LogWarning("  - プレイヤーにスクリプトが1つも付いていません！移動スクリプトを追加してください");
                 }
             }
             else
             {
-                Debug.LogError("★★★ プレイヤーが見つかりません！タグ「Player」が設定されているか、またはオブジェクト名が「MagForce_Prefab」であることを確認してください ★★★");
+                Debug.LogError("プレイヤーが見つかりません！タグ「Player」が設定されているか、またはオブジェクト名が「MagForce_Prefab」であることを確認してください ");
             }
         }
 
@@ -587,7 +590,7 @@ namespace Game.Stage
             Debug.Log("[StageConfigMenu] ForceResumeAll() 実行開始");
             Debug.Log("[StageConfigMenu] ========================================");
 
-            // Time.timeScaleをリセット（最優先）
+            // Time.timeScaleをリセット(最優先)
             Time.timeScale = 1f;
             Debug.Log($"[StageConfigMenu] Time.timeScale を 1f に設定: {Time.timeScale}");
 
@@ -606,7 +609,7 @@ namespace Game.Stage
 
             if (allManagers.Length > 1)
             {
-                Debug.LogWarning($"[StageConfigMenu] ★★★ 複数のGlobalUIManager検出! 余分なインスタンスを削除します ★★★");
+                Debug.LogWarning($"[StageConfigMenu] 複数のGlobalUIManager検出! 余分なインスタンスを削除します");
 
                 // 最初のインスタンス以外を即座に削除
                 for (int i = 1; i < allManagers.Length; i++)
@@ -619,7 +622,7 @@ namespace Game.Stage
                 }
             }
 
-            // ★★★ 重要: 全てのGlobalUIManagerインスタンスに対してForceResetを実行 ★★★
+            // 全てのGlobalUIManagerインスタンスに対してForceResetを実行 
             allManagers = FindObjectsOfType<GlobalUIManager>();
             foreach (var manager in allManagers)
             {
@@ -634,7 +637,7 @@ namespace Game.Stage
                 }
             }
 
-            // ★★★ 追加: InputHandlerの状態もリセット ★★★
+            // InputHandlerの状態もリセット 
             if (_input != null)
             {
                 Debug.Log("[StageConfigMenu] InputHandlerの状態をリセット");
@@ -645,7 +648,7 @@ namespace Game.Stage
                 Debug.LogWarning("[StageConfigMenu] InputHandlerが null です");
             }
 
-            // 最後にもう一度確認（念押し）
+            // 最後にもう一度確認(念押し)
             Time.timeScale = 1f;
 
             Debug.Log($"[StageConfigMenu] ForceResumeAll() 完了 - Time.timeScale: {Time.timeScale}");

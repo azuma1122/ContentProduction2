@@ -234,7 +234,7 @@ namespace Game.StageScene.Player
             if (_animator.GetInteger(CURRENT_STATE) != newState)
             {
                 _animator.SetInteger(CURRENT_STATE, newState);
-                Debug.Log($"[Animation] ★★★ CurrentState更新: {newState} ({_currentAnimationState}) ★★★");
+                Debug.Log($"[Animation] CurrentState更新: {newState} ({_currentAnimationState}) ");
             }
         }
 

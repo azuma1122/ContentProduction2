@@ -214,7 +214,7 @@ namespace Game.Title
             if (_input.IsActionPressed(InputConstants.Action.MENU_DECISION) || is_push_button)
             {
                 //決定
-                SEManager.instance.PlaySE(SEManager.Menu.DECISION); 
+                // SEManager.instance.PlaySE(SEManager.Menu.DECISION); 
                 SetStep(TitleStep.GAME_MENU);
             }
         }
@@ -231,14 +231,14 @@ namespace Game.Title
             // 決定ボタンで実行
             if (_input.IsActionPressed(InputConstants.Action.MENU_DECISION))
             {
-                SEManager.instance.PlaySE(SEManager.Menu.DECISION);
+                 SEManager.instance.PlaySE(SEManager.Menu.DECISION);
 
                 GameMenuDecision(_currentButton);
             }
             // 左右キーでボタン選択
             else if (_input.IsActionPressed(InputConstants.Action.MENU_LEFT_SELECT))
             {
-                SEManager.instance.PlaySE(SEManager.Menu.SELECT);
+                 SEManager.instance.PlaySE(SEManager.Menu.SELECT);
 
                 if (_currentButton == INIT_BUTTON)
                     _currentButton = (int)GameMenu.START;
@@ -247,7 +247,7 @@ namespace Game.Title
             }
             else if (_input.IsActionPressed(InputConstants.Action.MENU_RIGHT_SELECT))
             {
-                SEManager.instance.PlaySE(SEManager.Menu.SELECT);
+                 SEManager.instance.PlaySE(SEManager.Menu.SELECT);
 
                 if (_currentButton == INIT_BUTTON)
                     _currentButton = (int)GameMenu.START;
@@ -257,7 +257,7 @@ namespace Game.Title
             // 戻るキーでタイトルに戻る
             else if (_input.IsActionPressed(InputConstants.Action.MENU_BACK))
             {
-                SEManager.instance.PlaySE(SEManager.Menu.CANCEL);
+                 SEManager.instance.PlaySE(SEManager.Menu.CANCEL);
 
                 SetStep(TitleStep.TITLE);
             }
@@ -332,13 +332,13 @@ namespace Game.Title
         {
             if (_input.IsActionPressed(InputConstants.Action.MENU_DECISION))
             {
-                SEManager.instance.PlaySE(SEManager.Menu.DECISION);
+                 SEManager.instance.PlaySE(SEManager.Menu.DECISION);
 
                 StartMenuDecision(_currentButton);
             }
             else if (_input.IsActionPressed(InputConstants.Action.MENU_LEFT_SELECT))
             {
-                SEManager.instance.PlaySE(SEManager.Menu.SELECT);
+                 SEManager.instance.PlaySE(SEManager.Menu.SELECT);
 
                 if (_currentButton == INIT_BUTTON)
                     _currentButton = (_isExistGameData) ? (int)StartMenu.RE_START : (int)StartMenu.NEW_START;
@@ -347,7 +347,7 @@ namespace Game.Title
             }
             else if (_input.IsActionPressed(InputConstants.Action.MENU_RIGHT_SELECT))
             {
-                SEManager.instance.PlaySE(SEManager.Menu.SELECT);
+                 SEManager.instance.PlaySE(SEManager.Menu.SELECT);
 
                 if (_currentButton == INIT_BUTTON)
                     _currentButton = (_isExistGameData) ? (int)StartMenu.RE_START : (int)StartMenu.NEW_START;
@@ -357,7 +357,7 @@ namespace Game.Title
             else if (_input.IsActionPressed(InputConstants.Action.MENU_BACK))
             {
                 SetStep(TitleStep.GAME_MENU);
-                SEManager.instance.PlaySE(SEManager.Menu.CANCEL);
+                 SEManager.instance.PlaySE(SEManager.Menu.CANCEL);
 
             }
 
@@ -407,14 +407,14 @@ namespace Game.Title
         {
             if (_input.IsActionPressed(InputConstants.Action.MENU_DECISION))
             {
-                SEManager.instance.PlaySE(SEManager.Menu.DECISION);
+                // SEManager.instance.PlaySE(SEManager.Menu.DECISION);
 
                 ConfigMenuDecisioin(_currentButton);
 
             }
             else if (_input.IsActionPressed(InputConstants.Action.MENU_UP_SELECT))
             {
-                SEManager.instance.PlaySE(SEManager.Menu.SELECT);
+                // SEManager.instance.PlaySE(SEManager.Menu.SELECT);
 
                 if (_currentButton == INIT_BUTTON)
                     _currentButton = (int)ConfigMenu.BGM;
@@ -423,7 +423,7 @@ namespace Game.Title
             }
             else if (_input.IsActionPressed(InputConstants.Action.MENU_DOWN_SELECT))
             {
-                SEManager.instance.PlaySE(SEManager.Menu.SELECT);
+                // SEManager.instance.PlaySE(SEManager.Menu.SELECT);
 
                 if (_currentButton == INIT_BUTTON)
                     _currentButton = (int)ConfigMenu.BGM;
@@ -432,7 +432,7 @@ namespace Game.Title
             }
             else if (_input.IsActionPressed(InputConstants.Action.MENU_BACK))
             {
-                SEManager.instance.PlaySE(SEManager.Menu.CANCEL);
+                // SEManager.instance.PlaySE(SEManager.Menu.CANCEL);
 
                 SetStep(TitleStep.GAME_MENU);
             }
