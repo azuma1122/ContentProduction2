@@ -160,6 +160,8 @@ namespace Game.StageScene.Magnet
 
                 ChargeUpdate();
                 UpdateDebugLine();
+                UpdateChargeGageRotation();
+
             }
 
             if (!_inputHandler.IsActionPressing(InputConstants.Action.SHOOT) && _isCharging)
@@ -218,6 +220,9 @@ namespace Game.StageScene.Magnet
                 _debugLineRenderer.enabled = false;
         }
 
+        /// <summary>
+        /// マウス位置から弾の発射方向を計算
+        /// </summary>
         private Vector3 GetShootDirection(Vector3 shootPosition)
         {
             if (!useMouseAim || _mainCamera == null)
@@ -225,12 +230,14 @@ namespace Game.StageScene.Magnet
 
             Ray ray = _mainCamera.ScreenPointToRay(Input.mousePosition);
 
+            // レイがヒットした場合はその地点を狙う
             if (Physics.Raycast(ray, out RaycastHit hit, 1000f, aimLayerMask))
             {
                 Vector3 dir = hit.point - shootPosition;
                 return dir.sqrMagnitude < 0.01f ? transform.forward : dir.normalized;
             }
 
+            // 地面平面との交点を利用
             Plane plane = new Plane(Vector3.up, shootPosition);
             if (plane.Raycast(ray, out float enter))
             {
@@ -241,6 +248,9 @@ namespace Game.StageScene.Magnet
             return transform.forward;
         }
 
+        /// <summary>
+        /// チャージ中の処理更新
+        /// </summary>
         private void ChargeUpdate()
         {
             if (_currentPower < 100f)
@@ -248,12 +258,68 @@ namespace Game.StageScene.Magnet
 
             _chargeGage.fillAmount = _currentPower / 100f;
 
+            // チャージ量に応じてエフェクト色変更
+
             var main = _particleSystem.main;
             if (_currentPower < 33f) main.startColor = Color.green;
             else if (_currentPower < 66f) main.startColor = Color.yellow;
             else main.startColor = Color.red;
         }
 
+        /// <summary>
+        /// プレイヤーの向きに合わせてスクリーン上のチャージゲージを回転させる
+        /// </summary>
+        private void UpdateChargeGageRotation()
+        {
+            if (_chargeGageObj == null || _mainCamera == null) return;
+
+            RectTransform rect = _chargeGageObj.GetComponent<RectTransform>();
+
+            // UIの画面座標
+            Vector2 uiScreenPos =
+                RectTransformUtility.WorldToScreenPoint(null, rect.position);
+
+            // プレイヤー位置（画面）
+            Vector2 playerScreenPos =
+                RectTransformUtility.WorldToScreenPoint(
+                    _mainCamera,
+                    transform.position
+                );
+
+            // プレイヤー前方位置（画面）
+            Vector2 playerForwardScreenPos =
+                RectTransformUtility.WorldToScreenPoint(
+                    _mainCamera,
+                    transform.position + transform.forward
+                );
+
+            // 「画面上の前方向ベクトル」
+            Vector2 dir =
+                (playerForwardScreenPos - playerScreenPos).normalized;
+
+            float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
+
+            // -180～180 に正規化
+            angle = Mathf.DeltaAngle(0f, angle);
+
+            // 文字が逆さまになる領域
+            if (angle > 90f)
+            {
+                angle -= 180f;
+            }
+            else if (angle < -90f)
+            {
+                angle += 180f;
+            }
+
+            rect.localEulerAngles = new Vector3(0f, 0f, angle);
+            // ★ Screen Space UIなので world rotation を直接使う
+            rect.rotation = Quaternion.Euler(0f, 0f, angle);
+        }
+
+        /// <summary>
+        /// チャージ状態を強制リセット
+        /// </summary>
         private void ResetCharge()
         {
             _isCharging = false;
@@ -268,6 +334,9 @@ namespace Game.StageScene.Magnet
         }
 
 #if UNITY_EDITOR
+        /// <summary>
+        /// Sceneビュー上に発射方向を可視化
+        /// </summary>
         private void OnDrawGizmos()
         {
             if (!Application.isPlaying || _mainCamera == null) return;
