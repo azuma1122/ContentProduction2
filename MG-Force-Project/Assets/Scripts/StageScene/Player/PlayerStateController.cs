@@ -17,6 +17,7 @@ namespace Game.StageScene.Player
         private InputHandler _inputHandler;        // 入力処理を管理するクラス（キーボード・マウス入力）
         private BulletShootController _bulletShoot; // 射撃関連の制御クラス（チャージ・発射など）
         private Animator _animator;                 // プレイヤーのアニメーション制御用Animator（現在未使用）
+        private MagnetManager _magnet;              // 磁力システム管理クラス
 
         /// <summary>
         /// 初期化処理（プレイヤー生成時に1回だけ呼ばれる）
@@ -32,6 +33,10 @@ namespace Game.StageScene.Player
             // Animatorコンポーネントを取得（将来的に使う可能性があるため保持）
             _animator = playerObject.GetComponent<Animator>();
 
+            // 磁力マネージャーを取得
+            _magnet = GameObject.Find(GameConstants.MAGNET_MANAGER_OBJ)
+                                .GetComponent<MagnetManager>();
+
             // ゲーム開始時の初期状態を設定
             currentState = State.STILLNESS; // 静止状態からスタート
             currentDir = Direction.RIGHT;   // 右向きからスタート
@@ -43,7 +48,19 @@ namespace Game.StageScene.Player
         /// </summary>
         public override void OnUpdate()
         {
-            // ===== 1. 射撃状態のチェック（最優先） =====
+            // ===== 0. Boot中チェック（最優先） =====
+            // Boot中は射撃状態を強制的に解除
+            if (_magnet != null && _magnet.IsMagnetBoot)
+            {
+                RemoveState(State.SHOOT);
+
+                // Boot中でも移動・ジャンプは処理する
+                JumpUpdate();
+                RunUpdate();
+                return;
+            }
+
+            // ===== 1. 射撃状態のチェック（Boot中でない場合のみ） =====
             // 射撃ボタンが押されているか、チャージ中か、発射中かをチェック
             bool isShooting = CheckShootInput();
 

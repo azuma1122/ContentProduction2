@@ -171,7 +171,7 @@ namespace Game.Stage
             }
             else
             {
-                Debug.LogError("★★★ プレイヤーが見つかりません! ★★★");
+                Debug.LogError("プレイヤーが見つかりません!");
             }
 
             // InputHandler確認
@@ -203,7 +203,7 @@ namespace Game.Stage
             var player = GameObject.FindGameObjectWithTag("Player");
             if (player == null)
             {
-                Debug.LogError("★★★ プレイヤーが見つかりません！ ★★★");
+                Debug.LogError("プレイヤーが見つかりません！");
 
                 // Playerタグが付いているオブジェクトを全て検索
                 var allPlayers = GameObject.FindGameObjectsWithTag("Player");
@@ -276,12 +276,12 @@ namespace Game.Stage
                 }
                 else
                 {
-                    Debug.LogError("[Input] ★★★ InputHandlerコンポーネントがありません！");
+                    Debug.LogError("[Input]  InputHandlerコンポーネントがありません！");
                 }
             }
             else
             {
-                Debug.LogError("[Input] ★★★ InputHandlerオブジェクトが見つかりません！");
+                Debug.LogError("[Input]  InputHandlerオブジェクトが見つかりません！");
             }
 
             // GlobalUIManager確認
@@ -289,7 +289,7 @@ namespace Game.Stage
             Debug.Log($"[Manager] GlobalUIManager数: {managers.Length}");
             if (managers.Length > 1)
             {
-                Debug.LogWarning("[Manager] ★★★ GlobalUIManagerが複数存在します！");
+                Debug.LogWarning("[Manager]  GlobalUIManagerが複数存在します！");
                 for (int i = 0; i < managers.Length; i++)
                 {
                     Debug.Log($"[Manager]   [{i}] {managers[i].gameObject.name}, IsPaused: {managers[i].IsPaused}");
@@ -501,7 +501,7 @@ namespace Game.Stage
             {
                 if (player != null && player.name == "spine")
                 {
-                    Debug.LogWarning("[StageConfigMenu] ★ 「spine」に「Player」タグが付いています。これは間違いです。");
+                    Debug.LogWarning("[StageConfigMenu]  「spine」に「Player」タグが付いています。これは間違いです。");
                 }
 
                 // 名前で直接検索(MagForce_Prefabまたはそのクローン)
