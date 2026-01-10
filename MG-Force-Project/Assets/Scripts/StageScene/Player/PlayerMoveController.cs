@@ -3,37 +3,44 @@ using UnityEngine;
 namespace Game.StageScene.Player
 {
     /// <summary>
-    /// プレイヤーの物理的な移動を制御するクラス。
-    /// - Rigidbodyを操作し、横移動、ジャンプ、カスタム重力処理を行います。
-    /// - PlayerStateControllerから受け取った状態（RUN, JUMP, SHOOT）に基づいて動作します。
-    /// - ゴール後は移動処理を完全停止
+    /// プレイヤーの物理的な移動を制御するクラス
+    /// 
+    /// 【役割】
+    /// ・Rigidbody を使って横移動・ジャンプ・重力を制御する
+    /// ・PlayerStateController が管理する状態（RUN / JUMP / SHOOT / GOAL 等）を見て動作を切り替える
+    /// ・アニメーションではなく「物理的な動き」だけを担当する
     /// </summary>
     public class PlayerMoveController : PlayerControllerBase
     {
         #region ===== 定数 =====
         private const float MAX_SPEED = 3.5f;      // 横移動の最大速度
-        private const float MOVE_SPEED = 0.3f;     // 1フレームあたりの移動加速度（加速/減速の速さ）
-        private const float MIN_SPEED = 0.0f;      // 最小速度
-        private const float JUMP_FORCE = 5.0f;     // ジャンプ時に与える上方向の力
-        private const float GRAVITY_SCALE = 1.25f; // 重力の強さ（Unity標準重力の1.25倍）
+        private const float MOVE_SPEED = 0.3f;     // 1フレームあたりの加速・減速量
+        private const float MIN_SPEED = 0.0f;      // 停止時の最小速度
+        private const float JUMP_FORCE = 5.0f;     // ジャンプ時に上方向へ加える力
+        private const float GRAVITY_SCALE = 1.25f; // カスタム重力（Unity標準重力の倍率）
         private const float RAYCAST_LENGTH = 0.2f; // 接地判定用Rayの長さ
         #endregion
 
-        // ===== 内部変数 =====
+        // ===== 入力 =====
+        // 入力システムなどから設定される移動方向
         public Vector2 inputDir { get; set; } = Vector2.zero;
 
-        private Rigidbody _rigidbody;
-        private Vector3 moveDir = Vector3.zero;
-        private bool _hasJumped = false;
-        private CapsuleCollider _capsuleCollider;
+        // ===== 内部状態 =====
+        private Rigidbody _rigidbody;              // プレイヤーのRigidbody
+        private Vector3 moveDir = Vector3.zero;    // 現在の移動ベクトル
+        private bool _hasJumped = false;           // 1回のジャンプで多重ジャンプしないためのフラグ
+        private CapsuleCollider _capsuleCollider; // 接地判定に使うコライダー
 
         /// <summary>
-        /// 初期化処理。RigidbodyとColliderを取得し、重力を無効化します。
+        /// 初期化処理
+        /// ・RigidbodyとColliderを取得
+        /// ・重力を無効化して、カスタム重力を使うようにする
         /// </summary>
         public override void OnStart()
         {
             _rigidbody = playerObject.GetComponent<Rigidbody>();
             _rigidbody.useGravity = false;
+
             _capsuleCollider = playerObject.GetComponent<CapsuleCollider>();
 
             if (playerTransform == null)
@@ -41,69 +48,84 @@ namespace Game.StageScene.Player
         }
 
         /// <summary>
-        /// 毎フレームの更新処理。接地判定、状態チェック、移動処理、カスタム重力処理を行います。
+        /// 毎フレーム実行されるメインの移動処理
+        /// 
+        /// 【流れ】
+        /// 1. ゴールしていたら何もしない
+        /// 2. 接地判定を更新
+        /// 3. 射撃中なら移動を停止
+        /// 4. STILLNESSなら停止
+        /// 5. ジャンプ処理
+        /// 6. 横移動処理
+        /// 7. 重力処理
+        /// 8. Rigidbody に反映
         /// </summary>
         public override void OnUpdate()
         {
-            // ===== ゴール状態の場合は移動処理を完全停止 =====
+            // ゴール中は完全に移動停止
             if (HasState(State.GOAL))
-            {
-                // kinematicエラーを防ぐため、velocity設定を一切行わない
                 return;
-            }
 
-            // 接地判定を更新
+            // 地面にいるかどうかを判定
             CheckGrounded();
 
-            // 着地した瞬間、ジャンプフラグをリセット
+            // 着地したらジャンプ済みフラグをリセット
             if (isGrounded && _hasJumped)
-            {
                 _hasJumped = false;
-            }
 
-            // ===== 1. 射撃状態の処理 =====
+            // ===== 射撃中 =====
+            // 射撃中は横移動を完全に止める
             if (HasState(State.SHOOT))
             {
                 moveDir.x = 0f;
                 moveDir.z = 0f;
-                moveDir.y = _rigidbody.velocity.y;
+                moveDir.y = _rigidbody.velocity.y; // 落下中ならそのまま落ち続ける
 
-                if (!isGrounded) GravityUpdate();
+                if (!isGrounded)
+                    GravityUpdate();
+
                 _rigidbody.velocity = moveDir;
                 return;
             }
 
-            // ===== 2. 静止状態の処理 =====
+            // ===== 静止状態 =====
             if (HasState(State.STILLNESS) && !HasState(State.JUMP))
                 StopMoving();
 
-            // ===== 3. ジャンプ入力の処理 =====
+            // ===== ジャンプ処理 =====
             if (HasState(State.JUMP) && !_hasJumped)
                 JumpUpdate();
 
-            // ===== 4. 横移動の処理 =====
+            // ===== 横移動処理 =====
             MoveInputUpdate();
 
-            // ===== 5. 重力処理 =====
+            // ===== 重力処理 =====
             if (!isGrounded)
                 GravityUpdate();
             else if (moveDir.y < 0f)
                 moveDir.y = MIN_SPEED;
 
-            // 最終的な移動ベクトルをRigidbodyに適用
+            // 計算した移動量をRigidbodyに反映
             _rigidbody.velocity = moveDir;
         }
 
+        /// <summary>
+        /// 横移動を完全に止める
+        /// </summary>
         private void StopMoving()
         {
             moveDir.x = 0f;
             moveDir.z = 0f;
         }
 
+        /// <summary>
+        /// 入力と状態に応じて左右移動を加速・減速させる
+        /// </summary>
         private void MoveInputUpdate()
         {
             if (HasState(State.RUN) || HasState(State.JUMP))
             {
+                // 走り・ジャンプ中は加速
                 if (currentDir == Direction.RIGHT)
                     moveDir.x = Mathf.Min(moveDir.x + MOVE_SPEED, MAX_SPEED);
                 else if (currentDir == Direction.LEFT)
@@ -111,11 +133,16 @@ namespace Game.StageScene.Player
             }
             else
             {
+                // 入力がないときは自然に減速
                 if (moveDir.x > 0f) moveDir.x = Mathf.Max(moveDir.x - MOVE_SPEED, 0f);
                 else if (moveDir.x < 0f) moveDir.x = Mathf.Min(moveDir.x + MOVE_SPEED, 0f);
             }
         }
 
+        /// <summary>
+        /// ジャンプ処理
+        /// 地面にいる時だけ上方向に力を加える
+        /// </summary>
         private void JumpUpdate()
         {
             if (isGrounded)
@@ -127,39 +154,56 @@ namespace Game.StageScene.Player
             }
         }
 
+        /// <summary>
+        /// 接地判定
+        /// カプセルコライダーの底の「中央・右・左」からRayを飛ばし、
+        /// どれかが地面に当たっていれば接地とみなす
+        /// </summary>
         private void CheckGrounded()
         {
             if (_capsuleCollider == null)
                 _capsuleCollider = playerObject.GetComponent<CapsuleCollider>();
 
-            Vector3 rayStart = new Vector3(
+            Vector3 center = new Vector3(
                 _capsuleCollider.bounds.center.x,
                 _capsuleCollider.bounds.min.y + 0.01f,
                 _capsuleCollider.bounds.center.z
             );
 
-            isGrounded = Physics.Raycast(
-                rayStart,
-                Vector3.down,
-                RAYCAST_LENGTH,
-                ~0,
-                QueryTriggerInteraction.Ignore
-            );
+            float radius = _capsuleCollider.radius * 0.7f;
 
-#if UNITY_EDITOR
-            Debug.DrawRay(rayStart, Vector3.down * RAYCAST_LENGTH,
-                isGrounded ? Color.green : Color.red);
-#endif
+            Vector3 centerPoint = center;
+            Vector3 frontPoint = center + Vector3.right * radius;
+            Vector3 backPoint = center + Vector3.left * radius;
+
+            bool centerHit = Physics.Raycast(centerPoint, Vector3.down, RAYCAST_LENGTH, ~0, QueryTriggerInteraction.Ignore);
+            bool frontHit = Physics.Raycast(frontPoint, Vector3.down, RAYCAST_LENGTH, ~0, QueryTriggerInteraction.Ignore);
+            bool backHit = Physics.Raycast(backPoint, Vector3.down, RAYCAST_LENGTH, ~0, QueryTriggerInteraction.Ignore);
+
+            isGrounded = centerHit || frontHit || backHit;
         }
 
+        /// <summary>
+        /// 移動処理を有効化
+        /// </summary>
         public void EnableMovement() => this.enabled = true;
+
+        /// <summary>
+        /// 移動処理を無効化
+        /// </summary>
         public void DisableMovement() => this.enabled = false;
 
+        /// <summary>
+        /// カスタム重力を加算する
+        /// </summary>
         private void GravityUpdate()
         {
             moveDir.y += Physics.gravity.y * GRAVITY_SCALE * Time.deltaTime;
         }
 
+        /// <summary>
+        /// プレイヤーの初期スポーン処理
+        /// </summary>
         public void InitPlayer(Vector3 spawnPos, Quaternion spawnRot)
         {
             playerTransform.position = spawnPos;

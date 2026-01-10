@@ -4,10 +4,10 @@ using UnityEngine;
 namespace Game.StageScene.Player
 {
     /// <summary>
-    /// プレイヤー全体を統括管理するクラス。
-    /// - 各種 PlayerController（状態・移動・アニメーションなど）を一括管理します。
-    /// - Start() で必要なコントローラーを自動追加・初期化します。
-    /// - Update() で毎フレーム各コントローラーの処理を実行します。
+    /// プレイヤー全体を統括管理するクラス
+    /// - 各種 PlayerController（状態・移動・アニメーションなど）を一括管理している
+    /// - Start() で必要なコントローラーを自動追加・初期化
+    /// - Update() で毎フレーム各コントローラーの処理を実行
     /// </summary>
     public class PlayerManager : MonoBehaviour
     {
@@ -39,6 +39,9 @@ namespace Game.StageScene.Player
             Debug.Log($"[PlayerManager] Start開始 - GameObject={gameObject.name}");
 
             // プレイヤー制御用コンポーネントを自動的に追加
+            // PlayerFallDetector:
+            playerControllers.Add(gameObject.AddComponent<PlayerFallDetector>());
+            
             // PlayerStateController: 入力と状態の管理
             Debug.Log("[PlayerManager] PlayerStateControllerを追加");
             playerControllers.Add(gameObject.AddComponent<PlayerStateController>());
