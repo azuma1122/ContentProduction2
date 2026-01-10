@@ -2524,7 +2524,11 @@ PrefabInstance:
         type: 3}
       insertIndex: 0
       addedObject: {fileID: 514462032}
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1878440742751325773, guid: 98b11e885af74e44481581efe31dffcc,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 544830934}
   m_SourcePrefab: {fileID: 100100000, guid: 98b11e885af74e44481581efe31dffcc, type: 3}
 --- !u!224 &544830929 stripped
 RectTransform:
@@ -2538,6 +2542,35 @@ GameObject:
     type: 3}
   m_PrefabInstance: {fileID: 544830928}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &544830934
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 544830930}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0b148fe25e99eb48b9724523833bab1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Delegates:
+  - eventID: 0
+    callback:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 2042523701}
+          m_TargetAssemblyTypeName: Game.Title.TitleSceneController, Assembly-CSharp
+          m_MethodName: OnPointerEnterButton
+          m_Mode: 3
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 2
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
 --- !u!1 &565862020
 GameObject:
   m_ObjectHideFlags: 0
@@ -2914,7 +2947,11 @@ PrefabInstance:
         type: 3}
       insertIndex: 0
       addedObject: {fileID: 565862021}
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1878440742751325773, guid: 98b11e885af74e44481581efe31dffcc,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 568729031}
   m_SourcePrefab: {fileID: 100100000, guid: 98b11e885af74e44481581efe31dffcc, type: 3}
 --- !u!224 &568729026 stripped
 RectTransform:
@@ -2928,6 +2965,35 @@ GameObject:
     type: 3}
   m_PrefabInstance: {fileID: 568729025}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &568729031
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 568729027}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0b148fe25e99eb48b9724523833bab1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Delegates:
+  - eventID: 0
+    callback:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 2042523701}
+          m_TargetAssemblyTypeName: Game.Title.TitleSceneController, Assembly-CSharp
+          m_MethodName: OnPointerEnterButton
+          m_Mode: 3
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
 --- !u!1001 &588926757
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -8836,7 +8902,11 @@ PrefabInstance:
         type: 3}
       insertIndex: 0
       addedObject: {fileID: 1584917366}
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1878440742751325773, guid: 98b11e885af74e44481581efe31dffcc,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1848676039}
   m_SourcePrefab: {fileID: 100100000, guid: 98b11e885af74e44481581efe31dffcc, type: 3}
 --- !u!224 &1848676034 stripped
 RectTransform:
@@ -8850,6 +8920,35 @@ GameObject:
     type: 3}
   m_PrefabInstance: {fileID: 1848676033}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1848676039
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1848676035}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0b148fe25e99eb48b9724523833bab1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Delegates:
+  - eventID: 0
+    callback:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 2042523701}
+          m_TargetAssemblyTypeName: Game.Title.TitleSceneController, Assembly-CSharp
+          m_MethodName: OnPointerEnterButton
+          m_Mode: 3
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 1
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
 --- !u!4 &1857897375 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 210167660177499914, guid: 723ced0df99c0b4409ce25425a5e8eea,
