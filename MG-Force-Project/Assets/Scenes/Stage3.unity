@@ -3184,11 +3184,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
-      objectReference: {fileID: 819896255}
+      objectReference: {fileID: 1736974516}
     - target: {fileID: 7829876725217785164, guid: a410fccdeb5879b4db716250801b7abe,
         type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
-      value: ShowTitleConfirm
+      value: ToggleConfigMenu
       objectReference: {fileID: 0}
     - target: {fileID: 8570890154968244150, guid: a410fccdeb5879b4db716250801b7abe,
         type: 3}

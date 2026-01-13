@@ -861,21 +861,11 @@ PrefabInstance:
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
       objectReference: {fileID: 1895694957}
-    - target: {fileID: 301721224067868942, guid: a410fccdeb5879b4db716250801b7abe,
-        type: 3}
-      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
-      value: ShowResetConfirm
-      objectReference: {fileID: 0}
     - target: {fileID: 1534520923941712875, guid: a410fccdeb5879b4db716250801b7abe,
         type: 3}
       propertyPath: m_Name
       value: Menu (1)
       objectReference: {fileID: 0}
-    - target: {fileID: 1534520923941712875, guid: a410fccdeb5879b4db716250801b7abe,
-        type: 3}
-      propertyPath: m_IsActive
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 2176443427138673732, guid: a410fccdeb5879b4db716250801b7abe,
         type: 3}
       propertyPath: m_AnchorMax.x
@@ -931,30 +921,20 @@ PrefabInstance:
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
       objectReference: {fileID: 1895694957}
-    - target: {fileID: 6792278183073267896, guid: a410fccdeb5879b4db716250801b7abe,
-        type: 3}
-      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
-      value: ShowHelp
-      objectReference: {fileID: 0}
     - target: {fileID: 7741095665846021760, guid: a410fccdeb5879b4db716250801b7abe,
-        type: 3}
-      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
-      value: 
-      objectReference: {fileID: 1895694957}
-    - target: {fileID: 7741095665846021760, guid: a410fccdeb5879b4db716250801b7abe,
-        type: 3}
-      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
-      value: ShowTitleConfirm
-      objectReference: {fileID: 0}
-    - target: {fileID: 7829876725217785164, guid: a410fccdeb5879b4db716250801b7abe,
         type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
       objectReference: {fileID: 1895694957}
     - target: {fileID: 7829876725217785164, guid: a410fccdeb5879b4db716250801b7abe,
         type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 1415031551}
+    - target: {fileID: 7829876725217785164, guid: a410fccdeb5879b4db716250801b7abe,
+        type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
-      value: ShowTitleConfirm
+      value: ToggleConfigMenu
       objectReference: {fileID: 0}
     - target: {fileID: 8570890154968244150, guid: a410fccdeb5879b4db716250801b7abe,
         type: 3}
