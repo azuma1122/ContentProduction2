@@ -83,7 +83,7 @@ namespace Game.StageScene.Player
         {
             if (_animator == null) return;
 
-            // ===== ゴール状態の場合は特殊処理 =====
+            // ===== ゴール状態の場合は特殊処理（他のモーションを完全に無効化） =====
             if (HasState(State.GOAL))
             {
                 // ゴール状態が始まった瞬間の処理
@@ -115,7 +115,7 @@ namespace Game.StageScene.Player
                     Debug.Log("[Animation] ゴールアニメーション開始準備完了");
                 }
 
-                // Animator反映を実行（ゴール状態でも必ず実行）
+                // ゴール状態では強制的にGOAL状態のみを設定
                 UpdateAnimatorParameters();
 
                 // デバッグ: 現在のアニメーション状態を確認
@@ -129,6 +129,7 @@ namespace Game.StageScene.Player
                               $"CurrentState param: {_animator.GetInteger(CURRENT_STATE)}");
                 }
 
+                // ゴール状態では以降の処理をスキップ（他のモーションを無効化）
                 return;
             }
 
@@ -157,7 +158,7 @@ namespace Game.StageScene.Player
         /// </summary>
         private void StateUpdate()
         {
-            // ===== 最優先:ゴール演出 =====
+            // ===== 最優先:ゴール演出（念のため再チェック） =====
             if (HasState(State.GOAL))
             {
                 if (_currentAnimationState != AnimationState.GOAL)

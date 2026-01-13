@@ -7,9 +7,10 @@ namespace Game.StageScene.Player
     /// <summary>
     /// プレイヤーの状態管理クラス（修正版）
     /// - 入力に応じて State（静止・走行・ジャンプ・射撃など）を更新
+    /// - ゴール中は全ての入力を無効化
     /// - 射撃中は移動・ジャンプ操作を完全に無効化
     /// - ジャンプ状態は空中にいる間維持
-    /// - アニメーション優先順位: JUMP > SHOOT > RUN > IDLE
+    /// - アニメーション優先順位: GOAL > JUMP > SHOOT > RUN > IDLE
     /// </summary>
     public class PlayerStateController : PlayerControllerBase
     {
@@ -48,6 +49,23 @@ namespace Game.StageScene.Player
         /// </summary>
         public override void OnUpdate()
         {
+            // ===== 最優先: ゴール状態チェック =====
+            // ゴール中は全ての入力を無効化し、他のモーションを起こさせない
+            if (HasState(State.GOAL))
+            {
+                // ゴール状態以外の全ての状態フラグをクリア
+                currentState = State.GOAL;
+
+                // 射撃処理も完全停止
+                if (_bulletShoot != null)
+                {
+                    _bulletShoot.enabled = false;
+                }
+
+                Debug.Log("[StateController] ゴール状態：全ての入力を無効化");
+                return; // 以降の全ての処理をスキップ
+            }
+
             // ===== 0. Boot中チェック（最優先） =====
             // Boot中は射撃状態を強制的に解除
             if (_magnet != null && _magnet.IsMagnetBoot)
@@ -225,7 +243,7 @@ namespace Game.StageScene.Player
             if (isGrounded && _inputHandler.IsActionPressed(InputConstants.Action.JUMP))
             {
                 RemoveState(State.STILLNESS); // 静止状態を解除
-                AddState(State.JUMP);         // ジャンプ状態を追加（PlayerMoveControllerでジャンプ力が与えられる）
+                AddState(State.JUMP);         // ジャンプ状態を追加
                 Debug.Log("[StateController] ジャンプ状態追加");
             }
             // ===== 地面についたらジャンプ状態を解除 =====

@@ -62,9 +62,20 @@ namespace Game.StageScene.Player
         /// </summary>
         public override void OnUpdate()
         {
-            // ゴール中は完全に移動停止
+            // ===== ゴール中は完全に移動停止（他のモーションを無効化） =====
             if (HasState(State.GOAL))
+            {
+                // ゴール状態では物理演算も含めて全ての移動を停止
+                moveDir = Vector3.zero;
+
+                if (_rigidbody != null && !_rigidbody.isKinematic)
+                {
+                    _rigidbody.velocity = Vector3.zero;
+                    _rigidbody.angularVelocity = Vector3.zero;
+                }
+
                 return;
+            }
 
             // 地面にいるかどうかを判定
             CheckGrounded();
