@@ -144,19 +144,20 @@ namespace Game
             return _audioSource.volume;
         }
 
+        public void ApplyVolume(float volume)
+        {
+            _audioSource.volume = Mathf.Clamp01(volume);
+        }
+
         public void LoadVolumeSettings()
         {
             if (PlayerPrefs.HasKey(BGM_PREF_KEY))
             {
                 float bgmVolume = PlayerPrefs.GetFloat(BGM_PREF_KEY);
-                VolumeChange(bgmVolume);
+                ApplyVolume(bgmVolume);
             }
 
-            if (PlayerPrefs.HasKey(SE_PREF_KEY))
-            {
-                float seVolume = PlayerPrefs.GetFloat(SE_PREF_KEY);
-                VolumeChange(seVolume);
-            }
+           
         }
     }
 }
