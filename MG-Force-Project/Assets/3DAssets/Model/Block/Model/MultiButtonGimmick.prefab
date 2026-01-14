@@ -116,7 +116,7 @@ GameObject:
   - component: {fileID: 3229439888031551669}
   - component: {fileID: 393722931240449136}
   m_Layer: 0
-  m_Name: 'MultiButtonGimmick '
+  m_Name: MultiButtonGimmick
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -150,4 +150,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2ae9389be0eb7fe4585389e499598f7a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _gimmickId: wall_1
+  _buttons: []
+  _targetBlock: {fileID: 6580743679245374505}
+  _requiredButtonCount: 2
   _showDebugLogs: 0

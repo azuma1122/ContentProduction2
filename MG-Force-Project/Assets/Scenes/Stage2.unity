@@ -658,6 +658,12 @@ MonoBehaviour:
   _buttonYOffset: 0.5
   _crystalOffset: {x: 0, y: 0.5, z: 0}
   _stageOffset: {x: -1, y: -0.5, z: 0}
+  _gimmickPrefab: {fileID: 6479411921831518640, guid: f87800742c00aa1489e06df147233f2a,
+    type: 3}
+  _multiButtonGimmickPrefab: {fileID: 6580743679245374505, guid: e70fc87a4dcdd3b4eb3ee5330b9a62bb,
+    type: 3}
+  _reverseGimmickPrefab: {fileID: 8123646607084573144, guid: fc1a7ba2b8d4d0149b76fe80a73a47bb,
+    type: 3}
 --- !u!1 &734676815
 GameObject:
   m_ObjectHideFlags: 0

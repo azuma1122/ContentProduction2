@@ -50,7 +50,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _buttonUp: {fileID: 4794362781875641877}
   _buttonDown: {fileID: 3059830971080096181}
-  _initialYOffset: -0.6
+  gimmickId: wall_1
+  _initialYOffset: -1
   _adjustPositionOnStart: 1
 --- !u!65 &-2741597973292720637
 BoxCollider:
@@ -71,8 +72,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.1, y: 0.065016426, z: 0.1}
-  m_Center: {x: 0, y: -0.007508208, z: 0}
+  m_Size: {x: 0.1, y: 0.058062647, z: 0.1}
+  m_Center: {x: 0, y: -0.004031321, z: 0}
 --- !u!212 &1075475803354329358
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -246,11 +247,16 @@ PrefabInstance:
     - target: {fileID: 8120147713545339891, guid: 99539b5bcf8972a4d9b7045f3199f789,
         type: 3}
       propertyPath: m_UseGravity
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8120147713545339891, guid: 99539b5bcf8972a4d9b7045f3199f789,
         type: 3}
       propertyPath: m_IsKinematic
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8120147713545339891, guid: 99539b5bcf8972a4d9b7045f3199f789,
+        type: 3}
+      propertyPath: m_ImplicitTensor
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8352814743044815226, guid: 99539b5bcf8972a4d9b7045f3199f789,

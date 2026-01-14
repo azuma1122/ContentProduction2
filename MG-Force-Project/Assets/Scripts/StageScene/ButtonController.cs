@@ -18,6 +18,9 @@ namespace Game.StageScene
         [SerializeField] private GameObject _buttonUp;   // ボタンが上がっている状態のモデル
         [SerializeField] private GameObject _buttonDown; // ボタンが下がっている状態のモデル
 
+        [Header("ギミック設定")]
+        public string gimmickId;
+
         [Header("位置調整")]
         [Tooltip("生成時にY座標を調整する量（負の値で下がる）")]
         [SerializeField] private float _initialYOffset = -0.5f;

@@ -5317,7 +5317,7 @@
       "value": {
         "color": -4,
         "power": 0,
-        "point": ""
+        "point": 0
       }
     },
     {
@@ -5621,7 +5621,7 @@
       "value": {
         "color": -4,
         "power": 0,
-        "point": ""
+        "point": 0
       }
     },
     {
@@ -5925,7 +5925,7 @@
       "value": {
         "color": -4,
         "power": 0,
-        "point": ""
+        "point": 0
       }
     },
     {
@@ -6189,7 +6189,7 @@
       "value": {
         "color": -3,
         "power": 0,
-        "point": "１"
+        "point": 1
       }
     },
     {
@@ -6229,7 +6229,7 @@
       "value": {
         "color": -4,
         "power": 0,
-        "point": ""
+        "point": 0
       }
     },
     {
@@ -6533,7 +6533,7 @@
       "value": {
         "color": -4,
         "power": 0,
-        "point": "１押すと消える"
+        "point": 1
       }
     },
     {
@@ -6837,7 +6837,7 @@
       "value": {
         "color": -4,
         "power": 0,
-        "point": ""
+        "point": 0
       }
     },
     {
@@ -7141,7 +7141,7 @@
       "value": {
         "color": -4,
         "power": 0,
-        "point": ""
+        "point": 0
       }
     },
     {
