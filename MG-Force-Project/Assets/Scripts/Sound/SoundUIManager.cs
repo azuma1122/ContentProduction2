@@ -1,183 +1,103 @@
 using UnityEngine;
-using UnityEngine.Audio;
 using UnityEngine.UI;
 
 namespace Game
 {
     public class SoundUIManager : MonoBehaviour
     {
-        // 整数倍
-        private const float INTEGER_TIMES = 4;
-
-        // ボリューム定数
-        private enum Volume
-        {
-            MIN = 0,
-            HAFE = 2,
-            MAX = 4,
-        }
-
-        // ボリュームUI管理用
         private enum VolumeUI
         {
-            MIN,
-            SOFT,
-            LOUD,
-            MAX,
-
+            MIN,  // 0: 消音
+            SOFT, // 1: 小音
+            LOUD, // 2: 中音
+            MAX,  // 3: 最大
             MAX_SIZE,
         }
 
-        // BGMのUI
+        [Header("UI References")]
         [SerializeField] private Image _bgmVolume;
-        // SEのUI
         [SerializeField] private Image _seVoluem;
-        // BGMのAudioSorce
-        [SerializeField] private AudioSource _bgmAudioSource;
-        // SEのAudioSource
-        [SerializeField] private AudioSource _seAudioSource;
-        // UIスプライト
         [SerializeField] private Sprite[] _volumeUI = new Sprite[(int)VolumeUI.MAX_SIZE];
-
         [SerializeField] private Slider BGMSlider;
         [SerializeField] private Slider SESlider;
 
+        [Header("Audio Sources")]
+        [SerializeField] private AudioSource _bgmAudioSource;
+        [SerializeField] private AudioSource _seAudioSource;
 
-        private void Awake()
-        {
+        [Header("Threshold Settings")]
+        [SerializeField, Range(0f, 1f)] private float _minThreshold = 0.05f; // これ以下なら消音画像
+        [SerializeField, Range(0f, 1f)] private float _midThreshold = 0.5f;  // これ以下ならSOFT画像
+        [SerializeField, Range(0f, 1f)] private float _highThreshold = 0.9f; // これ以上ならMAX画像
 
-            if (!BGMManager.instance)
-            {
-                Debug.LogWarning("BGMManagerのシングルトンなし");
-                return;
-            }
-          
-        }
         private void Start()
         {
-            if (_bgmAudioSource == null)
+            // --- BGM設定 ---
+            if (BGMManager.instance != null)
             {
-
-                _bgmAudioSource = BGMManager.instance.GetAudioSource();
-                Debug.Log(_bgmAudioSource.name);
-
+                if (_bgmAudioSource == null) _bgmAudioSource = BGMManager.instance.GetAudioSource();
                 BGMManager.instance.LoadVolumeSettings();
 
+                if (BGMSlider != null)
+                {
+                    BGMSlider.value = _bgmAudioSource.volume;
+                    BGMSlider.onValueChanged.AddListener(OnBGMVolumeChanged);
+                    // 初期表示の更新
+                    UpdateBGMVisual(BGMSlider.value);
+                }
             }
 
+            // --- SE設定 ---
             if (_seAudioSource == null)
             {
-                _seAudioSource = GameObject.Find(GameConstants.Object.SE_MANAGER).GetComponent<AudioSource>();
+                var seObj = GameObject.Find(GameConstants.Object.SE_MANAGER);
+                if (seObj != null) _seAudioSource = seObj.GetComponent<AudioSource>();
             }
-            if (BGMSlider == null) return;
 
-            // BGMManagerから現在の音量を取得してスライダーに反映
-            BGMSlider.value = BGMManager.instance.VolumeChange(_bgmAudioSource.volume);
-
-            // スライダーの値が変わったらBGMManagerに反映
-            BGMSlider.onValueChanged.AddListener((value) =>
+            if (SESlider != null && _seAudioSource != null)
             {
-                if (BGMManager.instance != null)
-                {
-                    BGMManager.instance.VolumeChange(value);
-                }
-            });
+                SESlider.value = _seAudioSource.volume;
+                SESlider.onValueChanged.AddListener(OnSEVolumeChanged);
+                // 初期表示の更新
+                UpdateSEVisual(SESlider.value);
+            }
         }
-        /// <summary>
-        /// 更新処理
-        /// </summary>
-        private void Update()
+
+        private void OnBGMVolumeChanged(float value)
         {
-
-
-            BGMUIUpdate();
-            SEUIUpdate();
+            if (BGMManager.instance != null) BGMManager.instance.VolumeChange(value);
+            UpdateBGMVisual(value);
         }
 
-        /// <summary>
-        /// BGMUI更新
-        /// </summary>
-        private void BGMUIUpdate()
+        private void OnSEVolumeChanged(float value)
         {
-            if (!_bgmAudioSource) return;
-            if (_bgmAudioSource.mute)
-            {
-                _bgmVolume.sprite = _volumeUI[(int)VolumeUI.MIN];
-                return;
-            }
-            switch (CheckCurrentVolume(_bgmAudioSource.volume))
-            {
-                case VolumeUI.MIN:
-
-                    _bgmVolume.sprite = _volumeUI[(int)VolumeUI.MIN];
-                    break;
-
-                case VolumeUI.SOFT:
-                    _bgmVolume.sprite = _volumeUI[(int)VolumeUI.SOFT];
-                    break;
-
-                case VolumeUI.LOUD:
-                    _bgmVolume.sprite = _volumeUI[(int)VolumeUI.LOUD];
-                    break;
-
-                case VolumeUI.MAX:
-                    _bgmVolume.sprite = _volumeUI[(int)VolumeUI.MAX];
-                    break;
-            }
+            if (SEManager.instance != null) SEManager.instance.VolumeChange(value);
+            UpdateSEVisual(value);
         }
 
-        /// <summary>
-        /// SEUI更新
-        /// </summary>
-        private void SEUIUpdate()
+        private void UpdateBGMVisual(float volume)
         {
-            if (!_seAudioSource) return;
-            if (_seAudioSource.mute)
-            {
-                _seVoluem.sprite = _volumeUI[(int)VolumeUI.MIN];
-                return;
-            }
-
-            switch (CheckCurrentVolume(_seAudioSource.volume))
-            {
-                case VolumeUI.MIN:
-                    _seVoluem.sprite = _volumeUI[(int)VolumeUI.MIN];
-                    break;
-
-                case VolumeUI.SOFT:
-                    _seVoluem.sprite = _volumeUI[(int)VolumeUI.SOFT];
-                    break;
-
-                case VolumeUI.LOUD:
-                    _seVoluem.sprite = _volumeUI[(int)VolumeUI.LOUD];
-                    break;
-
-                case VolumeUI.MAX:
-                    _seVoluem.sprite = _volumeUI[(int)VolumeUI.MAX];
-                    break;
-            }
+            if (_bgmVolume != null) _bgmVolume.sprite = _volumeUI[(int)CheckCurrentVolume(volume)];
         }
 
-        /// <summary>
-        /// 音量チェック
-        /// </summary>
-        /// <param name="volume"></param>
-        /// <returns></returns>
+        private void UpdateSEVisual(float volume)
+        {
+            if (_seVoluem != null) _seVoluem.sprite = _volumeUI[(int)CheckCurrentVolume(volume)];
+        }
+
         private VolumeUI CheckCurrentVolume(float volume)
         {
-            volume *= INTEGER_TIMES;
+            // 1. まず「ほぼ0」かどうか
+            if (volume <= _minThreshold) return VolumeUI.MIN;
 
-            if (volume == (int)Volume.MIN) return VolumeUI.MIN;
+            // 2. 次に「最大に近い」かどうか
+            if (volume >= _highThreshold) return VolumeUI.MAX;
 
-            else if (volume == (int)Volume.MAX) return VolumeUI.MAX;
+            // 3. 中間判定
+            if (volume <= _midThreshold) return VolumeUI.SOFT;
 
-            else if (volume <= (int)Volume.HAFE) return VolumeUI.SOFT;
-
-            else return VolumeUI.LOUD;
+            // 4. 消去法で LOUD
+            return VolumeUI.LOUD;
         }
-
-
     }
-
-
 }
