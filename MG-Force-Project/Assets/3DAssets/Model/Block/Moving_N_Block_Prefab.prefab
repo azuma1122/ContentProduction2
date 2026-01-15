@@ -137,7 +137,7 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
-      objectReference: {fileID: 2100000, guid: 42dcbaa33ef5b0349a0a7811f5ce4ef6, type: 2}
+      objectReference: {fileID: 2100000, guid: 2645506a7fa676a4f8cae50be0eb5a15, type: 2}
     - target: {fileID: 919132149155446097, guid: 9b2d4ba5acce7b94796dce2aed642329,
         type: 3}
       propertyPath: m_Name
@@ -270,6 +270,8 @@ MonoBehaviour:
   magnetFixedPower: 0
   isFixedMagnet: 1
   fixedPower: 1
+  restrictToFourDirections: 1
+  directionThreshold: 0.3
 --- !u!114 &3842585988178089103
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -286,6 +288,7 @@ MonoBehaviour:
   magneticForce: 10
   magneticRange: 3
   magneticForceImage: {fileID: 0}
+  enableDebugLog: 0
 --- !u!4 &4378472634004576672 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 9b2d4ba5acce7b94796dce2aed642329,

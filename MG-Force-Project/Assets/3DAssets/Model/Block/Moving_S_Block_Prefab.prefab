@@ -142,7 +142,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: -915216440286173917, guid: 9b2d4ba5acce7b94796dce2aed642329, type: 3}
+  - {fileID: 2100000, guid: 951930664607000459181a1ff41e2e72, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -246,6 +246,8 @@ MonoBehaviour:
   magnetFixedPower: 0
   isFixedMagnet: 1
   fixedPower: 1
+  restrictToFourDirections: 1
+  directionThreshold: 0.3
 --- !u!114 &-1739338373940153388
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -262,3 +264,4 @@ MonoBehaviour:
   magneticForce: 10
   magneticRange: 3
   magneticForceImage: {fileID: 0}
+  enableDebugLog: 0

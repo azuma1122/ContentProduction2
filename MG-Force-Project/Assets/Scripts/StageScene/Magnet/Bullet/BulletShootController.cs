@@ -198,16 +198,17 @@ namespace Game.StageScene.Magnet
                 return;
             }
 
-            // ===== ボタン押下中：チャージ処理 =====
+            // ===== ボタン押下中：チャージ処理 ===== 
+
             if (_inputHandler.IsActionPressing(InputConstants.Action.SHOOT))
             {
                 // エネルギーが残っている場合のみチャージ開始
                 if (!_isCharging && _bulletGage.fillAmount > 0f)
                 {
                     _isCharging = true;
-                    _currentPower = 0f;
-                    _chargeGageObj.SetActive(true);
-                    _powerEffectObj.SetActive(true);
+                    //_currentPower = 0f;
+                    //_chargeGageObj.SetActive(true);
+                    //_powerEffectObj.SetActive(true);
                     _playerState.AddState(State.SHOOT);
                 }
 
@@ -219,7 +220,7 @@ namespace Game.StageScene.Magnet
                     return;
                 }
 
-                ChargeUpdate();
+                //ChargeUpdate();
                 UpdateDebugLine();
             }
 
