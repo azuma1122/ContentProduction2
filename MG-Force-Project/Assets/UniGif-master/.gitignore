@@ -1,0 +1,42 @@
+# ---------------[ Unity generated ]------------------ #
+[Aa]pps/
+[Ll]ibrary/
+[Ll]ogs/
+[Tt]emp/
+[Oo]bj/
+[Ss]treamingAssets/
+[Ss]treamingAssets.meta
+[Uu]ser[Ss]ettings/
+UnityGenerated/
+
+# Visual Studio cache directory
+.vs/
+.vscode/
+
+# Gradle cache directory
+.gradle/
+  
+# ----[ Visual Studio / MonoDevelop generated ]------- #
+  
+ExportedObj/
+*.svd
+*.userprefs
+*.csproj
+*.pidb
+*.suo
+*.sln
+*.user
+*.unityproj
+*.booproj
+[Uu]nityVS/
+[Uu]nityVS.meta
+  
+# -------------[ OS generated ]------------------------ #
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Icon?
+ehthumbs.db
+Thumbs.db
