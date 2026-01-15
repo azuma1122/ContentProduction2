@@ -133,6 +133,11 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -7511558181221131132, guid: cfab78a671f1b42489f53c9c9afafc66,
+        type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 08cc5a88ee5a0b34d9aa7f50d934d12d, type: 2}
     - target: {fileID: 919132149155446097, guid: cfab78a671f1b42489f53c9c9afafc66,
         type: 3}
       propertyPath: m_Name
@@ -230,6 +235,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e4bdc76d19299604c9090f15d8d20636, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  magnetManager: {fileID: 0}
   _magnetCollider: {fileID: 5805160416594109582}
   magnetFixed: 0
   magnetFixedPower: 0
