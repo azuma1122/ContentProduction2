@@ -192,6 +192,8 @@ namespace Game.Title
 
         private void GameMenuUpdate()
         {
+            // 追加：遷移中なら入力を一切受け付けない
+            if (_isStepChanging) return;
             if (_input.IsActionPressed(InputConstants.Action.MENU_DECISION))
             {
                 SEManager.instance.PlaySE(SEManager.Menu.DECISION);
@@ -236,8 +238,17 @@ namespace Game.Title
         public void GameMenuDecision(int button_index)
         {
             if (_isStepChanging) return;
-            StartCoroutine(ResetInputLock());
 
+
+            // 決定した瞬間にロックをかける
+            _isStepChanging = true;
+
+            // シーン遷移以外のステップ（設定画面へ行く等）の場合は、
+            // 一定時間後にロックを解除するコルーチンを回す
+            if (button_index != (int)GameMenu.START && button_index != (int)GameMenu.GAME_FINISH)
+            {
+                StartCoroutine(ResetInputLock());
+            }
             if (button_index != INIT_BUTTON)
             {
                 _currentButton = button_index;
