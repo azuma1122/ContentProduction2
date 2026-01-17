@@ -48,6 +48,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d4cf69e7e09122f4f9441e2aaa4cfb74, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  gimmickId: will_1
   _buttonUp: {fileID: 4794362781875641877}
   _buttonDown: {fileID: 3059830971080096181}
   _initialYOffset: -0.6

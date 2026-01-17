@@ -15,6 +15,10 @@ namespace Game.StageScene
     /// </summary>
     public class ButtonController : MonoBehaviour
     {
+        // ★追加：このボタンが属するギミックID（StageCreaterから設定）
+        [Header("ギミック設定")]
+        public string gimmickId;
+
         [SerializeField] private GameObject _buttonUp;   // ボタンが上がっている状態のモデル
         [SerializeField] private GameObject _buttonDown; // ボタンが下がっている状態のモデル
 
@@ -74,43 +78,33 @@ namespace Game.StageScene
             // UNTAGGED は無視
             if (collider.CompareTag(GameConstants.Tag.UNTAGGED)) return;
 
-            // デバッグで何が乗っているか確認
-            // Debug.LogWarning(collider.gameObject.tag);
-
             // プレイヤー と Moving ブロックのときボタンを押す
             if (collider.gameObject.CompareTag(GameConstants.Tag.MOVING))
             {
-
-                //ボタンが押し上がっているので
+                // ボタンが上がっている場合のみ反応
                 if (isUpButton)
                 {
-                    //SE障害物のボタンを押した時はこの一行（必要時にコメントアウト
-
+                    // SE 再生
                     SEManager.instance.PlaySE(SEManager.Obstacle.ButtonPress);
 
-                    //ここまで
-
-                    //ボタンを押し下げる
+                    // ボタンを押し下げる
                     isUpButton = false;
-
                 }
-                
             }
         }
 
 
         // ---------------------------------------------------------
-        // ボタンから離れたときに呼ばれる
+        // ボタンから離れたときに呼ばれる（現在は未使用）
         // ---------------------------------------------------------
         //private void OnTriggerExit(Collider collider)
         //{
         //    if (collider.CompareTag(GameConstants.Tag.UNTAGGED)) return;
-
+        //
         //    if (collider.gameObject.CompareTag(GameConstants.Tag.MOVING) ||
         //        collider.gameObject.CompareTag(GameConstants.Tag.PLAYER))
         //    {
-        //        isUpButton = true; 
-                
+        //        isUpButton = true;
         //    }
         //}
 
@@ -135,7 +129,6 @@ namespace Game.StageScene
             currentPos.y += _initialYOffset;
             transform.position = currentPos;
 
-            // デバッグログ
             Debug.Log(
                 $"ButtonController: 位置調整完了 最終Position={transform.position}, オフセット={_initialYOffset}"
             );

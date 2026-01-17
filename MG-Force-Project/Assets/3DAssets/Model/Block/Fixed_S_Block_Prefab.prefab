@@ -250,6 +250,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e4bdc76d19299604c9090f15d8d20636, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  magnetManager: {fileID: 0}
   _magnetCollider: {fileID: 6377928230594661489}
   magnetFixed: 0
   magnetFixedPower: 1

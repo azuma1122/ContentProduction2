@@ -5251,8 +5251,8 @@
     {
       "key": "70",
       "value": {
-        "color": 2,
-        "power": 1,
+        "color": 0,
+        "power": 0,
         "point": 0
       }
     },

@@ -4,11 +4,14 @@ using UnityEngine;
 /// <summary>
 /// ボタンを押すとブロックが出現するギミックコントローラー（逆ギミック）
 /// - 初期状態: ブロックは非表示
-/// - ボタンを押す(DOWN): ブロックが表示される
-/// - ボタンを離す(UP): ブロックが非表示になる
+/// - ボタンが下がっている(DOWN)時: ブロック表示
+/// - ボタンが上がっている(UP)時: ブロック非表示
 /// </summary>
 public class ReverseGimmickController : MonoBehaviour
 {
+    [Header("ギミック設定")]
+    [SerializeField] private string _gimmickId; // このギミック専用のID
+
     private ButtonController _button;
     [SerializeField] private GameObject _fixedBox;
 
@@ -19,7 +22,7 @@ public class ReverseGimmickController : MonoBehaviour
     {
         if (_showDebugLogs)
         {
-            Debug.Log($"ReverseGimmickController: 起動 - アタッチ先={gameObject.name}");
+            Debug.Log($"ReverseGimmickController: 起動 - GimmickID={_gimmickId}, アタッチ先={gameObject.name}");
         }
 
         TryFindButton();
@@ -38,59 +41,74 @@ public class ReverseGimmickController : MonoBehaviour
 
     private void Update()
     {
-        // _fixedBoxが破壊されているかnullチェック
         if (_fixedBox == null)
         {
             return;
         }
 
-        // ボタンが破壊されているか確認
         if (_button == null)
         {
             TryFindButton();
             return;
         }
 
-        // ボタンが存在している時だけ動作
-        // 通常版とは逆：ボタンが下がっている(押されている)時にブロックを表示
+        // ボタンが下がっている(押されている)時にブロックを表示
         bool isButtonDown = !_button.GetIsUpButton();
         _fixedBox.SetActive(isButtonDown);
 
         if (_showDebugLogs)
         {
-            Debug.Log($"ReverseGimmickController: ボタン={(_button.GetIsUpButton() ? "UP" : "DOWN")}, ブロック={(_fixedBox.activeSelf ? "表示" : "非表示")}");
+            Debug.Log($"ReverseGimmickController({_gimmickId}): ボタン={(_button.GetIsUpButton() ? "UP" : "DOWN")}, ブロック={(_fixedBox.activeSelf ? "表示" : "非表示")}");
         }
     }
 
     /// <summary>
-    /// Button(Clone) を探して取得する
+    /// 指定されたgimmickIdを持つButtonを探して取得
     /// </summary>
     private void TryFindButton()
     {
-        GameObject obj = GameObject.Find("Button(Clone)");
-        if (obj != null)
+        // 全てのButtonControllerを取得
+        ButtonController[] allButtons = FindObjectsOfType<ButtonController>();
+
+        foreach (ButtonController btn in allButtons)
         {
-            _button = obj.GetComponent<ButtonController>();
-            if (_button != null)
+            // gimmickIdが一致するボタンを探す
+            if (btn.gimmickId == _gimmickId)
             {
+                _button = btn;
+
                 if (_showDebugLogs)
                 {
-                    Debug.Log($"ReverseGimmickController: Button を取得しました - {obj.name}");
+                    Debug.Log($"ReverseGimmickController: GimmickID({_gimmickId})のボタンを取得しました - {btn.gameObject.name}");
                 }
-            }
-            else
-            {
-                Debug.LogWarning("ReverseGimmickController: ButtonController コンポーネントが見つかりません");
+                return;
             }
         }
-        else
+
+        // 見つからなかった場合
+        _button = null;
+
+        if (_showDebugLogs)
         {
-            _button = null;
+            Debug.LogWarning($"ReverseGimmickController: GimmickID({_gimmickId})のボタンが見つかりません");
         }
     }
 
     /// <summary>
-    /// 外部からボタンを設定する
+    /// StageCreaterから呼ばれる：GimmickIDを設定
+    /// </summary>
+    public void SetGimmickId(string gimmickId)
+    {
+        _gimmickId = gimmickId;
+
+        if (_showDebugLogs)
+        {
+            Debug.Log($"ReverseGimmickController: GimmickID設定 - {gimmickId}");
+        }
+    }
+
+    /// <summary>
+    /// StageCreaterから呼ばれる：ボタンを直接設定
     /// </summary>
     public void SetButton(ButtonController button)
     {
@@ -103,7 +121,7 @@ public class ReverseGimmickController : MonoBehaviour
     }
 
     /// <summary>
-    /// 外部からブロックを設定する
+    /// StageCreaterから呼ばれる：ブロックを設定
     /// </summary>
     public void SetFixedBox(GameObject block)
     {

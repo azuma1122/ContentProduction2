@@ -2106,6 +2106,8 @@ MonoBehaviour:
   _buttonYOffset: 0.5
   _crystalOffset: {x: 0, y: 0.5, z: 0}
   _stageOffset: {x: -1, y: -0.5, z: 0}
+  _gimmickPrefab: {fileID: 6479411921831518640, guid: f87800742c00aa1489e06df147233f2a,
+    type: 3}
 --- !u!1 &682578260
 GameObject:
   m_ObjectHideFlags: 0
@@ -3159,6 +3161,56 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: Menu (1)
+      objectReference: {fileID: 0}
+    - target: {fileID: 2176443427138673732, guid: a410fccdeb5879b4db716250801b7abe,
+        type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2176443427138673732, guid: a410fccdeb5879b4db716250801b7abe,
+        type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2176443427138673732, guid: a410fccdeb5879b4db716250801b7abe,
+        type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3439157154683862503, guid: a410fccdeb5879b4db716250801b7abe,
+        type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3439157154683862503, guid: a410fccdeb5879b4db716250801b7abe,
+        type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5366782449422750683, guid: a410fccdeb5879b4db716250801b7abe,
+        type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5366782449422750683, guid: a410fccdeb5879b4db716250801b7abe,
+        type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6599323103053725188, guid: a410fccdeb5879b4db716250801b7abe,
+        type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6599323103053725188, guid: a410fccdeb5879b4db716250801b7abe,
+        type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6599323103053725188, guid: a410fccdeb5879b4db716250801b7abe,
+        type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6792278183073267896, guid: a410fccdeb5879b4db716250801b7abe,
         type: 3}

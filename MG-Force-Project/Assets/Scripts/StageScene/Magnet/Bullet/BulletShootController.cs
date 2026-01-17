@@ -136,6 +136,10 @@ namespace Game.StageScene.Magnet
         /// </summary>
         private void Update()
         {
+            // ===== 最優先: デバッグラインの状態を常に監視 =====
+            // 条件を満たさない場合は必ずラインを消す
+            bool shouldShowLine = false;
+
             // ===== ゴール状態の場合は射撃を完全に無効化 =====
             if (_playerState != null && PlayerControllerBase.currentState.HasFlag(State.GOAL))
             {
@@ -170,23 +174,22 @@ namespace Game.StageScene.Magnet
             if (_uiManagerGlobal != null && Time.timeScale == 0f)
             {
                 if (_isCharging) ResetCharge();
-                if (_debugLineRenderer != null) _debugLineRenderer.enabled = false;
+                ForceHideShootingEffects();
                 return;
             }
 
             // ===== 磁力Boot中は射撃禁止 =====
-            if (_magnet.IsMagnetBoot)
+            if (_magnet != null && _magnet.IsMagnetBoot)
             {
                 // チャージや発射待機を強制リセット
                 if (_isCharging || _canShooting)
                     ResetCharge();
 
                 // 射撃状態を解除（アニメ用）
-                _playerState.RemoveState(State.SHOOT);
+                if (_playerState != null)
+                    _playerState.RemoveState(State.SHOOT);
 
-                if (_debugLineRenderer != null)
-                    _debugLineRenderer.enabled = false;
-
+                ForceHideShootingEffects();
                 return;
             }
 
@@ -194,38 +197,42 @@ namespace Game.StageScene.Magnet
             if (_canShooting)
             {
                 ShootBullet();
-                _playerState.ForceSetState(State.STILLNESS);
+                if (_playerState != null)
+                    _playerState.ForceSetState(State.STILLNESS);
                 return;
             }
 
-            // ===== ボタン押下中：チャージ処理 ===== 
-
-            if (_inputHandler.IsActionPressing(InputConstants.Action.SHOOT))
+            // ===== ボタン押下中：チャージ処理 =====
+            if (_inputHandler != null && _inputHandler.IsActionPressing(InputConstants.Action.SHOOT))
             {
                 // エネルギーが残っている場合のみチャージ開始
-                if (!_isCharging && _bulletGage.fillAmount > 0f)
+                if (!_isCharging && _bulletGage != null && _bulletGage.fillAmount > 0f)
                 {
                     _isCharging = true;
-                    //_currentPower = 0f;
-                    //_chargeGageObj.SetActive(true);
-                    //_powerEffectObj.SetActive(true);
-                    _playerState.AddState(State.SHOOT);
+                    _currentPower = 0f;
+                    _chargeGageObj.SetActive(true);
+                    _powerEffectObj.SetActive(true);
+                    if (_playerState != null)
+                        _playerState.AddState(State.SHOOT);
                 }
 
                 // チャージ中でもエネルギーをチェック
-                if (_isCharging && _bulletGage.fillAmount <= 0f)
+                if (_isCharging && _bulletGage != null && _bulletGage.fillAmount <= 0f)
                 {
                     ResetCharge();
                     Debug.Log("[BulletShoot] チャージ中にエネルギー切れ");
                     return;
                 }
 
-                //ChargeUpdate();
-                UpdateDebugLine();
+                if (_isCharging)
+                {
+                    ChargeUpdate();
+                    UpdateDebugLine();
+                    shouldShowLine = true; // チャージ中はラインを表示
+                }
             }
-
             // ===== ボタンを離したら発射準備 =====
-            if (!_inputHandler.IsActionPressing(InputConstants.Action.SHOOT) && _isCharging)
+            else if (_isCharging)
             {
                 _isCharging = false;
                 _chargeGageObj.SetActive(false);
@@ -233,6 +240,12 @@ namespace Game.StageScene.Magnet
 
                 if (_debugLineRenderer != null)
                     _debugLineRenderer.enabled = false;
+            }
+
+            // ===== 最終チェック: ラインを表示すべきでない場合は強制的に消す =====
+            if (!shouldShowLine && _debugLineRenderer != null && _debugLineRenderer.enabled)
+            {
+                _debugLineRenderer.enabled = false;
             }
         }
 
@@ -256,7 +269,19 @@ namespace Game.StageScene.Magnet
         /// </summary>
         private void UpdateDebugLine()
         {
-            if (!showDebugLine || _debugLineRenderer == null || _mainCamera == null) return;
+            if (!showDebugLine || _debugLineRenderer == null || _mainCamera == null)
+            {
+                if (_debugLineRenderer != null)
+                    _debugLineRenderer.enabled = false;
+                return;
+            }
+
+            // チャージ中のみラインを表示
+            if (!_isCharging)
+            {
+                _debugLineRenderer.enabled = false;
+                return;
+            }
 
             Vector3 shootPosition = transform.position + Vector3.up;
             Vector3 direction = GetShootDirection(shootPosition);
@@ -354,10 +379,14 @@ namespace Game.StageScene.Magnet
             _currentPower = 0f;
             _chargeGageObj.SetActive(false);
             _powerEffectObj.SetActive(false);
-            _playerState.RemoveState(State.SHOOT);
+
+            if (_playerState != null)
+                _playerState.RemoveState(State.SHOOT);
 
             if (_debugLineRenderer != null)
                 _debugLineRenderer.enabled = false;
+
+            Debug.Log("[BulletShoot] 射撃状態を完全リセット");
         }
 
 #if UNITY_EDITOR
