@@ -60,7 +60,7 @@ namespace Game.StageScene.Magnet
             // ※BOOT中は切り替え不可
             // ------------------------------------------------
             // 直接Rキーで切り替え
-            if (Input.GetKeyDown(KeyCode.R) && !IsMagnetBoot)
+            if (Input.GetKeyDown(KeyCode.S) && !IsMagnetBoot)
             {
                 SEManager.instance.PlaySE(SEManager.Magnet.MAGNET_CHANGE);
 

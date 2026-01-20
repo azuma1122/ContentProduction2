@@ -194,7 +194,7 @@ public partial class @GameInputActions: IInputActionCollection2, IDisposable
                 {
                     ""name"": """",
                     ""id"": ""0aa715eb-6ec6-4976-a681-07cd8a152df4"",
-                    ""path"": ""<Keyboard>/space"",
+                    ""path"": ""<Keyboard>/#(W)"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": ""KeyMouse"",
