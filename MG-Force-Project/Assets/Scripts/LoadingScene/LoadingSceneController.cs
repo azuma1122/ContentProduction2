@@ -16,7 +16,7 @@ namespace Game.LoadingScene
         private void Awake()
         {
             _sceneLoader = SceneLoader.Instance;
-
+            SEManager.instance.PlaySE(SEManager.Stage.STAGE_TRANSITION);
             // SceneLoader‚ª‘¶İ‚µ‚È‚¢ê‡‚ÍTitle‚É–ß‚·
             if (_sceneLoader == null)
                 SceneManager.LoadScene(GameConstants.Scene.Title.ToString());

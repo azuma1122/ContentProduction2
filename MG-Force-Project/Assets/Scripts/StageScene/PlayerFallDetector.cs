@@ -73,7 +73,7 @@ namespace Game.StageScene.Player
         {
             _isFalling = true;
             _fallTimer = 0f;
-
+            SEManager.instance.PlaySE(SEManager.Player.PLAYER_FALLED);
             Debug.Log($"[FallDetector] 落下検知！ Y座標: {playerTransform.position.y}");
 
             // プレイヤーの操作を無効化

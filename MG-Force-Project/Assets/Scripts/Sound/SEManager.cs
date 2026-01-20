@@ -1,3 +1,4 @@
+using System;
 using Game.GameSystem;
 using UnityEngine;
 
@@ -25,6 +26,7 @@ namespace Game
             PLAYER_MOVE,   // プレイヤー移動時のSE
             PLAYER_JUMP,   // プレイヤージャンプ時のSE
             PLAYER_LAND, // プレイヤー着地時のSE
+            PLAYER_FALLED,
             MAX_SE,
         }
 
@@ -37,7 +39,7 @@ namespace Game
             STAGE_TRANSITION, // ステージ移行時のSE
             STAGE_START, // ステージ開始時のSE
             STAGE_RETRY,  // ステージリトライ時のSE
-            STAGE_CLEAR,  // ステージリトライ時のSE
+            STAGE_CLEAR,  // ステージ時のSE
             MAX_SE,
 
         }
@@ -62,6 +64,7 @@ namespace Game
         {
             MAGNET_ACTIVATE,// 磁力起動時のSE
             MAGNET_RESET,// 磁力リセット時のSE
+            MAGNET_CHANGE,//磁力切り替え
             MAX_SE,
 
         }
@@ -96,7 +99,7 @@ namespace Game
                 "プレイヤー移動時のSE",
                 "プレイヤージャンプ時のSE",
                 "プレイヤー着地時のSE",
-
+                "プレイヤーが落下したときのSE"
 
             }
         )]
@@ -137,6 +140,7 @@ namespace Game
          {
                "磁力起動時のSE" ,
                " 磁力リセット時のSE ",
+               "磁力切り替え時のSE"
 
          }
      )]
@@ -161,6 +165,25 @@ namespace Game
         private const float MIN_VOLUME = 0.0f;
         private const float MAX_VOLUME = 1.0f;
         private const float VARIABLE_VOLUME = 0.1f;
+
+
+        [NamedSerializeField(
+    new string[]
+    {
+        "磁力起動時の音量",
+        "磁力リセット時の音量",
+        "磁力切り替え時の音量",
+    }
+)]
+
+        [Header("Magnet SE Volume")]
+        [SerializeField]
+        private float[] _magnetVolumes = new float[(int)Magnet.MAX_SE]
+  {
+    0.3f, // MAGNET_ACTIVATE
+    0.4f, // MAGNET_RESET
+    0.6f, // MAGNET_CHANGE
+  };
 
         #region -------- シングルトンの設定 --------
 
@@ -231,6 +254,7 @@ namespace Game
             AudioClip set_clip = _ObstacleClips[(int)clip_index];
 
             _audioSource.PlayOneShot(set_clip);  // 再生
+
         }
 
         /// <summary>
@@ -239,9 +263,21 @@ namespace Game
         /// <param name="clip_index"></param>
         public void PlaySE(Magnet clip_index)
         {
+            int index = (int)clip_index;
+
             AudioClip set_clip = _MagnetClips[(int)clip_index];
 
-            _audioSource.PlayOneShot(set_clip);  // 再生
+            float volume = 1.0f;
+
+            if (_magnetVolumes != null &&index < _magnetVolumes.Length)
+            {
+                volume = _magnetVolumes[index];
+            }
+            if (!_audioSource.isPlaying)
+            {
+                _audioSource.PlayOneShot(set_clip, volume);
+            }
+
         }
 
         /// <summary>

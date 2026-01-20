@@ -4382,9 +4382,10 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 8300000, guid: 2d1c526d0eacbdd41959348b032c7375, type: 3}
   - {fileID: 8300000, guid: 938181aca12e77040944eb950f519f1b, type: 3}
+  - {fileID: 8300000, guid: 0b9ecb585f628ef4aaed6f6e182bbb68, type: 3}
   _StageClips:
   - {fileID: 8300000, guid: 2b52c52b23def3749a1887b94faa1722, type: 3}
-  - {fileID: 0}
+  - {fileID: 8300000, guid: c268c70f9eabc2641bef74f1eda15cd1, type: 3}
   - {fileID: 8300000, guid: 58b3e4b6ac8c7414ba3015e11570492a, type: 3}
   - {fileID: 8300000, guid: 2e626d181c1e0044aa73bee7453d0582, type: 3}
   _BulletClips:
@@ -4394,10 +4395,11 @@ MonoBehaviour:
   - {fileID: 0}
   _MagnetClips:
   - {fileID: 8300000, guid: 24148ad46b95b394a9986f696602c7f8, type: 3}
+  - {fileID: 8300000, guid: 07d813745682daa4d99b216304e014f2, type: 3}
   - {fileID: 8300000, guid: 46f19be487cd1724ca2de14c51606153, type: 3}
   _ObstacleClips:
   - {fileID: 8300000, guid: 3f7ea735852eb12489e521c140a78e61, type: 3}
-  - {fileID: 8300000, guid: 3fe7d3a79ef50a94d9b9aa5fbb16f76b, type: 3}
+  - {fileID: 8300000, guid: 8a2fb851e5e95e74b9eb824883e2452d, type: 3}
   _audioSource: {fileID: 0}
 --- !u!82 &976967747
 AudioSource:

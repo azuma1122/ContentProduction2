@@ -62,6 +62,8 @@ namespace Game.StageScene.Magnet
             // 直接Rキーで切り替え
             if (Input.GetKeyDown(KeyCode.R) && !IsMagnetBoot)
             {
+                SEManager.instance.PlaySE(SEManager.Magnet.MAGNET_CHANGE);
+
                 ChangeMagnetType();
 
 
@@ -74,7 +76,6 @@ namespace Game.StageScene.Magnet
             if (_input.IsActionPressed(InputConstants.Action.MAGNET_BOOT))
             {
                 ChangeMagnetBoot();
-
 
                 //磁力起動しているかどうかでSEの音源を切り替えて鳴らす
                 if (IsMagnetBoot)

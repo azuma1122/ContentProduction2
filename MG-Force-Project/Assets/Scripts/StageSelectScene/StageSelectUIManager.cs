@@ -85,6 +85,7 @@ namespace Game.StageScene
         private void OnClickStage(Button button)
         {
             string stageName = button.name;
+            SEManager.instance.PlaySE(SEManager.Stage.STAGE_START);    
             //Debug.Log("Clicked: " + stageName);
             // 名前に応じてシーンを切り替え
             if (stageName.Contains("Stage1"))
@@ -107,6 +108,9 @@ namespace Game.StageScene
         private void OnClickBack()
         {
             SceneManager.LoadScene("Title");
+            SEManager.instance.PlaySE(SEManager.Menu.CANCEL);
+
+
         }
     }
 }
