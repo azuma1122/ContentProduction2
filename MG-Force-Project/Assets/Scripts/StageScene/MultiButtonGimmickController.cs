@@ -151,7 +151,7 @@ public class MultiButtonGimmickController : MonoBehaviour
     }
 
     /// <summary>
-    /// 単一のターゲットブロックを設定（互換性のため）
+    /// 単一のターゲットブロックを設定S
     /// </summary>
     public void SetTargetBlock(GameObject block)
     {

@@ -88,7 +88,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4a790f8dfa8350743b52b2b629c6e22c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _fixedBox: {fileID: 8123646607084573144}
+  _fixedBoxes: []
+  _targetButton: {fileID: 897109679488286996, guid: a00691e1989b7434591f909e8f9743fc,
+    type: 3}
   _showDebugLogs: 0
 --- !u!1001 &1753113645804112505
 PrefabInstance:

@@ -271,7 +271,7 @@ public partial class @GameInputActions: IInputActionCollection2, IDisposable
                 {
                     ""name"": """",
                     ""id"": ""c53c5730-d2fb-4841-8989-fec9edb51608"",
-                    ""path"": ""<Keyboard>/b"",
+                    ""path"": ""<Keyboard>/space"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": ""KeyMouse"",

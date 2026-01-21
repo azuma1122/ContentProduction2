@@ -7,10 +7,17 @@ namespace Game.StageScene.Magnet
 {
     /// <summary>
     /// 移動可能な磁石ブロック
+    /// 
+    /// ・Boot（磁力モード）ON の間だけ磁力を発生させる
+    /// ・他の MovingMagnetBlock に対して引力／斥力を与える
+    /// ・Boot 切替時の Rigidbody 状態を安定させる
+    /// ・磁力強度を UI（Image.fillAmount）で表示
     /// </summary>
     [RequireComponent(typeof(Rigidbody))]
     public class MovingMagnetBlock : MonoBehaviour
     {
+        // ===== インスペクタ設定 =====
+
         [Header("磁石の極タイプ"), Tooltip("N極(赤)か S極(青)を設定する")]
         [SerializeField] public MagnetPoleType poleType = MagnetPoleType.North;
 
@@ -18,7 +25,8 @@ namespace Game.StageScene.Magnet
         [SerializeField]
         private float magneticForce = 10f;
 
-        [Tooltip("磁力の影響範囲。この距離内にある磁石と干渉する"), SerializeField]
+        [Tooltip("磁力の影響範囲。この距離内にある磁石と干渉する")]
+        [SerializeField]
         private float magneticRange = 5f;
 
         [Header("磁力表示用UI（Image）"), Tooltip("磁力強度を表示するUI Image（FillAmountを使用）")]
@@ -26,32 +34,38 @@ namespace Game.StageScene.Magnet
         private Image magneticForceImage;
 
         [Header("デバッグ設定")]
-        [SerializeField] private bool enableDebugLog = false; // デバッグログの有効/無効
+        [SerializeField] private bool enableDebugLog = false;
 
-        // Rigidbodyキャッシュ
+        // ===== 内部参照 =====
+
+        // 自分の Rigidbody
         private Rigidbody _rigidbody;
 
-        // MagnetManagerへの参照
+        // 磁力モード（Boot）状態を管理するマネージャ
         private MagnetManager magnetManager;
 
-        // 最大磁力値（UI正規化用）
+        // UI 正規化用の最大磁力値
         private const float MAX_FORCE = 100f;
 
-        // 前フレームのBoot状態を記録
+        // ===== Boot 状態管理用 =====
+
+        // 前フレームの Boot 状態
         private bool _wasBoot = false;
 
-        // Boot ON時の初期化が完了したか
+        // Boot ON 時の初期化が完了しているか
         private bool _isBootInitialized = false;
 
-        // 最後にBootがOFFになった時刻
+        // 最後に Boot が OFF になった時刻
         private float _lastBootOffTime = -1f;
 
-        // Boot OFF後の待機時間（秒）
+        // Boot OFF 直後に再 ON された場合のクールダウン時間
         private const float BOOT_OFF_COOLDOWN = 0.1f;
+
+        // =====================================================================
 
         private void Start()
         {
-            // Rigidbodyを取得してキャッシュ化
+            // Rigidbody を取得してキャッシュ
             _rigidbody = GetComponent<Rigidbody>();
             if (_rigidbody == null)
             {
@@ -59,15 +73,11 @@ namespace Game.StageScene.Magnet
                 return;
             }
 
-            // 重要：物理演算の設定を最適化
-            _rigidbody.isKinematic = false;
-            _rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
-
-            // Constraintsを設定（Z軸と回転を固定）
-            _rigidbody.constraints = RigidbodyConstraints.FreezeRotation | RigidbodyConstraints.FreezePositionZ;
-
-            // Collision Detection を Continuous に設定（連続衝突検出で安定性向上）
-            _rigidbody.collisionDetectionMode = CollisionDetectionMode.Continuous;
+            // Rigidbody の初期物理設定
+            _rigidbody.isKinematic = false; // 物理演算を有効
+            _rigidbody.interpolation = RigidbodyInterpolation.Interpolate; // 見た目のカクつき防止
+            _rigidbody.constraints = RigidbodyConstraints.FreezeRotation | RigidbodyConstraints.FreezePositionZ; // 回転 & Z移動を固定
+            _rigidbody.collisionDetectionMode = CollisionDetectionMode.Continuous; // 高速移動時のすり抜け防止
 
             if (enableDebugLog)
             {
@@ -76,20 +86,44 @@ namespace Game.StageScene.Magnet
                 Debug.Log($"  - collisionDetectionMode: {_rigidbody.collisionDetectionMode}");
             }
 
-            // MagnetManagerを取得
+            // MagnetManager をシーンから取得
             magnetManager = FindObjectOfType<MagnetManager>();
             if (magnetManager == null)
             {
                 Debug.LogError($"[MovingMagnetBlock] {gameObject.name} で MagnetManager が見つかりません！");
             }
 
-            // 開始時にUI更新
+            // 磁力 UI を初期更新
             UpdateMagneticForceUI();
+
+            // 次フレームで確実に Rigidbody を起こす（Sleep対策）
+            StartCoroutine(ForceWakeUpNextFrame());
+        }
+
+        /// <summary>
+        /// 次フレームで Rigidbody を強制的に起こす
+        /// （生成直後に Sleep してしまう問題の対策）
+        /// </summary>
+        private IEnumerator ForceWakeUpNextFrame()
+        {
+            yield return null;
+
+            if (_rigidbody != null)
+            {
+                _rigidbody.isKinematic = false;
+                _rigidbody.constraints = RigidbodyConstraints.FreezeRotation | RigidbodyConstraints.FreezePositionZ;
+                _rigidbody.WakeUp();
+
+                if (enableDebugLog)
+                {
+                    Debug.Log($"[MovingMagnetBlock] {gameObject.name} - ForceWakeUpNextFrame 実行");
+                }
+            }
         }
 
         private void Update()
         {
-            // デバッグ用：Bキー押下時の状態確認
+            // デバッグ用：Bキーで現在状態をログ出力
             if (Input.GetKeyDown(KeyCode.B) && enableDebugLog)
             {
                 Debug.Log($"========== Bキー押下 [{gameObject.name}] ==========");
@@ -102,6 +136,7 @@ namespace Game.StageScene.Magnet
                 {
                     Debug.Log($"  velocity: {_rigidbody.velocity}");
                     Debug.Log($"  isKinematic: {_rigidbody.isKinematic}");
+                    Debug.Log($"  IsSleeping: {_rigidbody.IsSleeping()}");
                 }
                 Debug.Log($"=======================================");
             }
@@ -111,7 +146,20 @@ namespace Game.StageScene.Magnet
         {
             if (_rigidbody == null) return;
 
-            // MagnetManagerが取得できていない場合は再取得を試みる
+            // ★ Rigidbody が Sleep していたら毎フレーム起こす
+            if (_rigidbody.IsSleeping())
+            {
+                _rigidbody.WakeUp();
+            }
+
+            // ★ isKinematic / constraints の保険（他スクリプトの影響対策）
+            if (_rigidbody.isKinematic)
+            {
+                _rigidbody.isKinematic = false;
+            }
+            _rigidbody.constraints = RigidbodyConstraints.FreezeRotation | RigidbodyConstraints.FreezePositionZ;
+
+            // MagnetManager を再取得（生成順のズレ対策）
             if (magnetManager == null)
             {
                 magnetManager = FindObjectOfType<MagnetManager>();
@@ -121,17 +169,14 @@ namespace Game.StageScene.Magnet
                 }
             }
 
-            // Boot状態を取得
             bool isBootActive = magnetManager.IsMagnetBoot;
 
-            // Boot状態が変化した時の処理
+            // ===== Boot 状態が切り替わった瞬間の処理 =====
             if (isBootActive != _wasBoot)
             {
                 if (isBootActive)
                 {
-                    // --- Boot ON になった ---
-
-                    // クールダウン期間中なら初期化をスキップ
+                    // Boot ON 直後がクールダウン中なら無視
                     if (Time.time - _lastBootOffTime < BOOT_OFF_COOLDOWN)
                     {
                         if (enableDebugLog)
@@ -147,23 +192,19 @@ namespace Game.StageScene.Magnet
                         Debug.Log($"[MovingMagnetBlock] {gameObject.name} - Boot ON 初期化開始");
                     }
 
-                    // 確実に物理状態をリセット
+                    // 速度をリセットして安定化
                     _rigidbody.velocity = Vector3.zero;
                     _rigidbody.angularVelocity = Vector3.zero;
 
-                    // スリープ状態から確実に復帰
                     if (_rigidbody.IsSleeping())
                     {
                         _rigidbody.WakeUp();
                     }
 
-                    // Constraintsを再設定
                     _rigidbody.constraints = RigidbodyConstraints.FreezeRotation | RigidbodyConstraints.FreezePositionZ;
 
-                    // isKinematic が true になっていないか確認
                     if (_rigidbody.isKinematic)
                     {
-                        Debug.LogWarning($"[MovingMagnetBlock] {gameObject.name} の isKinematic が true になっていたため false に修正");
                         _rigidbody.isKinematic = false;
                     }
 
@@ -171,14 +212,12 @@ namespace Game.StageScene.Magnet
                 }
                 else
                 {
-                    // --- Boot OFF になった ---
-
+                    // Boot OFF 時の後処理
                     if (enableDebugLog)
                     {
                         Debug.Log($"[MovingMagnetBlock] {gameObject.name} - Boot OFF");
                     }
 
-                    // 完全停止
                     _rigidbody.velocity = Vector3.zero;
                     _rigidbody.angularVelocity = Vector3.zero;
 
@@ -189,10 +228,9 @@ namespace Game.StageScene.Magnet
                 _wasBoot = isBootActive;
             }
 
-            // Bootがオフの場合は停止状態を維持
+            // ===== Boot OFF 中は物理的に完全停止 =====
             if (!isBootActive)
             {
-                // 毎フレーム確実に停止
                 if (_rigidbody.velocity != Vector3.zero || _rigidbody.angularVelocity != Vector3.zero)
                 {
                     _rigidbody.velocity = Vector3.zero;
@@ -201,22 +239,22 @@ namespace Game.StageScene.Magnet
                 return;
             }
 
-            // Boot初期化が完了していない場合はスキップ
+            // Boot ON でも初期化が終わるまで何もしない
             if (!_isBootInitialized)
             {
                 return;
             }
 
-            // --- ここから磁力処理（Bootがオンの時のみ実行） ---
+            // ===== 磁力処理 =====
 
-            // 指定範囲内にある全てのColliderを取得
+            // 磁力範囲内の Collider を取得
             Collider[] colliders = Physics.OverlapSphere(transform.position, magneticRange);
 
             foreach (Collider collider in colliders)
             {
-                // 自分以外の MovingMagnetBlock を探す
                 MovingMagnetBlock other = collider.GetComponent<MovingMagnetBlock>();
 
+                // 自分以外の MovingMagnetBlock にだけ作用させる
                 if (other != null && other != this)
                 {
                     ApplyMagneticForce(other);
@@ -225,7 +263,7 @@ namespace Game.StageScene.Magnet
         }
 
         /// <summary>
-        /// 他の磁石ブロックに対して磁力（引力または反発力）を加える
+        /// 他の磁石ブロックに磁力（引力 or 斥力）を与える
         /// </summary>
         private void ApplyMagneticForce(MovingMagnetBlock other)
         {
@@ -234,35 +272,41 @@ namespace Game.StageScene.Magnet
             Rigidbody otherRb = other.GetComponent<Rigidbody>();
             if (otherRb == null) return;
 
-            // 相手もBoot初期化が完了していない場合はスキップ
+            // 相手側の Boot 初期化が終わっていない場合は無視
             if (!other._isBootInitialized)
             {
                 return;
             }
 
-            // 方向と距離を計算
+            // 距離と方向を計算
             Vector3 direction = transform.position - other.transform.position;
             float distance = direction.magnitude;
 
-            // 範囲チェック
+            // 範囲外 or 近すぎる場合は無視
             if (distance > magneticRange || distance <= 0.01f) return;
 
-            // 極性判定
+            // 同極：反発（-1） / 異極：引力（+1）
             float forceMultiplier = (poleType == other.poleType) ? -1f : 1f;
 
-            // 力を計算
+            // 距離に反比例した磁力
             float force = (magneticForce * 10f / distance) * forceMultiplier;
 
             // 力を加える
             otherRb.AddForce(direction.normalized * force, ForceMode.Force);
         }
 
+        /// <summary>
+        /// 磁力強度を外部から変更する
+        /// </summary>
         public void SetMagneticForce(float newForce)
         {
             magneticForce = Mathf.Clamp(newForce, 0f, MAX_FORCE);
             UpdateMagneticForceUI();
         }
 
+        /// <summary>
+        /// 磁力 UI（Image.fillAmount）を更新
+        /// </summary>
         private void UpdateMagneticForceUI()
         {
             if (magneticForceImage != null)
@@ -271,10 +315,16 @@ namespace Game.StageScene.Magnet
             }
         }
 
+        /// <summary>
+        /// 極性（N / S）を切り替える
+        /// </summary>
         public void TogglePolarity()
         {
-            poleType = (poleType == MagnetPoleType.North) ? MagnetPoleType.South : MagnetPoleType.North;
+            poleType = (poleType == MagnetPoleType.North)
+                ? MagnetPoleType.South
+                : MagnetPoleType.North;
 
+            // 見た目の色も変更
             Renderer renderer = GetComponent<Renderer>();
             if (renderer != null)
             {
@@ -284,6 +334,9 @@ namespace Game.StageScene.Magnet
             Debug.Log($"{gameObject.name} の極性を {poleType} に切り替えました。");
         }
 
+        /// <summary>
+        /// シーンビューに磁力範囲を表示
+        /// </summary>
         private void OnDrawGizmos()
         {
             Gizmos.color = (poleType == MagnetPoleType.North) ? Color.red : Color.blue;

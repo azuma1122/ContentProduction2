@@ -56,7 +56,7 @@ namespace Game.StageScene.Magnet
             if (_input == null) return;
 
             // ------------------------------------------------
-            // 極切り替え(Rキー)
+            // 極切り替え(Sキー)
             // ※BOOT中は切り替え不可
             // ------------------------------------------------
             // 直接Rキーで切り替え
@@ -80,19 +80,13 @@ namespace Game.StageScene.Magnet
                 //磁力起動しているかどうかでSEの音源を切り替えて鳴らす
                 if (IsMagnetBoot)
                 {
-                    //SE磁力起動時はこの一行（必要時にコメントアウト
-
+                    //SE磁力起動時はこの一行
                     SEManager.instance.PlaySE(SEManager.Magnet.MAGNET_ACTIVATE);
-
-                    //ここまで
                 }
                 else
                 {
-                    //SE磁力リセットはこの一行（必要時にコメントアウト
-
+                    //SE磁力リセットはこの一行
                     SEManager.instance.PlaySE(SEManager.Magnet.MAGNET_RESET);
-                    //ここまで
-
                 }
 
             }

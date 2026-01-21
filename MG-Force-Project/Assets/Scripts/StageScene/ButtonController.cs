@@ -15,7 +15,7 @@ namespace Game.StageScene
     /// </summary>
     public class ButtonController : MonoBehaviour
     {
-        // ★追加：このボタンが属するギミックID（StageCreaterから設定）
+        // このボタンが属するギミックID（StageCreaterから設定）
         [Header("ギミック設定")]
         public string gimmickId;
 
@@ -78,7 +78,7 @@ namespace Game.StageScene
             // UNTAGGED は無視
             if (collider.CompareTag(GameConstants.Tag.UNTAGGED)) return;
 
-            // プレイヤー と Moving ブロックのときボタンを押す
+            // Movingブロックのときボタンを押す
             if (collider.gameObject.CompareTag(GameConstants.Tag.MOVING))
             {
                 // ボタンが上がっている場合のみ反応

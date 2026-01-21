@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+﻿﻿using System.Collections.Generic;
 using UnityEngine;
 
 namespace Game.StageScene.Magnet
@@ -28,10 +28,10 @@ namespace Game.StageScene.Magnet
             if (_rigitbody == null)
                 Debug.LogError("[MovingObjectController] Rigidbody が見つかりません！");
 
-            // ✅ 修正: isKinematicをfalseに設定（物理演算を有効にする）
+            // isKinematicをfalseに設定（物理演算を有効にする）
             _rigitbody.isKinematic = false;
 
-            // ✅ 追加: 物理演算の最適化設定
+            // 物理演算の最適化設定
             _rigitbody.collisionDetectionMode = CollisionDetectionMode.Continuous;
             _rigitbody.interpolation = RigidbodyInterpolation.Interpolate;
 

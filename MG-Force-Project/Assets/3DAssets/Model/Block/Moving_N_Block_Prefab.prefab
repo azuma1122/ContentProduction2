@@ -11,7 +11,8 @@ GameObject:
   - component: {fileID: 1300719283684065992}
   - component: {fileID: 7682221580470769465}
   - component: {fileID: 4580457385794499457}
-  m_Layer: 9
+  - component: {fileID: 61837352563143420}
+  m_Layer: 6
   m_Name: Magnet
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -75,6 +76,24 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 20, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &61837352563143420
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2492746171144611495}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 64740de14a02eeb439ebd878625b3669, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  magnetManager: {fileID: 0}
+  _magnetColliders:
+  - {fileID: 4580457385794499457}
+  - {fileID: 7682221580470769465}
+  magnetFixed: 0
+  magnetFixedPower: 0
 --- !u!1001 &4272170936303746635
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -146,7 +165,7 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 9b2d4ba5acce7b94796dce2aed642329,
         type: 3}
       propertyPath: m_Layer
-      value: 7
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 9b2d4ba5acce7b94796dce2aed642329,
         type: 3}
@@ -176,11 +195,7 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 9b2d4ba5acce7b94796dce2aed642329,
         type: 3}
       insertIndex: -1
-      addedObject: {fileID: -2970466410122464257}
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 9b2d4ba5acce7b94796dce2aed642329,
-        type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 3842585988178089103}
+      addedObject: {fileID: 8145747321914822413}
   m_SourcePrefab: {fileID: 100100000, guid: 9b2d4ba5acce7b94796dce2aed642329, type: 3}
 --- !u!1 &4001629709848593178 stripped
 GameObject:
@@ -207,8 +222,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1, y: 1, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
+  m_Size: {x: 1, y: 0.97453654, z: 1}
+  m_Center: {x: 0, y: 0.012731746, z: 0}
 --- !u!54 &4055840778583637487
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -249,30 +264,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   magnetManager: {fileID: 0}
-  _magnetCollider: {fileID: 2492746171144611495}
+  _magnetColliders: []
   magnetFixed: 0
   magnetFixedPower: 1
---- !u!114 &-2970466410122464257
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4001629709848593178}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ef45ce8442e288441b4c5f3b5ed57744, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  magnetManager: {fileID: 0}
-  _magnetCollider: {fileID: 0}
-  magnetFixed: 0
-  magnetFixedPower: 0
-  isFixedMagnet: 1
-  fixedPower: 1
-  restrictToFourDirections: 1
-  directionThreshold: 0.3
---- !u!114 &3842585988178089103
+--- !u!114 &8145747321914822413
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -286,7 +281,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   poleType: 0
   magneticForce: 10
-  magneticRange: 3
+  magneticRange: 5
   magneticForceImage: {fileID: 0}
   enableDebugLog: 0
 --- !u!4 &4378472634004576672 stripped

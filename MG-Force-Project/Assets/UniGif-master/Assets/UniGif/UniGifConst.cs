@@ -101,10 +101,10 @@ public static partial class UniGif
                     sb.Append(", ");
                     sb.Append(m_graphicCtrlExList[i].m_delayTime);
                 }
-                Debug.Log(sb.ToString());
+                //Debug.Log(sb.ToString());
             }
-            Debug.Log("Application Identifier: " + m_appEx.applicationIdentifier);
-            Debug.Log("Application Authentication Code: " + m_appEx.applicationAuthenticationCode);
+            //Debug.Log("Application Identifier: " + m_appEx.applicationIdentifier);
+            //Debug.Log("Application Authentication Code: " + m_appEx.applicationAuthenticationCode);
         }
     }
 

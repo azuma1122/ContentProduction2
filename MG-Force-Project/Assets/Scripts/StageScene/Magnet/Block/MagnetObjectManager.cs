@@ -1,5 +1,6 @@
 using Game.GameSystem;
 using UnityEngine;
+using System.Collections.Generic;
 
 namespace Game.StageScene.Magnet
 {
@@ -10,7 +11,8 @@ namespace Game.StageScene.Magnet
     /// </summary>
     public class MagnetObjectManager : MonoBehaviour
     {
-        private InputHandler input; // プレイヤー入力処理クラスの参照
+        // プレイヤー入力処理クラスの参照
+        private InputHandler input;
 
         /// <summary>
         /// このオブジェクトの磁力データ  
@@ -24,8 +26,8 @@ namespace Game.StageScene.Magnet
         // 磁力の動作制御（吸着・反発など）を行うクラス
         protected MagnetController magnetController;
 
-        // 磁力判定用のコライダー（当たり判定専用）
-        [SerializeField] private GameObject _magnetCollider;
+        // 磁力判定用のコライダー（当たり判定専用・複数対応）
+        [SerializeField] private List<Collider> _magnetColliders = new List<Collider>();
 
         // このオブジェクトが固定磁石かどうか
         [SerializeField] protected bool magnetFixed;
@@ -92,9 +94,15 @@ namespace Game.StageScene.Magnet
         /// </summary>
         protected virtual void Update()
         {
-            // Collider は常に安全に扱う
-            if (_magnetCollider != null)
-                _magnetCollider.SetActive(true);
+            // Collider が設定されていない場合でも落ちないようにする
+            if (_magnetColliders != null)
+            {
+                foreach (var col in _magnetColliders)
+                {
+                    if (col != null)
+                        col.enabled = true;
+                }
+            }
 
             // MagnetManager がいない → 処理中断（NRE防止）
             if (magnetManager == null)
@@ -103,15 +111,28 @@ namespace Game.StageScene.Magnet
             // MagnetManager から磁力起動状態を確認
             if (magnetManager.IsMagnetBoot)
             {
-                if (_magnetCollider != null && !_magnetCollider.activeSelf)
-                    _magnetCollider.SetActive(true);
+                // Boot ON 中は磁力コライダーを有効化
+                if (_magnetColliders != null)
+                {
+                    foreach (var col in _magnetColliders)
+                    {
+                        if (col != null && !col.enabled)
+                            col.enabled = true;
+                    }
+                }
 
                 return;
             }
 
-            // MagnetBoot が OFF の場合 → 判定コライダー切る
-            if (_magnetCollider != null && _magnetCollider.activeSelf)
-                _magnetCollider.SetActive(false);
+            // MagnetBoot が OFF の場合 → 判定コライダーを無効化
+            if (_magnetColliders != null)
+            {
+                foreach (var col in _magnetColliders)
+                {
+                    if (col != null && col.enabled)
+                        col.enabled = false;
+                }
+            }
 
             if (magnetFixed) return;
 
@@ -154,7 +175,7 @@ namespace Game.StageScene.Magnet
         protected virtual void OnTriggerEnter(Collider other)
         {
             if (magnetFixed) return;
-            if (MyData == null) return; // 追加：念のため安全化
+            if (MyData == null) return; // 念のため安全化
 
             if (other.gameObject.layer == (int)GameConstants.Layer.BULLET && magnetManager != null)
             {
@@ -177,11 +198,16 @@ namespace Game.StageScene.Magnet
             switch (power)
             {
                 case (int)MagnetData.MagnetPower.Weak:
-                    magnetFixedPower = MagnetData.MagnetPower.Weak; break;
+                    magnetFixedPower = MagnetData.MagnetPower.Weak;
+                    break;
+
                 case (int)MagnetData.MagnetPower.Medium:
-                    magnetFixedPower = MagnetData.MagnetPower.Medium; break;
+                    magnetFixedPower = MagnetData.MagnetPower.Medium;
+                    break;
+
                 case (int)MagnetData.MagnetPower.Strong:
-                    magnetFixedPower = MagnetData.MagnetPower.Strong; break;
+                    magnetFixedPower = MagnetData.MagnetPower.Strong;
+                    break;
             }
         }
     }

@@ -34,7 +34,7 @@ namespace Game.StageScene
 
         protected override void Start()
         {
-            // ===== 先にmagnetFixedを設定（base.Start()より前） =====
+            // ===== 先にmagnetFixedを設定 =====
             magnetFixed = isFixedMagnet;
             magnetFixedPower = fixedPower;
 
@@ -68,6 +68,7 @@ namespace Game.StageScene
             {
                 // 磁力で動かすためにisKinematicをfalseに設定
                 _rigidbody.isKinematic = false;
+
                 // 物理演算の最適化設定
                 _rigidbody.collisionDetectionMode = CollisionDetectionMode.Continuous;
                 _rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
