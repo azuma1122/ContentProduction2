@@ -239,7 +239,7 @@ namespace Game.StageScene.Magnet
             EnsureUIInitialized();
 
             // Fixed_Not_Block_Prefab(Clone)に当ったら消去
-            if (other.gameObject.name == "Fixed_Not_Block_Prefab(Clone)")
+            if ((other.gameObject.name == "Fixed_Not_Block_Prefab(Clone)")||(other.gameObject.name == "Gimmick"))
             {
                 Debug.Log("[OnTriggerEnter] → Fixed_Not_Block検出 → 弾を削除");
                 _hasCollided = true;

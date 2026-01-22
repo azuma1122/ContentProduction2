@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 4068675278143541317}
   - component: {fileID: 6380634633110324727}
   m_Layer: 0
-  m_Name: Fixed_Not_Block
+  m_Name: Gimmick
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

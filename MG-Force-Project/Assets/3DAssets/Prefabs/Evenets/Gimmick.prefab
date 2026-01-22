@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 1832731156675022108}
   - component: {fileID: -4756525936016715268}
   - component: {fileID: 4065937797544688607}
+  - component: {fileID: 9016748483817691602}
   m_Layer: 0
   m_Name: Gimmick
   m_TagString: Untagged
@@ -54,7 +55,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 0}
+  - {fileID: 2100000, guid: 951930664607000459181a1ff41e2e72, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -89,8 +90,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _gimmickId: will_1
-  _fixedBox: {fileID: 6479411921831518640}
+  _fixedBoxes: []
+  _autoFindBlocks: 0
   _showDebugLogs: 0
+--- !u!33 &9016748483817691602
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6479411921831518640}
+  m_Mesh: {fileID: -7870861582546819789, guid: 74af51cab4da693478230b4a781c2e59, type: 3}
 --- !u!1001 &2742896003427656767
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -157,7 +167,12 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 74af51cab4da693478230b4a781c2e59,
         type: 3}
       propertyPath: m_Name
-      value: Fixed_Not_Block
+      value: Gimmick
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 74af51cab4da693478230b4a781c2e59,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

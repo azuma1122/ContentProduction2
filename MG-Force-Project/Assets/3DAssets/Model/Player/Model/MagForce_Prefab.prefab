@@ -107,7 +107,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &7543511285414290266
 RectTransform:
   m_ObjectHideFlags: 0
@@ -5349,16 +5349,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 53f7f21b28d234345800009775d220a3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _chargeGageObj: {fileID: 4985467487446186763}
-  _chargeGage: {fileID: 8088367460782412997}
-  _powerEffectObj: {fileID: 8172437375069700698}
   bulletPrefab: {fileID: 5006926018254083275, guid: e7fe3a9b88cf6ea4f9f5bc7632828753,
     type: 3}
   bulletSpeed: 20
-  fixedNBlockPrefab: {fileID: 3280761362568157059, guid: d1a14eed1bd2e9a45911aac665eb07f5,
-    type: 3}
-  fixedSBlockPrefab: {fileID: 6687628407338511429, guid: 3ad7dc385f0ab15418b3314a64023f20,
-    type: 3}
   useMouseAim: 1
   aimLayerMask:
     serializedVersion: 2

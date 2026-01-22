@@ -42,9 +42,9 @@ namespace Game.StageScene.Magnet
 
         // ===== UI =====
         [Header("UI")]
-        [SerializeField] private GameObject _chargeGageObj; // チャージゲージの親オブジェクト
-        [SerializeField] private Image _chargeGage;        // チャージ量表示
-        [SerializeField] private GameObject _powerEffectObj; // チャージエフェクト
+        //[SerializeField] private GameObject _chargeGageObj; // チャージゲージの親オブジェクト
+        //[SerializeField] private Image _chargeGage;        // チャージ量表示
+        //[SerializeField] private GameObject _powerEffectObj; // チャージエフェクト
         private ParticleSystem _particleSystem;            // パワーエフェクト用
         private Image _bulletGage;                          // 弾エネルギーゲージ
 
@@ -81,11 +81,11 @@ namespace Game.StageScene.Magnet
             _mainCamera = UnityEngine.Camera.main;
 
             _bulletGage = GameObject.Find("EnergyGage").GetComponent<Image>();
-            _particleSystem = _powerEffectObj.GetComponent<ParticleSystem>();
+            //_particleSystem = _powerEffectObj.GetComponent<ParticleSystem>();
 
             // 初期状態ではゲージとエフェクトは非表示
-            _chargeGageObj.SetActive(false);
-            _powerEffectObj.SetActive(false);
+            //_chargeGageObj.SetActive(false);
+            //_powerEffectObj.SetActive(false);
 
             SetupDebugLine();
             DisableLineRenderersInChildren();
@@ -97,17 +97,17 @@ namespace Game.StageScene.Magnet
         /// </summary>
         private void DisableLineRenderersInChildren()
         {
-            if (_chargeGageObj != null)
-            {
-                foreach (var line in _chargeGageObj.GetComponentsInChildren<LineRenderer>(true))
-                    line.enabled = false;
-            }
+            //if (_chargeGageObj != null)
+            //{
+            //    foreach (var line in _chargeGageObj.GetComponentsInChildren<LineRenderer>(true))
+            //        line.enabled = false;
+            //}
 
-            if (_powerEffectObj != null)
-            {
-                foreach (var line in _powerEffectObj.GetComponentsInChildren<LineRenderer>(true))
-                    line.enabled = false;
-            }
+            //if (_powerEffectObj != null)
+            //{
+            //    foreach (var line in _powerEffectObj.GetComponentsInChildren<LineRenderer>(true))
+            //        line.enabled = false;
+            //}
         }
 
         /// <summary>
@@ -136,7 +136,7 @@ namespace Game.StageScene.Magnet
         /// </summary>
         private void Update()
         {
-            // ===== 最優先: デバッグラインの状態を常に監視 =====
+            // ===== デバッグラインの状態を常に監視 =====
             // 条件を満たさない場合は必ずラインを消す
             bool shouldShowLine = false;
 
@@ -210,8 +210,8 @@ namespace Game.StageScene.Magnet
                 {
                     _isCharging = true;
                     _currentPower = 0f;
-                    _chargeGageObj.SetActive(true);
-                    _powerEffectObj.SetActive(true);
+                    //_chargeGageObj.SetActive(true);
+                    //_powerEffectObj.SetActive(true);
                     if (_playerState != null)
                         _playerState.AddState(State.SHOOT);
                 }
@@ -226,7 +226,7 @@ namespace Game.StageScene.Magnet
 
                 if (_isCharging)
                 {
-                    ChargeUpdate();
+                    //ChargeUpdate();
                     UpdateDebugLine();
                     shouldShowLine = true; // チャージ中はラインを表示
                 }
@@ -235,7 +235,7 @@ namespace Game.StageScene.Magnet
             else if (_isCharging)
             {
                 _isCharging = false;
-                _chargeGageObj.SetActive(false);
+                //_chargeGageObj.SetActive(false);
                 _canShooting = true;
 
                 if (_debugLineRenderer != null)
@@ -254,11 +254,11 @@ namespace Game.StageScene.Magnet
         /// </summary>
         private void ForceHideShootingEffects()
         {
-            if (_chargeGageObj != null && _chargeGageObj.activeSelf)
-                _chargeGageObj.SetActive(false);
+            //if (_chargeGageObj != null && _chargeGageObj.activeSelf)
+            //    _chargeGageObj.SetActive(false);
 
-            if (_powerEffectObj != null && _powerEffectObj.activeSelf)
-                _powerEffectObj.SetActive(false);
+            //if (_powerEffectObj != null && _powerEffectObj.activeSelf)
+            //    _powerEffectObj.SetActive(false);
 
             if (_debugLineRenderer != null && _debugLineRenderer.enabled)
                 _debugLineRenderer.enabled = false;
@@ -318,7 +318,7 @@ namespace Game.StageScene.Magnet
                 bulletController.SetChargePower(_currentPower);
 
             _canShooting = false;
-            _powerEffectObj.SetActive(false);
+            //_powerEffectObj.SetActive(false);
             _bulletGage.fillAmount -= 0.1f;
 
             if (_debugLineRenderer != null)
@@ -356,18 +356,18 @@ namespace Game.StageScene.Magnet
         /// <summary>
         /// チャージ量を増やし、UIとエフェクトを更新
         /// </summary>
-        private void ChargeUpdate()
-        {
-            if (_currentPower < 100f)
-                _currentPower += ADD_POWER;
+        //private void ChargeUpdate()
+        //{
+        //    if (_currentPower < 100f)
+        //        _currentPower += ADD_POWER;
 
-            _chargeGage.fillAmount = _currentPower / 100f;
+        //    _chargeGage.fillAmount = _currentPower / 100f;
 
-            var main = _particleSystem.main;
-            if (_currentPower < 33f) main.startColor = Color.green;
-            else if (_currentPower < 66f) main.startColor = Color.yellow;
-            else main.startColor = Color.red;
-        }
+        //    var main = _particleSystem.main;
+        //    if (_currentPower < 33f) main.startColor = Color.green;
+        //    else if (_currentPower < 66f) main.startColor = Color.yellow;
+        //    else main.startColor = Color.red;
+        //}
 
         /// <summary>
         /// チャージ・発射状態を完全リセットする
@@ -377,8 +377,8 @@ namespace Game.StageScene.Magnet
             _isCharging = false;
             _canShooting = false;
             _currentPower = 0f;
-            _chargeGageObj.SetActive(false);
-            _powerEffectObj.SetActive(false);
+           // _chargeGageObj.SetActive(false);
+            //_powerEffectObj.SetActive(false);
 
             if (_playerState != null)
                 _playerState.RemoveState(State.SHOOT);
@@ -386,7 +386,7 @@ namespace Game.StageScene.Magnet
             if (_debugLineRenderer != null)
                 _debugLineRenderer.enabled = false;
 
-            Debug.Log("[BulletShoot] 射撃状態を完全リセット");
+            //Debug.Log("[BulletShoot] 射撃状態を完全リセット");
         }
 
 #if UNITY_EDITOR
