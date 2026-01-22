@@ -11,12 +11,15 @@ namespace Game.StageScene
 {
     /// <summary>
     /// JSON データからステージを生成するクラス
+    /// ・JSONを読み込んで配列に展開
+    /// ・通常ブロック / 特殊オブジェクト / ギミック / プレイヤーを生成
+    /// ・最後にギミックを関連付ける
     /// </summary>
     public class StageCreater : MonoBehaviour
     {
         #region ===== 列挙型 =====
 
-        // 通常ブロックの種類
+        // 通常ブロックの種類（color > 0 のときに使用）
         private enum ObjectType
         {
             NotObject,
@@ -32,14 +35,14 @@ namespace Game.StageScene
             SMoving,
         }
 
-        // 特殊オブジェクト（負の値）
+        // 特殊オブジェクト（JSON上では負の値）
         private enum S_ObjectType
         {
             Main = 0,
             Player = -1,
             Goal = -2,
-            CanUp = -3,      // ボタン
-            P_Gimmick = -4,  // ギミック対象ブロック
+            CanUp = -3,
+            P_Gimmick = -4,
             None = -5,
         }
 
@@ -67,7 +70,8 @@ namespace Game.StageScene
         [SerializeField] private Vector3 _stageOffset = Vector3.zero;
 
         [Header("Gimmick")]
-        [SerializeField] private GameObject _gimmickPrefab; // Gimmickプレハブ
+        // 通常ギミック用プレハブ（GimmickController付き想定）
+        [SerializeField] private GameObject _gimmickPrefab;
 
         #endregion
 
@@ -95,7 +99,6 @@ namespace Game.StageScene
         {
             public int row;
             public int col;
-
             public Scale(int r, int c)
             {
                 row = r;
@@ -116,10 +119,11 @@ namespace Game.StageScene
 
         private SimulationMode _originalSimulationMode;
 
-        // ギミック管理用（複数ブロック対応）
+        // ギミックIDごとのボタン一覧
         private Dictionary<int, List<ButtonController>> _gimmickButtons =
             new Dictionary<int, List<ButtonController>>();
 
+        // ギミックIDごとの対象ブロック一覧
         private Dictionary<int, List<GameObject>> _gimmickTargetBlocks =
             new Dictionary<int, List<GameObject>>();
 
@@ -182,8 +186,10 @@ namespace Game.StageScene
                 return;
 
             _jsonData = json;
+
             StageCreate();
             StartCoroutine(InitializePlayerAfterCreation());
+
             _hasCreated = true;
         }
 
@@ -280,7 +286,6 @@ namespace Game.StageScene
 
             isPlayerCreate = true;
 
-            // オブジェクト生成
             for (int i = 0; i < MAX_ROWS; i++)
             {
                 for (int j = 0; j < MAX_COLS; j++)
@@ -307,7 +312,7 @@ namespace Game.StageScene
                     float x = INIT_X * j;
                     float y = INIT_Y * i;
 
-                    // ボタンの場合、ギミックIDと一緒に保存
+                    // --- ボタン登録 ---
                     if (color == (int)S_ObjectType.CanUp)
                     {
                         y += _buttonYOffset;
@@ -323,16 +328,11 @@ namespace Game.StageScene
                                     _gimmickButtons[point] = new List<ButtonController>();
 
                                 _gimmickButtons[point].Add(btn);
-
-                                Debug.Log(
-                                    $"[StageCreater] ボタン登録: GimmickID={point}, " +
-                                    $"GameObject={obj.name}, 位置=({i},{j})"
-                                );
                             }
                         }
                     }
 
-                    // ギミック対象ブロックの場合（複数対応）
+                    // --- ギミック対象登録 ---
                     if (color == (int)S_ObjectType.P_Gimmick)
                     {
                         if (point > 0)
@@ -341,12 +341,6 @@ namespace Game.StageScene
                                 _gimmickTargetBlocks[point] = new List<GameObject>();
 
                             _gimmickTargetBlocks[point].Add(obj);
-
-                            Debug.Log(
-                                $"[StageCreater] ターゲットブロック登録: GimmickID={point}, " +
-                                $"GameObject={obj.name}, 位置=({i},{j}), " +
-                                $"合計={_gimmickTargetBlocks[point].Count}個"
-                            );
                         }
                     }
 
@@ -367,11 +361,11 @@ namespace Game.StageScene
                 }
             }
 
-            // ギミック生成
+            // ★ ギミック生成
             CreateGimmicks(main.transform);
+
             BGCreate();
 
-            // Physics復帰
             Physics.simulationMode = _originalSimulationMode;
         }
 
@@ -388,9 +382,7 @@ namespace Game.StageScene
             {
                 if (!_gimmickTargetBlocks.ContainsKey(gimmickId))
                 {
-                    Debug.LogWarning(
-                        $"[StageCreater] ギミックID {gimmickId} に対応するターゲットブロックがありません"
-                    );
+                    Debug.LogWarning($"[StageCreater] ギミックID {gimmickId} に対応するターゲットブロックがありません");
                     continue;
                 }
 
@@ -402,41 +394,58 @@ namespace Game.StageScene
                 Debug.Log($"[StageCreater] - ボタン数: {buttons.Count}");
                 Debug.Log($"[StageCreater] - ターゲットブロック数: {targetBlocks.Count}");
 
-                // ★ギミックIDに応じて異なるコントローラーを生成
+                if (buttons.Count == 0)
+                {
+                    Debug.LogError($"[StageCreater] ギミックID {gimmickId} にボタンがありません");
+                    continue;
+                }
+
+                // ===== gimmickId = 1 → ReverseGimmick =====
                 if (gimmickId == 1)
                 {
-                    // ギミックID=1 → ReverseGimmick（押すと表示）
                     Debug.Log("[StageCreater] - ReverseGimmickController を使用");
 
                     GameObject gimmickObj = new GameObject($"ReverseGimmick_{gimmickId}");
                     gimmickObj.transform.SetParent(parent, false);
 
-                    ReverseGimmickController controller = gimmickObj.AddComponent<ReverseGimmickController>();
+                    ReverseGimmickController controller =
+                        gimmickObj.AddComponent<ReverseGimmickController>();
 
-                    if (buttons.Count > 0)
+                    ButtonController button = buttons[0];
+                    controller.SetButton(button);
+
+                    foreach (GameObject block in targetBlocks)
                     {
-                        ButtonController button = buttons[0];
-                        controller.SetButton(button);
-
-                        // ★重要: ReverseGimmickの場合、各ブロックを最初から非表示に設定
-                        foreach (GameObject block in targetBlocks)
-                        {
-                            block.SetActive(false); // 最初は非表示
-                            controller.SetFixedBox(block);
-                            Debug.Log($"[StageCreater] - ReverseGimmick ターゲット設定（初期非表示）: {block.name}");
-                        }
-
-                        Debug.Log($"[StageCreater] ✓ ReverseGimmick設定完了: ボタン={button.gameObject.name}");
-                    }
-                    else
-                    {
-                        Debug.LogError($"[StageCreater] ギミックID {gimmickId} にボタンがありません");
+                        block.SetActive(false);
+                        controller.SetFixedBox(block);
+                        Debug.Log($"[StageCreater] - Reverse ターゲット設定: {block.name}");
                     }
                 }
+                // ===== gimmickId = 2 → MultiButtonGimmick =====
                 else if (gimmickId == 2)
                 {
-                    // ギミックID=2 → 通常Gimmick（押すと非表示）
-                    Debug.Log("[StageCreater] - GimmickController を使用");
+                    Debug.Log("[StageCreater] - MultiButtonGimmickController を使用");
+
+                    GameObject gimmickObj = new GameObject($"MultiButtonGimmick_{gimmickId}");
+                    gimmickObj.transform.SetParent(parent, false);
+
+                    MultiButtonGimmickController controller =
+                        gimmickObj.AddComponent<MultiButtonGimmickController>();
+
+                    controller.SetGimmickId($"gimmick_{gimmickId}");
+                    controller.SetButtons(buttons);
+                    controller.SetRequiredButtonCount(buttons.Count);
+
+                    foreach (GameObject block in targetBlocks)
+                    {
+                        controller.AddTargetBlock(block);
+                        Debug.Log($"[StageCreater] - MultiButton ターゲット追加: {block.name}");
+                    }
+                }
+                // ===== gimmickId = 3 → 通常Gimmick =====
+                else if (gimmickId == 3)
+                {
+                    Debug.Log("[StageCreater] - 通常GimmickController を使用");
 
                     GameObject gimmickObj;
 
@@ -454,49 +463,49 @@ namespace Game.StageScene
 
                     GimmickController controller = gimmickObj.GetComponent<GimmickController>();
 
-                    if (controller != null && buttons.Count > 0)
+                    if (controller != null)
                     {
                         ButtonController button = buttons[0];
-                        string gimmickIdString = $"gimmick_{gimmickId}";
-
-                        controller.SetGimmickId(gimmickIdString);
+                        controller.SetGimmickId($"gimmick_{gimmickId}");
                         controller.SetButton(button);
 
                         foreach (GameObject block in targetBlocks)
                         {
                             controller.AddFixedBox(block);
-                            Debug.Log($"[StageCreater] - GimmickController ターゲット追加: {block.name}");
+                            Debug.Log($"[StageCreater] - 通常Gimmick ターゲット追加: {block.name}");
                         }
+                    }
+                }
+                // ===== 4以降 → デフォルト通常Gimmick =====
+                else
+                {
+                    Debug.LogWarning($"[StageCreater] 未定義ギミックID {gimmickId} → デフォルト通常Gimmickを使用");
 
-                        Debug.Log($"[StageCreater] ✓ GimmickController設定完了: ボタン={button.gameObject.name}");
+                    GameObject gimmickObj;
+
+                    if (_gimmickPrefab != null)
+                    {
+                        gimmickObj = Instantiate(_gimmickPrefab, parent);
+                        gimmickObj.name = $"Gimmick_{gimmickId}";
                     }
                     else
                     {
-                        Debug.LogError($"[StageCreater] GimmickController取得失敗 or ボタンなし");
+                        gimmickObj = new GameObject($"Gimmick_{gimmickId}");
+                        gimmickObj.transform.SetParent(parent, false);
+                        gimmickObj.AddComponent<GimmickController>();
                     }
-                }
-                else if (buttons.Count > 1)
-                {
-                    // ボタンが複数 → MultiButtonGimmick
-                    Debug.Log("[StageCreater] - MultiButtonGimmickController を使用");
 
-                    GameObject gimmickObj = new GameObject($"MultiButtonGimmick_{gimmickId}");
-                    gimmickObj.transform.SetParent(parent, false);
+                    GimmickController controller = gimmickObj.GetComponent<GimmickController>();
 
-                    MultiButtonGimmickController controller =
-                        gimmickObj.AddComponent<MultiButtonGimmickController>();
-
-                    controller.SetGimmickId($"gimmick_{gimmickId}");
-                    controller.SetButtons(buttons);
-                    controller.SetRequiredButtonCount(buttons.Count);
-
-                    foreach (GameObject block in targetBlocks)
+                    if (controller != null)
                     {
-                        controller.AddTargetBlock(block);
-                        Debug.Log($"[StageCreater] - MultiButtonGimmick ターゲット追加: {block.name}");
-                    }
+                        ButtonController button = buttons[0];
+                        controller.SetGimmickId($"gimmick_{gimmickId}");
+                        controller.SetButton(button);
 
-                    Debug.Log($"[StageCreater] ✓ MultiButtonGimmickController設定完了");
+                        foreach (GameObject block in targetBlocks)
+                            controller.AddFixedBox(block);
+                    }
                 }
             }
 
@@ -510,10 +519,7 @@ namespace Game.StageScene
         private IEnumerator InitializePlayerAfterCreation()
         {
             if (!_playerWasCreatedFromJson || _createdPlayer == null)
-            {
-                Physics.simulationMode = _originalSimulationMode;
                 yield break;
-            }
 
             yield return null;
 
@@ -530,8 +536,6 @@ namespace Game.StageScene
                 rb.angularVelocity = Vector3.zero;
             }
 
-            Physics.simulationMode = _originalSimulationMode;
-
             _createdPlayer.AddComponent<PlayerManager>();
         }
 
@@ -543,23 +547,11 @@ namespace Game.StageScene
         {
             switch (color)
             {
-                case (int)S_ObjectType.Player:
-                    return -1;
-
-                case (int)S_ObjectType.Goal:
-                    return 2;
-
-                case (int)S_ObjectType.CanUp:
-                    return 3;
-
-                case (int)S_ObjectType.P_Gimmick:
-                    return 4;
-
-                default:
-                    Debug.LogWarning(
-                        $"[StageCreater] 未定義の特殊オブジェクト: color={color}"
-                    );
-                    return -1;
+                case (int)S_ObjectType.Player: return -1;
+                case (int)S_ObjectType.Goal: return 2;
+                case (int)S_ObjectType.CanUp: return 3;
+                case (int)S_ObjectType.P_Gimmick: return 4;
+                default: return -1;
             }
         }
 
@@ -581,40 +573,14 @@ namespace Game.StageScene
             if (color < 0)
             {
                 int index = GetSpecialObjectIndex(color);
-                if (index < 0)
-                {
-                    Debug.LogError(
-                        $"[StageCreater] エラー: color={color} に対応する特殊オブジェクトが見つかりません"
-                    );
+                if (index < 0 || index >= _specialObjects.Length || _specialObjects[index] == null)
                     return null;
-                }
-
-                if (index >= _specialObjects.Length)
-                {
-                    Debug.LogError(
-                        $"[StageCreater] エラー: index={index} は配列サイズ {_specialObjects.Length} を超えています!"
-                    );
-                    return null;
-                }
-
-                if (_specialObjects[index] == null)
-                {
-                    Debug.LogError(
-                        $"[StageCreater] エラー: _specialObjects[{index}] (color={color}) が null です!"
-                    );
-                    return null;
-                }
 
                 return Instantiate(_specialObjects[index]);
             }
 
             if (color < 1 || color > Objects.Length)
-            {
-                Debug.LogError(
-                    $"[StageCreater] エラー: 通常ブロックcolor={color} は範囲外です（1～{Objects.Length}）"
-                );
                 return null;
-            }
 
             GameObject obj = Instantiate(Objects[color - 1]);
             PowerSet(obj, power);
@@ -635,7 +601,6 @@ namespace Game.StageScene
                 isPlayerCreate = false;
                 return true;
             }
-
             return false;
         }
 
