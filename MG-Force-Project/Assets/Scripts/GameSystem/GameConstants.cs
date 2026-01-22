@@ -99,7 +99,7 @@ namespace Game
         public enum Stage
         {
             Stage_Select,
-            Stage_1,
+            Stage1,
             Stage_2,
             Stage_3,
             Stage_4,

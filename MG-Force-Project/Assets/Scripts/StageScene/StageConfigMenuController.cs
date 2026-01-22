@@ -22,9 +22,6 @@ namespace Game.Stage
         // シーン切り替え管理
         private SceneLoader _sceneLoader = SceneLoader.Instance;
 
-        [Header("操作説明")]
-        [SerializeField] private GameObject _helpMenuObject;
-        [SerializeField] private TextMeshProUGUI _helpText;
 
         [Header("確認ダイアログ")]
         [SerializeField] private GameObject _confirmDialogObject;
@@ -43,15 +40,7 @@ namespace Game.Stage
         {
             _input = GameObject.Find(GameConstants.Object.INPUT)?.GetComponent<InputHandler>();
 
-            // 初期状態は非表示(nullチェック付き)
-            if (_helpMenuObject != null)
-            {
-                _helpMenuObject.SetActive(false);
-            }
-            else
-            {
-                Debug.LogWarning("[StageConfigMenu] _helpMenuObject が Inspector で設定されていません");
-            }
+          
 
             if (_confirmDialogObject != null)
             {
@@ -101,13 +90,7 @@ namespace Game.Stage
             {
                 Debug.Log("[StageConfigMenu] ESCキー検出");
 
-                // ヘルプが開いている場合は閉じる
-                if (_isHelpActive)
-                {
-                    Debug.Log("[StageConfigMenu] ヘルプを閉じます");
-                    CloseHelp();
-                    return;
-                }
+                
                 // ヘルプが開いていない場合は即時リスタート
                 Debug.Log("[StageConfigMenu] ESCキー押下 - ステージを即時リスタートします");
                 ResetStage();
@@ -314,39 +297,7 @@ namespace Game.Stage
             }
         }
 
-        public void ShowHelp()
-        {
-            if (_helpMenuObject == null) return;
 
-            _isHelpActive = true;
-            _helpMenuObject.SetActive(true);
-
-            if (_helpText != null)
-            {
-                _helpText.text = @"
-【基本操作】
-移動: WASD / 方向キー / 左スティック
-ジャンプ: スペース / Aボタン
-攻撃: 左クリック / Xボタン
-ダッシュ: Shift / Bボタン
-
-【メニュー】
-メニュー開く: M / Startボタン
-決定: Enter / Aボタン
-キャンセル: ESC / Bボタン
-
-【その他】
-ポーズ: ESC / Startボタン
-";
-            }
-        }
-
-        public void CloseHelp()
-        {
-            if (_helpMenuObject == null) return;
-            _isHelpActive = false;
-            _helpMenuObject.SetActive(false);
-        }
 
         public void ShowResetConfirm()
         {
@@ -387,8 +338,7 @@ namespace Game.Stage
             // ダイアログとヘルプを閉じる
             if (_confirmDialogObject != null)
                 _confirmDialogObject.SetActive(false);
-            if (_helpMenuObject != null)
-                _helpMenuObject.SetActive(false);
+         
 
             // ConfigMenuを閉じる
             if (GlobalUIManager.Instance != null)
@@ -428,11 +378,12 @@ namespace Game.Stage
             // ダイアログとヘルプを閉じる
             if (_confirmDialogObject != null)
                 _confirmDialogObject.SetActive(false);
-            if (_helpMenuObject != null)
-                _helpMenuObject.SetActive(false);
+          
 
             // 状態をリセット
             ForceResumeAll();
+
+            PopupImageManager.ResetTutorialFlag();
 
             // ロードシーンを経由してタイトルへ
             StartCoroutine(LoadSceneWithLoadingScreen(GameConstants.Scene.Title.ToString()));
@@ -653,6 +604,7 @@ namespace Game.Stage
 
             Debug.Log($"[StageConfigMenu] ForceResumeAll() 完了 - Time.timeScale: {Time.timeScale}");
             Debug.Log("[StageConfigMenu] ========================================");
+
         }
 
         #endregion

@@ -42,6 +42,7 @@ GameObject:
   - component: {fileID: 2793488833847493522}
   - component: {fileID: 9039979689250835571}
   - component: {fileID: 6218545112232283629}
+  - component: {fileID: 3978281919918180165}
   m_Layer: 0
   m_Name: StageLoader
   m_TagString: Untagged
@@ -92,3 +93,28 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _useJsonStage: 1
   _stageCreater: {fileID: 0}
+--- !u!114 &3978281919918180165
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5401147349349345859}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: defb0b05aafb7cb4db78f10780468fd0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  canvasPrefab: {fileID: 3534291732663280354, guid: c05a54e64b73a4645aeb23bad0b83d7c,
+    type: 3}
+  imagePrefab: {fileID: 2713970402184899656, guid: 62f6b9648d450b04abf29e0202ff01cd,
+    type: 3}
+  controlGuideImages:
+  - {fileID: 21300000, guid: c7088de0d5c1d53479e38fa52166ba1b, type: 3}
+  - {fileID: 21300000, guid: 0098ab5192934b64688ca39bf972cb6c, type: 3}
+  - {fileID: 21300000, guid: 358087a47479cab4d881b4875a9e4f61, type: 3}
+  ruleTutorialImages:
+  - {fileID: 21300000, guid: c7088de0d5c1d53479e38fa52166ba1b, type: 3}
+  - {fileID: 21300000, guid: 0098ab5192934b64688ca39bf972cb6c, type: 3}
+  - {fileID: 21300000, guid: 358087a47479cab4d881b4875a9e4f61, type: 3}
+  - {fileID: 21300000, guid: c7088de0d5c1d53479e38fa52166ba1b, type: 3}

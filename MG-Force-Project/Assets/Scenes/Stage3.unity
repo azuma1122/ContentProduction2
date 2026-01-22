@@ -2108,6 +2108,18 @@ MonoBehaviour:
   _stageOffset: {x: -1, y: -0.5, z: 0}
   _gimmickPrefab: {fileID: 6479411921831518640, guid: f87800742c00aa1489e06df147233f2a,
     type: 3}
+--- !u!114 &642074919 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3978281919918180165, guid: 8bb3bf3161ae9b146adf96413cf7d643,
+    type: 3}
+  m_PrefabInstance: {fileID: 642074916}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: defb0b05aafb7cb4db78f10780468fd0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &682578260
 GameObject:
   m_ObjectHideFlags: 0
@@ -2566,8 +2578,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ebc146bb3fa5fa1479f27928e596b0ca, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _helpMenuObject: {fileID: 0}
-  _helpText: {fileID: 978692080}
   _confirmDialogObject: {fileID: 1985934442}
   _confirmMessageText: {fileID: 1470847481}
   _confirmYesButton: {fileID: 1472165773}
@@ -2645,18 +2655,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &978692080 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 8249055957007373838, guid: a410fccdeb5879b4db716250801b7abe,
-    type: 3}
-  m_PrefabInstance: {fileID: 1185448939}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &1023102050
 GameObject:
   m_ObjectHideFlags: 0
@@ -3216,11 +3214,16 @@ PrefabInstance:
         type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
-      objectReference: {fileID: 819896255}
+      objectReference: {fileID: 642074919}
     - target: {fileID: 6792278183073267896, guid: a410fccdeb5879b4db716250801b7abe,
         type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
-      value: ShowHelp
+      value: ShowControlGuide
+      objectReference: {fileID: 0}
+    - target: {fileID: 6792278183073267896, guid: a410fccdeb5879b4db716250801b7abe,
+        type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: PopupImageManager, Assembly-CSharp
       objectReference: {fileID: 0}
     - target: {fileID: 7741095665846021760, guid: a410fccdeb5879b4db716250801b7abe,
         type: 3}
