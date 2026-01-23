@@ -136,6 +136,16 @@ namespace Game.StageScene.Magnet
         /// </summary>
         private void Update()
         {
+            // ===== UIや演出による入力ロック =====
+            if (GameInputLock.IsLocked)
+            {
+                if (_isCharging || _canShooting)
+                    ResetCharge();
+
+                ForceHideShootingEffects();
+                return;
+            }
+
             // ===== デバッグラインの状態を常に監視 =====
             // 条件を満たさない場合は必ずラインを消す
             bool shouldShowLine = false;

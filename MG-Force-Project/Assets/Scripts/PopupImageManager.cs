@@ -51,6 +51,8 @@ public class PopupImageManager : MonoBehaviour
 
     private void StartTutorial(Sprite[] images)
     {
+        GameInputLock.Lock();
+
         currentImages = images;
         currentImageIndex = 0;
         SpawnCanvasWithImage(currentImages[currentImageIndex]);
@@ -148,6 +150,8 @@ public class PopupImageManager : MonoBehaviour
 
     public void DestroyCanvasWithImage()
     {
+        GameInputLock.Unlock();
+
         if (canvasObject != null)
         {
             Destroy(canvasObject);
@@ -156,4 +160,11 @@ public class PopupImageManager : MonoBehaviour
 
 
 
+}
+public static class GameInputLock
+{
+    public static bool IsLocked { get; private set; }
+
+    public static void Lock() => IsLocked = true;
+    public static void Unlock() => IsLocked = false;
 }
