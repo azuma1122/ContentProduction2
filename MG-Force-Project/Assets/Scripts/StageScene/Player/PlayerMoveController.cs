@@ -177,7 +177,7 @@ namespace Game.StageScene.Player
 
             Vector3 center = new Vector3(
                 _capsuleCollider.bounds.center.x,
-                _capsuleCollider.bounds.min.y + 0.01f,
+                _capsuleCollider.bounds.min.y + 0.03f,
                 _capsuleCollider.bounds.center.z
             );
 
