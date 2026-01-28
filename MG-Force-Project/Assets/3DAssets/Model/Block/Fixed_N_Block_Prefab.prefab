@@ -251,7 +251,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   magnetManager: {fileID: 0}
-  _magnetCollider: {fileID: 2581570767281934506}
+  _magnetColliders: []
   magnetFixed: 1
   magnetFixedPower: 0
 --- !u!114 &6890902007481355267

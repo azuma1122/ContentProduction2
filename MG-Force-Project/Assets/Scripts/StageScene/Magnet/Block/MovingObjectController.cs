@@ -138,8 +138,8 @@ namespace Game.StageScene.Magnet
         protected override void OnTriggerEnter(Collider other)
         {
             base.OnTriggerEnter(other);
-            if (other.gameObject.layer != (int)GameConstants.Layer.MAGNET_RANGE) return;
-            if (other.gameObject.layer != (int)GameConstants.Layer.DEFAULT) return;
+            if (other.gameObject.layer != (int)GameConstants.Layer.MAGNET_RANGE &&
+        other.gameObject.layer != (int)GameConstants.Layer.DEFAULT) return;
 
             // 磁力範囲リストに追加
             if (!_isHitMagnet.Contains(other))
