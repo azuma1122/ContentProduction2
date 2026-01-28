@@ -160,6 +160,7 @@ namespace Game.StageScene
         private void Awake()
         {
             CleanupPreviousStageObjects();
+
             _hasCreated = false;
         }
 
@@ -279,7 +280,7 @@ namespace Game.StageScene
 
             ResetInternalState();
             GetStageDataFromJson();
-
+            Debug.Log("ステージ生成開始");
             GameObject main = Instantiate(_specialObjects[(int)S_ObjectType.Main]);
             main.tag = "MainStage";
             main.transform.position = _stageOffset;
@@ -296,6 +297,7 @@ namespace Game.StageScene
                     int color = colorArray[i, j];
                     int power = powerArray[i, j];
                     int point = pointArray[i, j];
+                    Debug.Log("ステージブロック開始");
 
                     GameObject obj = ObjectCreater(color, power);
                     if (obj == null)
@@ -361,7 +363,7 @@ namespace Game.StageScene
                 }
             }
 
-            // ★ ギミック生成
+            // ギミック生成
             CreateGimmicks(main.transform);
 
             BGCreate();
@@ -557,14 +559,19 @@ namespace Game.StageScene
 
         private GameObject ObjectCreater(int color, int power)
         {
-            if (color == (int)ObjectType.NotObject)
-                return null;
+            Debug.Log("プレイヤーの生成開始前");
 
+            if (color == (int)ObjectType.NotObject)
+            {
+                                return null;
+                
+            }
+
+            Debug.Log(color);
             if (color == (int)S_ObjectType.Player)
             {
                 if (!CanPlayerCreate())
                     return null;
-
                 GameObject player = Instantiate(_playerPrefab);
                 player.tag = "Player";
                 return player;

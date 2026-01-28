@@ -1321,7 +1321,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &389902343
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3748,7 +3748,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   parentOfBlocks: {fileID: 5770446997273316875, guid: de3cb77f07c14e8428e7dd9fdfb99b12,
     type: 3}
-  fileName: Stage_3.json
+  fileName: Stage_7.json
 --- !u!4 &1356883556
 Transform:
   m_ObjectHideFlags: 0
