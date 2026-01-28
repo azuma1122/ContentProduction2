@@ -177,11 +177,11 @@ namespace Game.StageScene.Player
 
             Vector3 center = new Vector3(
                 _capsuleCollider.bounds.center.x,
-                _capsuleCollider.bounds.min.y + 0.03f,
+                _capsuleCollider.bounds.min.y + 0.05f,
                 _capsuleCollider.bounds.center.z
             );
 
-            float radius = _capsuleCollider.radius * 0.7f;
+            float radius = _capsuleCollider.radius * 0.8f;
 
             Vector3 centerPoint = center;
             Vector3 frontPoint = center + Vector3.right * radius;
