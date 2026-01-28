@@ -319,7 +319,13 @@ namespace Game.Stage
         {
             BackToTitle();
         }
-
+        public void ShowStageSelectConfirm()
+        {
+            ShowConfirmDialog(
+                "ステージ選択画面に戻りますか?\n(進行状況は保存されません)",
+                () => BackToStageSelect()
+            );
+        }
         /// <summary>
         /// リスタートボタンから直接呼び出し用
         /// 確認ダイアログなしで即座にステージをリセット
@@ -388,6 +394,20 @@ namespace Game.Stage
             // ロードシーンを経由してタイトルへ
             StartCoroutine(LoadSceneWithLoadingScreen(GameConstants.Scene.Title.ToString()));
         }
+
+        private void BackToStageSelect()
+        {
+            // ダイアログとヘルプを閉じる
+            if (_confirmDialogObject != null)
+                _confirmDialogObject.SetActive(false);
+
+
+            // 状態をリセット
+            ForceResumeAll();
+           // ロードシーンを経由してステージ選択画面へ
+            StartCoroutine(LoadSceneWithLoadingScreen(GameConstants.Scene.StageSelect.ToString()));
+        }
+        
 
         /// <summary>
         /// ロード画面を経由してシーンを読み込む
