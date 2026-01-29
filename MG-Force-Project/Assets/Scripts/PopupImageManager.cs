@@ -35,7 +35,7 @@ public class PopupImageManager : MonoBehaviour
     }
     public void ShowControlGuide()
     {
-        StartTutorial(controlGuideImages);
+        StartControl(controlGuideImages);
     }
 
     public void ShowRuleTutorial()
@@ -57,7 +57,13 @@ public class PopupImageManager : MonoBehaviour
         currentImageIndex = 0;
         SpawnCanvasWithImage(currentImages[currentImageIndex]);
     }
+    private void StartControl(Sprite[] images)
+    {
 
+        currentImages = images;
+        currentImageIndex = 0;
+        SpawnCanvasWithImage(currentImages[currentImageIndex]);
+    }
 
     public void SpawnCanvasWithImage(Sprite sprite)
     {
