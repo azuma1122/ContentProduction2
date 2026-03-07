@@ -8,50 +8,39 @@ namespace Game.StageScene.Magnet
 {
     /// <summary>
     /// プレイヤーの弾発射（射撃）を制御するクラス
-    ///
+    /// 
     /// 【このクラスの役割】
-    /// ・射撃ボタン長押しによるチャージ処理
-    /// ・チャージ量に応じたUIとエフェクトの更新
+    /// ・右クリック押下中：発射方向ラインを表示
+    /// ・右クリックリリース時：弾を発射
     /// ・マウス位置を基準にした発射方向の計算
     /// ・弾の生成と発射
     /// ・エネルギー不足時、磁力Boot中、ポーズ中、ゴール時の射撃の強制停止
-    /// ・デバッグ用の発射方向ライン表示
     /// </summary>
     public class BulletShootController : MonoBehaviour
     {
-        // 1フレームごとに増えるチャージ量
-        private const float ADD_POWER = 0.1f;
+        // ===== 射撃状態（PlayerStateControllerとの連携用） =====
+        public bool IsCharging => _isHolding; // クリック中かどうか
+        public bool IsShooting => false; // リリース瞬間の判定なので常にfalse
+        public float CurrentChargePower => 0f; // チャージ機能は削除したため常に0
 
-        // ===== 射撃の内部状態 =====
-        private bool _isCharging;     // チャージ中かどうか
-        private bool _canShooting;   // ボタンを離して発射待機状態か
-        private float _currentPower; // 現在のチャージ量
-
-        // 外部から参照する用
-        public bool IsCharging => _isCharging;
-        public bool IsShooting => _canShooting;
-        public float CurrentChargePower => _currentPower;
+        private bool _isHolding; // 現在射撃ボタンが押されているか
 
         // ===== 他システム参照 =====
-        private InputHandler _inputHandler;     // 入力管理
-        private MagnetManager _magnet;          // 磁力システム
-        private PlayerStateController _playerState; // プレイヤーの状態管理
-        private MagnetUIManager _uiManager;     // 磁力UI
-        private GlobalUIManager _uiManagerGlobal; // ポーズ等のUI
-        private UnityEngine.Camera _mainCamera; // メインカメラ（マウス照準用）
+        private InputHandler _inputHandler;
+        private MagnetManager _magnet;
+        private PlayerStateController _playerState;
+        private GlobalUIManager _uiManagerGlobal;
+        private UnityEngine.Camera _mainCamera;
 
         // ===== UI =====
         [Header("UI")]
-        //[SerializeField] private GameObject _chargeGageObj; // チャージゲージの親オブジェクト
-        //[SerializeField] private Image _chargeGage;        // チャージ量表示
-        //[SerializeField] private GameObject _powerEffectObj; // チャージエフェクト
-        private ParticleSystem _particleSystem;            // パワーエフェクト用
-        private Image _bulletGage;                          // 弾エネルギーゲージ
+        private Image _bulletGage; // 弾エネルギーゲージ
 
         // ===== 弾 =====
         [Header("Bullet")]
         [SerializeField] private GameObject bulletPrefab; // 発射する弾
         [SerializeField] private float bulletSpeed = 20f; // 弾の初速
+        [SerializeField] private float energyCost = 0.1f; // 1発あたりのエネルギー消費量
 
         // ===== 照準 =====
         [Header("Aim")]
@@ -62,52 +51,45 @@ namespace Game.StageScene.Magnet
         [Header("Debug Visualization")]
         [SerializeField] private bool showDebugLine = true;
         [SerializeField] private float debugLineLength = 10f;
+        [SerializeField] private bool enableDebugLog = false;
         private LineRenderer _debugLineRenderer;
+
+        // ===== 連射制御 =====
+        [Header("Fire Rate")]
+        [SerializeField] private float fireRate = 0.2f; // 連射間隔（秒）
+        private float _lastFireTime = -1f; // 最後に発射した時刻
 
         /// <summary>
         /// 初期化処理
-        /// ・各マネージャー取得
-        /// ・UIとエフェクトの初期非表示
-        /// ・デバッグラインの準備
         /// </summary>
         private void Start()
         {
             _inputHandler = InputHandler.Instance;
-            _magnet = GameObject.Find(GameConstants.MAGNET_MANAGER_OBJ)
-                                .GetComponent<MagnetManager>();
+
+            var magnetObj = GameObject.Find(GameConstants.MAGNET_MANAGER_OBJ);
+            if (magnetObj != null)
+                _magnet = magnetObj.GetComponent<MagnetManager>();
+
             _playerState = GetComponent<PlayerStateController>();
-            _uiManager = FindObjectOfType<MagnetUIManager>();
             _uiManagerGlobal = FindObjectOfType<GlobalUIManager>();
             _mainCamera = UnityEngine.Camera.main;
 
-            _bulletGage = GameObject.Find("EnergyGage").GetComponent<Image>();
-            //_particleSystem = _powerEffectObj.GetComponent<ParticleSystem>();
-
-            // 初期状態ではゲージとエフェクトは非表示
-            //_chargeGageObj.SetActive(false);
-            //_powerEffectObj.SetActive(false);
+            var gageObj = GameObject.Find("EnergyGage");
+            if (gageObj != null)
+                _bulletGage = gageObj.GetComponent<Image>();
 
             SetupDebugLine();
-            DisableLineRenderersInChildren();
-        }
 
-        /// <summary>
-        /// UIの子オブジェクトに含まれるLineRendererを全て無効化する
-        /// （誤ってデバッグ線が表示されるのを防ぐ）
-        /// </summary>
-        private void DisableLineRenderersInChildren()
-        {
-            //if (_chargeGageObj != null)
-            //{
-            //    foreach (var line in _chargeGageObj.GetComponentsInChildren<LineRenderer>(true))
-            //        line.enabled = false;
-            //}
-
-            //if (_powerEffectObj != null)
-            //{
-            //    foreach (var line in _powerEffectObj.GetComponentsInChildren<LineRenderer>(true))
-            //        line.enabled = false;
-            //}
+            if (enableDebugLog)
+            {
+                Debug.Log("=== BulletShootController 初期化 ===");
+                Debug.Log($"InputHandler: {(_inputHandler != null ? "OK" : "NULL")}");
+                Debug.Log($"MagnetManager: {(_magnet != null ? "OK" : "NULL")}");
+                Debug.Log($"BulletGage: {(_bulletGage != null ? "OK" : "NULL")}");
+                if (_bulletGage != null)
+                    Debug.Log($"初期エネルギー: {_bulletGage.fillAmount}");
+                Debug.Log($"BulletPrefab: {(bulletPrefab != null ? "OK" : "NULL")}");
+            }
         }
 
         /// <summary>
@@ -139,157 +121,100 @@ namespace Game.StageScene.Magnet
             // ===== UIや演出による入力ロック =====
             if (GameInputLock.IsLocked)
             {
-                if (_isCharging || _canShooting)
-                    ResetCharge();
-
-                ForceHideShootingEffects();
+                _isHolding = false;
+                HideDebugLine();
                 return;
             }
-
-            // ===== デバッグラインの状態を常に監視 =====
-            // 条件を満たさない場合は必ずラインを消す
-            bool shouldShowLine = false;
 
             // ===== ゴール状態の場合は射撃を完全に無効化 =====
             if (_playerState != null && PlayerControllerBase.currentState.HasFlag(State.GOAL))
             {
-                // チャージや発射待機を強制リセット
-                if (_isCharging || _canShooting)
-                {
-                    ResetCharge();
-                    Debug.Log("[BulletShoot] ゴール状態：射撃を完全停止");
-                }
-
-                // エフェクトとデバッグラインを強制非表示
-                ForceHideShootingEffects();
-                return; // 以降の処理をスキップ
+                _isHolding = false;
+                HideDebugLine();
+                if (enableDebugLog && Input.GetMouseButtonDown(1))
+                    Debug.Log("[BulletShoot] ゴール状態：射撃不可");
+                return;
             }
 
             // ===== エネルギー不足の場合は射撃を無効化 =====
-            if (_bulletGage != null && _bulletGage.fillAmount <= 0f)
+            if (_bulletGage != null && _bulletGage.fillAmount < energyCost)
             {
-                // チャージや発射待機を強制リセット
-                if (_isCharging || _canShooting)
-                {
-                    ResetCharge();
-                    Debug.Log("[BulletShoot] エネルギー不足：射撃を停止");
-                }
-
-                // エフェクトとデバッグラインを強制非表示
-                ForceHideShootingEffects();
-                return; // 以降の処理をスキップ
+                _isHolding = false;
+                HideDebugLine();
+                if (enableDebugLog && Input.GetMouseButtonDown(1))
+                    Debug.Log("[BulletShoot] エネルギー不足：射撃不可");
+                return;
             }
 
             // ===== ポーズ中は射撃を強制停止 =====
             if (_uiManagerGlobal != null && Time.timeScale == 0f)
             {
-                if (_isCharging) ResetCharge();
-                ForceHideShootingEffects();
+                _isHolding = false;
+                HideDebugLine();
                 return;
             }
 
             // ===== 磁力Boot中は射撃禁止 =====
             if (_magnet != null && _magnet.IsMagnetBoot)
             {
-                // チャージや発射待機を強制リセット
-                if (_isCharging || _canShooting)
-                    ResetCharge();
-
-                // 射撃状態を解除（アニメ用）
-                if (_playerState != null)
-                    _playerState.RemoveState(State.SHOOT);
-
-                ForceHideShootingEffects();
+                _isHolding = false;
+                HideDebugLine();
+                if (enableDebugLog && Input.GetMouseButtonDown(1))
+                    Debug.Log("[BulletShoot] 磁力Boot中：射撃不可");
                 return;
             }
 
-            // ===== 発射待機中なら弾を撃つ =====
-            if (_canShooting)
+            // ===== 射撃ボタンの状態管理 =====
+            bool isPressing = _inputHandler != null &&
+                              _inputHandler.IsActionPressing(InputConstants.Action.SHOOT);
+
+            // ★ クリック中：ラインを表示
+            if (isPressing)
             {
-                ShootBullet();
-                if (_playerState != null)
-                    _playerState.ForceSetState(State.STILLNESS);
-                return;
+                _isHolding = true;
+                UpdateDebugLine();
             }
-
-            // ===== ボタン押下中：チャージ処理 =====
-            if (_inputHandler != null && _inputHandler.IsActionPressing(InputConstants.Action.SHOOT))
+            // ★ クリックを離した瞬間：弾を発射
+            else if (_isHolding)
             {
-                // エネルギーが残っている場合のみチャージ開始
-                if (!_isCharging && _bulletGage != null && _bulletGage.fillAmount > 0f)
-                {
-                    _isCharging = true;
-                    _currentPower = 0f;
-                    //_chargeGageObj.SetActive(true);
-                    //_powerEffectObj.SetActive(true);
-                    if (_playerState != null)
-                        _playerState.AddState(State.SHOOT);
-                }
+                _isHolding = false;
+                HideDebugLine();
 
-                // チャージ中でもエネルギーをチェック
-                if (_isCharging && _bulletGage != null && _bulletGage.fillAmount <= 0f)
+                // 連射制限チェック
+                if (Time.time - _lastFireTime >= fireRate)
                 {
-                    ResetCharge();
-                    Debug.Log("[BulletShoot] チャージ中にエネルギー切れ");
-                    return;
+                    ShootBullet();
                 }
-
-                if (_isCharging)
+                else
                 {
-                    //ChargeUpdate();
-                    UpdateDebugLine();
-                    shouldShowLine = true; // チャージ中はラインを表示
+                    if (enableDebugLog)
+                        Debug.Log($"[BulletShoot] 連射制限中（残り{fireRate - (Time.time - _lastFireTime):F2}秒）");
                 }
             }
-            // ===== ボタンを離したら発射準備 =====
-            else if (_isCharging)
+            else
             {
-                _isCharging = false;
-                //_chargeGageObj.SetActive(false);
-                _canShooting = true;
-
-                if (_debugLineRenderer != null)
-                    _debugLineRenderer.enabled = false;
-            }
-
-            // ===== 最終チェック: ラインを表示すべきでない場合は強制的に消す =====
-            if (!shouldShowLine && _debugLineRenderer != null && _debugLineRenderer.enabled)
-            {
-                _debugLineRenderer.enabled = false;
+                // クリックしていない：ラインを非表示
+                HideDebugLine();
             }
         }
 
         /// <summary>
-        /// 射撃関連のエフェクトを強制的に非表示にする
+        /// デバッグラインを非表示にする
         /// </summary>
-        private void ForceHideShootingEffects()
+        private void HideDebugLine()
         {
-            //if (_chargeGageObj != null && _chargeGageObj.activeSelf)
-            //    _chargeGageObj.SetActive(false);
-
-            //if (_powerEffectObj != null && _powerEffectObj.activeSelf)
-            //    _powerEffectObj.SetActive(false);
-
             if (_debugLineRenderer != null && _debugLineRenderer.enabled)
                 _debugLineRenderer.enabled = false;
         }
 
         /// <summary>
-        /// 発射方向をLineRendererで表示
+        /// 発射方向をLineRendererで表示（クリック中のみ）
         /// </summary>
         private void UpdateDebugLine()
         {
             if (!showDebugLine || _debugLineRenderer == null || _mainCamera == null)
             {
-                if (_debugLineRenderer != null)
-                    _debugLineRenderer.enabled = false;
-                return;
-            }
-
-            // チャージ中のみラインを表示
-            if (!_isCharging)
-            {
-                _debugLineRenderer.enabled = false;
+                HideDebugLine();
                 return;
             }
 
@@ -306,35 +231,44 @@ namespace Game.StageScene.Magnet
         /// </summary>
         private void ShootBullet()
         {
-            Vector3 shootPosition = transform.position + Vector3.up;
+            if (bulletPrefab == null)
+            {
+                Debug.LogError("[BulletShoot] bulletPrefabが設定されていません！");
+                return;
+            }
 
+            Vector3 shootPosition = transform.position + Vector3.up;
+            Vector3 direction = GetShootDirection(shootPosition);
+
+            // 弾を生成
             GameObject bulletObj = Instantiate(bulletPrefab, shootPosition, Quaternion.identity);
             Rigidbody rb = bulletObj.GetComponent<Rigidbody>();
 
             if (rb == null)
             {
-                Debug.LogError("弾にRigidbodyが存在しません");
+                Debug.LogError("[BulletShoot] 弾にRigidbodyが存在しません");
                 Destroy(bulletObj);
                 return;
             }
 
-            Vector3 direction = GetShootDirection(shootPosition);
-
+            // 物理設定
             rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
             rb.interpolation = RigidbodyInterpolation.Interpolate;
             rb.velocity = direction * bulletSpeed;
 
+            // 弾の初期化（チャージパワーは常に0）
             if (bulletObj.TryGetComponent(out BulletController bulletController))
-                bulletController.SetChargePower(_currentPower);
+                bulletController.SetChargePower(0f);
 
-            _canShooting = false;
-            //_powerEffectObj.SetActive(false);
-            _bulletGage.fillAmount -= 0.1f;
+            // エネルギー消費
+            if (_bulletGage != null)
+                _bulletGage.fillAmount -= energyCost;
 
-            if (_debugLineRenderer != null)
-                _debugLineRenderer.enabled = false;
+            // 最終発射時刻を記録
+            _lastFireTime = Time.time;
 
-            Debug.Log($"[BulletShoot] 弾発射 - 残りエネルギー: {_bulletGage.fillAmount:F2}");
+            if (enableDebugLog)
+                Debug.Log($"[BulletShoot] 弾発射成功！ - 残りエネルギー: {(_bulletGage != null ? _bulletGage.fillAmount.ToString("F2") : "N/A")}");
         }
 
         /// <summary>
@@ -347,12 +281,14 @@ namespace Game.StageScene.Magnet
 
             Ray ray = _mainCamera.ScreenPointToRay(Input.mousePosition);
 
+            // レイキャストでワールド座標を取得
             if (Physics.Raycast(ray, out RaycastHit hit, 1000f, aimLayerMask))
             {
                 Vector3 dir = hit.point - shootPosition;
                 return dir.sqrMagnitude < 0.01f ? transform.forward : dir.normalized;
             }
 
+            // レイキャストが当たらない場合は地面との交点を計算
             Plane plane = new Plane(Vector3.up, shootPosition);
             if (plane.Raycast(ray, out float enter))
             {
@@ -361,42 +297,6 @@ namespace Game.StageScene.Magnet
             }
 
             return transform.forward;
-        }
-
-        /// <summary>
-        /// チャージ量を増やし、UIとエフェクトを更新
-        /// </summary>
-        //private void ChargeUpdate()
-        //{
-        //    if (_currentPower < 100f)
-        //        _currentPower += ADD_POWER;
-
-        //    _chargeGage.fillAmount = _currentPower / 100f;
-
-        //    var main = _particleSystem.main;
-        //    if (_currentPower < 33f) main.startColor = Color.green;
-        //    else if (_currentPower < 66f) main.startColor = Color.yellow;
-        //    else main.startColor = Color.red;
-        //}
-
-        /// <summary>
-        /// チャージ・発射状態を完全リセットする
-        /// </summary>
-        private void ResetCharge()
-        {
-            _isCharging = false;
-            _canShooting = false;
-            _currentPower = 0f;
-           // _chargeGageObj.SetActive(false);
-            //_powerEffectObj.SetActive(false);
-
-            if (_playerState != null)
-                _playerState.RemoveState(State.SHOOT);
-
-            if (_debugLineRenderer != null)
-                _debugLineRenderer.enabled = false;
-
-            //Debug.Log("[BulletShoot] 射撃状態を完全リセット");
         }
 
 #if UNITY_EDITOR
@@ -412,7 +312,11 @@ namespace Game.StageScene.Magnet
                 return;
 
             // エネルギー不足の場合もGizmosを表示しない
-            if (_bulletGage != null && _bulletGage.fillAmount <= 0f)
+            if (_bulletGage != null && _bulletGage.fillAmount < energyCost)
+                return;
+
+            // クリック中のみGizmosを表示
+            if (!_isHolding)
                 return;
 
             Vector3 shootPosition = transform.position + Vector3.up;
